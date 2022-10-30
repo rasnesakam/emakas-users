@@ -1,14 +1,14 @@
 package com.emakas.userService.user;
 
-import com.emakas.userService.entity.Entity;
+import com.emakas.userService.entity.BaseEntity;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.Objects;
 import java.util.UUID;
 
-public class User extends Entity<UUID> {
+@Entity
+@Table(name = "users")
+public class User extends BaseEntity {
 
     @Column(name = "user_name",length = 30)
     private String uname;
@@ -21,13 +21,16 @@ public class User extends Entity<UUID> {
     @Column(length = 30)
     private String surname;
 
-    public User(UUID uuid, String uname, String email, String password, String name, String surname) {
-        super(uuid);
+    public User(String uname, String email, String password, String name, String surname) {
         this.uname = uname;
         this.email = email;
         this.password = password;
         this.name = name;
         this.surname = surname;
+    }
+
+    public User() {
+
     }
 
     public String getUname() {
@@ -69,6 +72,7 @@ public class User extends Entity<UUID> {
     public void setSurname(String surname) {
         this.surname = surname;
     }
+
 
     @Override
     public boolean equals(Object o) {
