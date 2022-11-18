@@ -1,6 +1,4 @@
-package com.emakas.userService.user;
-
-import com.emakas.userService.entity.BaseEntity;
+package com.emakas.userService.model;
 
 import javax.persistence.*;
 import java.util.Objects;

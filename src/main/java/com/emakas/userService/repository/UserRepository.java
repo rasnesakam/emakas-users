@@ -1,7 +1,8 @@
-package com.emakas.userService.user;
+package com.emakas.userService.repository;
 
-import com.emakas.userService.repository.BaseRepository;
 import org.springframework.stereotype.Repository;
+
+import com.emakas.userService.model.User;
 
 import java.util.UUID;
 

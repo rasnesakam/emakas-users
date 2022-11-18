@@ -1,8 +1,7 @@
-package com.emakas.userService.oauth;
-
-import com.emakas.userService.entity.BaseEntity;
+package com.emakas.userService.model;
 
 import javax.persistence.*;
+
 import java.util.Objects;
 import java.util.UUID;
 

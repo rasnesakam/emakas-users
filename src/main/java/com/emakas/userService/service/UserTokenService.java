@@ -1,6 +1,8 @@
-package com.emakas.userService.oauth;
+package com.emakas.userService.service;
 
-import com.emakas.userService.service.BaseService;
+import com.emakas.userService.model.UserToken;
+import com.emakas.userService.repository.UserTokenRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

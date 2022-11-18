@@ -6,7 +6,8 @@ plugins {
 
 group = 'com.emakas'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '19'
+sourceCompatibility = '15'
+targetCompatibility = '15'
 
 repositories {
 	mavenCentral()

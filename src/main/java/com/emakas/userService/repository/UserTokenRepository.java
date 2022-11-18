@@ -1,7 +1,9 @@
-package com.emakas.userService.oauth;
+package com.emakas.userService.repository;
 
-import com.emakas.userService.repository.BaseRepository;
 import org.springframework.stereotype.Repository;
+
+import com.emakas.userService.model.UserToken;
+
 import java.util.UUID;
 
 @Repository

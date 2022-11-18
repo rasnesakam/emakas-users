@@ -1,6 +1,6 @@
 package com.emakas.userService.service;
 
-import com.emakas.userService.entity.BaseEntity;
+import com.emakas.userService.model.BaseEntity;
 import com.emakas.userService.repository.BaseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 

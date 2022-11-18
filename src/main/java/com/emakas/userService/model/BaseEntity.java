@@ -1,4 +1,4 @@
-package com.emakas.userService.entity;
+package com.emakas.userService.model;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

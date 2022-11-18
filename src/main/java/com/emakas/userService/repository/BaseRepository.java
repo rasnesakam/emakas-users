@@ -1,7 +1,8 @@
 package com.emakas.userService.repository;
 
-import com.emakas.userService.entity.BaseEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.emakas.userService.model.BaseEntity;
 
 import java.io.Serializable;
 
