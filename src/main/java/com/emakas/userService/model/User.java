@@ -10,15 +10,25 @@ public class User extends BaseEntity {
 
     @Column(name = "user_name",length = 30)
     private String uname;
+    
     @Column(unique = true, length = 30)
     private String email;
+    
     @Column(length = 64)
     private String password;
+    
     @Column(length = 30)
     private String name;
+    
     @Column(length = 30)
     private String surname;
-
+    
+    @Column(name="access_token")
+    private String accessToken;
+    
+    @Column(name="renew_token")
+    private String renewToken;
+    
     public User(String uname, String email, String password, String name, String surname) {
         this.uname = uname;
         this.email = email;

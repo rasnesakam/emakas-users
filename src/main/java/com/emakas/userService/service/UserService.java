@@ -10,10 +10,15 @@ import java.util.UUID;
 
 @Service
 public class UserService extends BaseService<User, UUID> {
-
+	private UserRepository repository;
     @Autowired
     public UserService(UserRepository repository) {
         super(repository);
+        this.repository = repository;
+    }
+    
+    public User getByUserName(String userName) {
+    	return repository.getByUserName(userName);
     }
 
 }

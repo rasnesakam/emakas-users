@@ -21,6 +21,26 @@ public class BaseEntity {
     @Column
     private LocalDateTime updatedTime;
 
+
+    
+    
+    public BaseEntity(UUID id, LocalDateTime createdTime, LocalDateTime updatedTime) {
+		super();
+		this.id = id;
+		this.createdTime = createdTime;
+		this.updatedTime = updatedTime;
+	}
+    
+    public BaseEntity(LocalDateTime createdTime, LocalDateTime updatedTime) {
+		this(UUID.randomUUID(),createdTime, updatedTime);
+	}
+
+
+	public BaseEntity() {
+    	this(LocalDateTime.now(), LocalDateTime.now());
+	}
+    
+    
     public void setId(UUID id) {
         this.id = id;
     }
