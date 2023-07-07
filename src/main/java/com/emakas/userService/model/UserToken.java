@@ -1,5 +1,10 @@
 package com.emakas.userService.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 
 import java.util.Objects;
@@ -9,28 +14,45 @@ import java.util.UUID;
 @Table(name="user_tokens")
 public class UserToken extends BaseEntity {
 
+    /**
+     * Represents <b>iss</b> claim for the JWT
+     */
     @Column
     private String iss; // Provider of token
 
+
+    /**
+     * Represents <b>iss</b> claim for the JWT
+     */
     @Column
     private String aud; // Audience of token
 
+
+    /**
+     * Represents <b>sub</b> claim for the JWT
+     */
     @Column
     private String sub; // Subject of token
 
+
+    /**
+     * Represents <b>exp</b> claim for the JWT
+     */
     @Column
     private String exp; // Expiration date
 
-    public UserToken(String iss, String aud, String sub, String exp) {
+    @Column
+    private String serializedToken;
+
+    public UserToken(String iss, String aud, String sub, String exp, String serializedToken) {
         this.iss = iss;
         this.aud = aud;
         this.sub = sub;
         this.exp = exp;
+        this.serializedToken = serializedToken;
     }
 
-    public UserToken() {
-
-    }
+    public UserToken(){}
 
     public String getIss() {
         return iss;
@@ -64,16 +86,11 @@ public class UserToken extends BaseEntity {
         this.exp = exp;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserToken userToken = (UserToken) o;
-        return Objects.equals(getId(), userToken.getId()) && Objects.equals(getIss(), userToken.getIss()) && Objects.equals(getAud(), userToken.getAud()) && Objects.equals(getSub(), userToken.getSub()) && Objects.equals(getExp(), userToken.getExp());
+    public String getSerializedToken() {
+        return serializedToken;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getId(), getIss(), getAud(), getSub(), getExp());
+    public void setSerializedToken(String serializedToken) {
+        this.serializedToken = serializedToken;
     }
 }

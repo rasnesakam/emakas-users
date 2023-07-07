@@ -1,5 +1,10 @@
 package com.emakas.userService.model;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -7,6 +12,7 @@ import javax.persistence.Id;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
+
 
 @Entity
 public class BaseEntity {
@@ -21,12 +27,8 @@ public class BaseEntity {
     @Column
     private LocalDateTime updatedTime;
 
-
-    
-    
     public BaseEntity(UUID id, LocalDateTime createdTime, LocalDateTime updatedTime) {
-		super();
-		this.id = id;
+        this.id = id;
 		this.createdTime = createdTime;
 		this.updatedTime = updatedTime;
 	}
@@ -39,23 +41,6 @@ public class BaseEntity {
 	public BaseEntity() {
     	this(LocalDateTime.now(), LocalDateTime.now());
 	}
-    
-    
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public LocalDateTime getCreatedTime() {
-        return createdTime;
-    }
-
-    public void setCreatedTime(LocalDateTime createdTime) {
-        this.createdTime = createdTime;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -68,6 +53,23 @@ public class BaseEntity {
     @Override
     public int hashCode() {
         return Objects.hash(getId());
+    }
+
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getCreatedTime() {
+        return createdTime;
+    }
+
+    public void setCreatedTime(LocalDateTime createdTime) {
+        this.createdTime = createdTime;
     }
 
     public LocalDateTime getUpdatedTime() {

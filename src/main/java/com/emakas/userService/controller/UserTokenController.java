@@ -1,47 +1,48 @@
 package com.emakas.userService.controller;
 
+import com.emakas.userService.model.*;
+import com.emakas.userService.shared.AuthHelper;
+import com.emakas.userService.shared.TokenManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties.Jwt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.emakas.userService.model.User;
-import com.emakas.userService.model.UserDto;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.service.UserTokenService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping(path = "oauth")
 public class UserTokenController {
 
+    private TokenManager tokenManager;
     private UserTokenService tokenService;
     private UserService userService;
 
     @Autowired
-    public UserTokenController(UserTokenService service, UserService userService){
-        this.tokenService = service;
+    public UserTokenController(UserTokenService tokenService, UserService userService, TokenManager tokenManager){
+        this.tokenService = tokenService;
         this.userService = userService;
+        this.tokenManager = tokenManager;
     }
     
-    
+    @GetMapping("auth")
+    public static ResponseEntity<Response<Boolean>> authorizeToken(){
+        return new ResponseEntity<>(new Response<>(false,"work in progress"),
+                HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
     @PostMapping("auth")
-    public ResponseEntity<String> getToken(@RequestBody UserDto userdto){
-    	User user = userService.getByUserName(userdto.getUname());
-    	// User auth
-    	if (user != null) {
-    		
-    		
-    		
-    		
-    		return new ResponseEntity<String>(
-    				"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlbWFrYXMubmV0Iiwic3ViIjoiMTFiZTJjZjItNTZhYS00YzY1LWI0MGYtMTI2Y2ZhODZmOTg1IiwibmFtZSI6IkJhdGFyeWEgRMO8bnlhc8SxIn0.KSWU6A_Y6LlCEC0gP48INdYFFE_2p6WBafbjXWyAPqc",
-    				HttpStatus.OK);
-    	}
-    	return new ResponseEntity<String>(HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<Response<String>> getToken(@RequestBody LoginModel login){
+    	User user = userService.getByUserName(login.getUname());
+        if (AuthHelper.checkPassword(user,login))
+    	    return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        UserToken token = tokenManager.generateUserToken(user,login.getAudiences());
+        tokenService.save(token);
+        Response<String> response = new Response<>(tokenManager.generateJwtToken(token));
+        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 }

@@ -9,6 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends BaseRepository<User, UUID> {
-	@Query("SELECT u FROM User u WHERE u.user_name = ?1")
+	@Query("SELECT u FROM User u WHERE u.uname = ?1")
 	User getByUserName(String user);
 }

@@ -3,17 +3,12 @@ package com.emakas.userService.controller;
 import java.util.List;
 import java.util.UUID;
 
+import com.emakas.userService.model.UserRegistrationDto;
+import com.emakas.userService.shared.AuthHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.emakas.userService.model.User;
 import com.emakas.userService.service.UserService;
@@ -28,13 +23,27 @@ public class UserController {
     public UserController(UserService service) {
         this.service = service;
     }
-    
+
+
     @PostMapping("sign-up")
-    public ResponseEntity<User> createUser(@RequestBody User user){
-    	service.save(user);
-    	return new ResponseEntity<User>(user, HttpStatus.CREATED);
+    @ResponseBody
+    public ResponseEntity<User> createUser(@RequestBody UserRegistrationDto userDto){
+        String passwordSalt = AuthHelper.generateRandomPasswordSalt();
+        String hashedPassword = AuthHelper.getHashedPassword(userDto.getPassword(), passwordSalt);
+    	User user = new User(
+                userDto.getUname(),
+                userDto.getEmail(),
+                hashedPassword,
+                userDto.getName(),
+                userDto.getSurname(),
+                passwordSalt
+        );
+        service.save(user);
+    	return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
-    
+
+    @PutMapping("user")
+
     @DeleteMapping("delete/{uuid}")
     @ResponseBody
     public ResponseEntity<User> deleteUser(@PathVariable UUID uuid) {
@@ -47,6 +56,6 @@ public class UserController {
     
     @GetMapping("")
     public ResponseEntity<List<User>> getAllUsers(){
-    	return new ResponseEntity<List<User>>(service.getAll(),HttpStatus.OK);
+    	return new ResponseEntity<>(service.getAll(),HttpStatus.OK);
     }
 }

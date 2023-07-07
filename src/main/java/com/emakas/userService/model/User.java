@@ -1,9 +1,12 @@
 package com.emakas.userService.model;
 
+import lombok.*;
+
 import javax.persistence.*;
 import java.util.Objects;
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "users")
 public class User extends BaseEntity {
@@ -22,23 +25,20 @@ public class User extends BaseEntity {
     
     @Column(length = 30)
     private String surname;
-    
-    @Column(name="access_token")
-    private String accessToken;
-    
-    @Column(name="renew_token")
-    private String renewToken;
-    
-    public User(String uname, String email, String password, String name, String surname) {
+
+    @Column(length = 10)
+    private String passwordSalt;
+
+
+    public User(){}
+
+    public User(String uname, String email, String password, String name, String surname, String passwordSalt) {
         this.uname = uname;
         this.email = email;
         this.password = password;
         this.name = name;
         this.surname = surname;
-    }
-
-    public User() {
-
+        this.passwordSalt = passwordSalt;
     }
 
     public String getUname() {
@@ -81,29 +81,11 @@ public class User extends BaseEntity {
         this.surname = surname;
     }
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(getId(), user.getId()) && Objects.equals(getUname(), user.getUname()) && Objects.equals(getEmail(), user.getEmail()) && Objects.equals(getPassword(), user.getPassword()) && Objects.equals(getName(), user.getName()) && Objects.equals(getSurname(), user.getSurname());
+    public String getPasswordSalt() {
+        return passwordSalt;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getId(), getUname(), getEmail(), getPassword(), getName(), getSurname());
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id='" + getId() + '\'' +
-                ", uname='" + getUname() + '\'' +
-                ", email='" + getEmail() + '\'' +
-                ", password='" + getPassword() + '\'' +
-                ", name='" + getName() + '\'' +
-                ", surname='" + getSurname() + '\'' +
-                '}';
+    public void setPasswordSalt(String passwordSalt) {
+        this.passwordSalt = passwordSalt;
     }
 }

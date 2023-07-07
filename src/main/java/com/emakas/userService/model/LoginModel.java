@@ -1,25 +1,22 @@
 package com.emakas.userService.model;
 
-import javax.persistence.Column;
-
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserDto {
-
+public class LoginModel {
     private String uname;
-
-    private String email;
-
     private String password;
-    
+    private String[] audiences;
+
     public String getUname() {
-		return uname;
-	}
-    public String getEmail() {
-		return email;
-	}
+        return uname;
+    }
+
     public String getPassword() {
-		return password;
-	}
+        return password;
+    }
+
+    public String[] getAudiences() {
+        return audiences;
+    }
 }
