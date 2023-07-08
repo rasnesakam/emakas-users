@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 public class LoginModel {
     private String uname;
     private String password;
-    private String[] audiences;
 
     public String getUname() {
         return uname;
@@ -16,7 +15,4 @@ public class LoginModel {
         return password;
     }
 
-    public String[] getAudiences() {
-        return audiences;
-    }
 }

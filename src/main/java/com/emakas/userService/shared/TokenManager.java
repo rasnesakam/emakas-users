@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -57,7 +58,7 @@ public class TokenManager implements Serializable {
             JWTVerifier verifier = JWT.require(ALGORITHM)
                     .withIssuer(issuer)
                     .acceptExpiresAt(Instant.now().getEpochSecond())
-                    .withAudience(audiences)
+                    .withAudience(Optional.ofNullable(audiences).orElse(new String[0]))
                     .build();
             verifier.verify(jwtToken);
             return TokenVerificationStatus.SUCCESS;
@@ -81,7 +82,8 @@ public class TokenManager implements Serializable {
         token.setIss(issuer);
         token.setId(UUID.randomUUID());
         token.setSub(user.getId().toString());
-        token.setAud(String.join(" ",audiences));
+        if (audiences != null)
+            token.setAud(String.join(" ",audiences));
         token.setExp(Instant.now().toString());
         token.setSerializedToken(generateJwtToken(token));
         return token;

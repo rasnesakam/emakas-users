@@ -42,7 +42,7 @@ public class UserController {
     	return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
-    @PutMapping("user")
+    //@PutMapping("user")
 
     @DeleteMapping("delete/{uuid}")
     @ResponseBody
