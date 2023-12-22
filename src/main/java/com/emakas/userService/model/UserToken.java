@@ -1,15 +1,13 @@
 package com.emakas.userService.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import javax.persistence.*;
-
-import java.util.Objects;
-import java.util.UUID;
-
+@Getter
+@Setter
 @Entity
 @Table(name="user_tokens")
 public class UserToken extends BaseEntity {
@@ -54,43 +52,4 @@ public class UserToken extends BaseEntity {
 
     public UserToken(){}
 
-    public String getIss() {
-        return iss;
-    }
-
-    public void setIss(String iss) {
-        this.iss = iss;
-    }
-
-    public String getAud() {
-        return aud;
-    }
-
-    public void setAud(String aud) {
-        this.aud = aud;
-    }
-
-    public String getSub() {
-        return sub;
-    }
-
-    public void setSub(String sub) {
-        this.sub = sub;
-    }
-
-    public String getExp() {
-        return exp;
-    }
-
-    public void setExp(String exp) {
-        this.exp = exp;
-    }
-
-    public String getSerializedToken() {
-        return serializedToken;
-    }
-
-    public void setSerializedToken(String serializedToken) {
-        this.serializedToken = serializedToken;
-    }
 }
