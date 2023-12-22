@@ -37,10 +37,10 @@ Endpoints and responses
 }
 ```
 #### Response
-|Response code|          Description          |
-|:-----------:|:-----------------------------:|
-|     201     |   User created successfully   |
-|     400     | Wrong parameters in post body |
+| Response code |          Description          |
+|:-------------:|:-----------------------------:|
+|      201      |   User created successfully   |
+|      400      | Wrong parameters in post body |
 
 ----
 
@@ -50,11 +50,11 @@ Header param:
 - Authorization: Bearer jwt token that contains id of the user to be deleted
 
 #### Response
-|Response code|          Description          |
-|:-----------:|:-----------------------------:|
-|     200     |   User deleted successfully   |
-|     400     | Wrong parameters in request   |
-|     404     |     User cannot be founded    |
+| Response code |         Description         |
+|:-------------:|:---------------------------:|
+|      200      |  User deleted successfully  |
+|      400      | Wrong parameters in request |
+|      404      |   User cannot be founded    |
 
 ---
 
