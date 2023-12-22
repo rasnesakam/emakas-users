@@ -1,17 +1,19 @@
 package com.emakas.userService.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.*;
 
-import javax.persistence.*;
-import java.util.Objects;
-import java.util.UUID;
 
+@Getter
+@Setter
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "users")
 public class User extends BaseEntity {
 
-    @Column(name = "user_name",length = 30)
+    @Column(name = "user_name", length = 30)
     private String uname;
     
     @Column(unique = true, length = 30)
@@ -29,7 +31,6 @@ public class User extends BaseEntity {
     @Column(length = 10)
     private String passwordSalt;
 
-
     public User(){}
 
     public User(String uname, String email, String password, String name, String surname, String passwordSalt) {
@@ -38,54 +39,6 @@ public class User extends BaseEntity {
         this.password = password;
         this.name = name;
         this.surname = surname;
-        this.passwordSalt = passwordSalt;
-    }
-
-    public String getUname() {
-        return uname;
-    }
-
-    public void setUname(String uname) {
-        this.uname = uname;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSurname() {
-        return surname;
-    }
-
-    public void setSurname(String surname) {
-        this.surname = surname;
-    }
-
-    public String getPasswordSalt() {
-        return passwordSalt;
-    }
-
-    public void setPasswordSalt(String passwordSalt) {
         this.passwordSalt = passwordSalt;
     }
 }
