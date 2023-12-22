@@ -1,9 +1,9 @@
 package com.emakas.userService.model;
 
-import javax.persistence.Column;
-
+import lombok.Getter;
 import org.springframework.stereotype.Component;
 
+@Getter
 @Component
 public class UserDto {
 
@@ -12,14 +12,5 @@ public class UserDto {
     private String email;
 
     private String password;
-    
-    public String getUname() {
-		return uname;
-	}
-    public String getEmail() {
-		return email;
-	}
-    public String getPassword() {
-		return password;
-	}
+
 }
