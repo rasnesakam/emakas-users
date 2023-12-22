@@ -44,10 +44,10 @@ Endpoints and responses
 
 ----
 
-### `DELETE:` `/users/delete/{uuid}` Delete a user
+### `DELETE:` `/users/delete/` Delete a user
 This request does not need a body
-Url param:
-- uuid: id of the user that will be deleted
+Header param:
+- Authorization: Bearer jwt token that contains id of the user to be deleted
 
 #### Response
 |Response code|          Description          |
@@ -58,27 +58,4 @@ Url param:
 
 ---
 
-### `GET:` `/users/` List of all users
-
-#### Response
-|Response code|          Description          |
-|:-----------:|:-----------------------------:|
-|     200     |   User deleted successfully   |
-|     400     | Wrong parameters in request   |
-|     404     |     User cannot be founded    |
-
-#### Response Body
-```json
-{
-	"message": "string",
-	"content": [
-		{
-			"id":"uuid",
-			"uname":"string",
-			"email":"string",
-			"password":"string",
-		}
-	]
-}
-```
 
