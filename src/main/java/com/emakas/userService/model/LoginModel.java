@@ -1,18 +1,21 @@
 package com.emakas.userService.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 
+@Getter
+@Setter
 @Component
 public class LoginModel {
     private String uname;
     private String password;
 
-    public String getUname() {
-        return uname;
+    public LoginModel() {
     }
 
-    public String getPassword() {
-        return password;
+    public LoginModel(String uname, String password) {
+        this.uname = uname;
+        this.password = password;
     }
-
 }

@@ -36,13 +36,13 @@ public class UserToken extends BaseEntity {
     /**
      * Represents <b>exp</b> claim for the JWT
      */
-    @Column
-    private String exp; // Expiration date
+    @Column(columnDefinition = "BIGINT")
+    private long exp; // Expiration date
 
     @Column
     private String serializedToken;
 
-    public UserToken(String iss, String aud, String sub, String exp, String serializedToken) {
+    public UserToken(String iss, String aud, String sub, long exp, String serializedToken) {
         this.iss = iss;
         this.aud = aud;
         this.sub = sub;
