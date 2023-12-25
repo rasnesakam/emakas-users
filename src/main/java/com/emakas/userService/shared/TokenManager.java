@@ -3,18 +3,15 @@ package com.emakas.userService.shared;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.AlgorithmMismatchException;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.exceptions.SignatureVerificationException;
-import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.exceptions.*;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.emakas.userService.model.User;
 import com.emakas.userService.model.UserToken;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.HashMap;
@@ -25,6 +22,8 @@ import java.util.UUID;
 @Component
 public class TokenManager implements Serializable {
 
+    @Value("${java-jwt.expiration}")
+    private long secondsToExpire;
     private String jwtSecret;
     private String issuer;
     private final Algorithm ALGORITHM;
@@ -38,13 +37,27 @@ public class TokenManager implements Serializable {
     public String generateJwtToken(UserToken userToken) {
         Map<String, Object> claims = new HashMap<>();
 
-        String token = JWT.create()
+        return JWT.create()
                 .withIssuer(issuer)
                 .withSubject(userToken.getSub())
                 .withAudience(userToken.getAud().split(" "))
-                .withExpiresAt(Instant.parse(userToken.getExp()))
+                .withExpiresAt(Instant.ofEpochSecond(userToken.getExp()))
                 .sign(ALGORITHM);
-        return token;
+    }
+
+    public Optional<UserToken> getFromToken(@NonNull String token){
+        try {
+             DecodedJWT decodedJWT = JWT.decode(token);
+             return Optional.of(new UserToken(
+                     decodedJWT.getIssuer(),
+                     String.join(",",decodedJWT.getAudience()),
+                     decodedJWT.getSubject(),
+                     decodedJWT.getExpiresAt().getTime(),token
+             ));
+        }
+        catch (JWTDecodeException exception){
+            return Optional.empty();
+        }
     }
 
     /**
@@ -84,7 +97,7 @@ public class TokenManager implements Serializable {
         token.setSub(user.getId().toString());
         if (audiences != null)
             token.setAud(String.join(" ",audiences));
-        token.setExp(Instant.now().toString());
+        token.setExp(Instant.now().plusSeconds(secondsToExpire).getEpochSecond());
         token.setSerializedToken(generateJwtToken(token));
         return token;
     }
