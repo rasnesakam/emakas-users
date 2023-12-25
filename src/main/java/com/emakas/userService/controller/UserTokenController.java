@@ -29,8 +29,9 @@ public class UserTokenController {
         this.tokenManager = tokenManager;
     }
     
-    @GetMapping("auth")
+    @GetMapping("token")
     public ResponseEntity<Response<Boolean>> authorizeToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestParam String[] audiences){
+        /*
         System.out.println(String.format("Authorization: %s",token));
         if (token.startsWith("Bearer ")){
             token = token.substring("Bearer ".length());
@@ -54,13 +55,14 @@ public class UserTokenController {
                 );
             };
         }
+        */
         return new ResponseEntity<>(
                 new Response<>(false, "Jwt token must be supply in Authorization header"),
                 HttpStatus.BAD_REQUEST
         );
     }
 
-    @PostMapping("auth")
+    @PostMapping("token/generate/")
     public ResponseEntity<Response<String>> getToken(@RequestBody LoginModel login, @RequestParam String[] audiences){
     	User user = userService.getByUserName(login.getUname());
         if (!AuthHelper.checkPassword(user,login))
