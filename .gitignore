@@ -37,7 +37,10 @@ out/
 .vscode/
 
 ### Application properties ###
-src/main/resources/
-src/test/resources/
+src/main/resources/*
+src/test/resources/*
+
+### Templiate html files
+!src/main/resources/templates/
 
 .env
