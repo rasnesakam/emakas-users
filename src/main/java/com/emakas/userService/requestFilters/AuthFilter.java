@@ -37,7 +37,7 @@ public class AuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String url = request.getRequestURI();
-        return url.startsWith("/docs/") || url.startsWith("/v3/api-docs");
+        return url.startsWith("/docs") || url.startsWith("/v3/api-docs") || url.startsWith("/page");
     }
 
     @Override
