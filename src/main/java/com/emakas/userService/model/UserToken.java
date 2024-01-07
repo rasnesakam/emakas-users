@@ -1,16 +1,18 @@
 package com.emakas.userService.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import com.emakas.userService.shared.enums.Scope;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.Set;
 
 @Getter
 @Setter
 @Entity
 @Table(name="user_tokens")
 public class UserToken extends BaseEntity {
+
 
     /**
      * Represents <b>iss</b> claim for the JWT
@@ -24,6 +26,16 @@ public class UserToken extends BaseEntity {
      */
     @Column
     private String aud; // Audience of token
+
+
+    /**
+     * Represents <b>scope</b> claim for the JWT
+     */
+    @ElementCollection(targetClass = Scope.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_token_scopes", joinColumns = @JoinColumn(name = "user_token_id"))
+    @Enumerated(EnumType.STRING)
+    @Column
+    private Set<Scope> scope; // Audience of token
 
 
     /**
