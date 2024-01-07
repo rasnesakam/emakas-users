@@ -26,13 +26,19 @@ public class UserService extends BaseService<User, UUID>  implements UserDetails
     	return repository.getByUserName(userName);
     }
 
+    public boolean existsByEmailOrUserName(String email, String userName){
+        return this.repository.existsUserByEmailOrUserName(email,userName);
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = repository.getByUserName(username);
+        if (user == null)
+            throw new UsernameNotFoundException(String.format("User with username \"%s\" not found",username));
         List<String> roles = new ArrayList<>();
         roles.add("USER");
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUname())
+                .username(user.getUserName())
                 .password(user.getPassword())
                 .roles(roles.toArray(new String[0]))
                 .build();
