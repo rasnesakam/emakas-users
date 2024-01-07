@@ -9,6 +9,8 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends BaseRepository<User, UUID> {
-	@Query("SELECT u FROM User u WHERE u.uname = ?1")
+
 	User getByUserName(String user);
+
+	boolean existsUserByEmailOrUserName(String email, String uname);
 }
