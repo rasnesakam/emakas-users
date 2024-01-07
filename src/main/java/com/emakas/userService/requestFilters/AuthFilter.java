@@ -37,13 +37,12 @@ public class AuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String url = request.getRequestURI();
-        return url.startsWith("/docs") || url.startsWith("/v3/api-docs") || url.startsWith("/page");
+        return !url.startsWith("/api") || url.startsWith("/api/users/sign");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         final String authorizationHeader = request.getHeader("Authorization");
-        System.out.println("Burası Çalıştı");
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
             final String token = authorizationHeader.substring("Bearer ".length());
             switch (tokenManager.verifyJwtToken(token)){
