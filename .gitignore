@@ -43,4 +43,7 @@ src/test/resources/*
 ### Templiate html files
 !src/main/resources/templates/
 
+### Static resource files
+!src/main/resources/static/
+
 .env
