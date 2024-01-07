@@ -39,6 +39,13 @@ public class UserToken extends BaseEntity {
     @Column(columnDefinition = "BIGINT")
     private long exp; // Expiration date
 
+
+    /**
+     * Represents <b>iat</b> claim for the JWT
+     */
+    @Column(columnDefinition = "BIGINT")
+    private long iat; // Date of the creation of token
+
     @Column
     private String serializedToken;
 
