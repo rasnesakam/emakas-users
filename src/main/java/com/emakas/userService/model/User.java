@@ -13,8 +13,8 @@ import lombok.*;
 @Table(name = "users")
 public class User extends BaseEntity {
 
-    @Column(name = "user_name", length = 30)
-    private String uname;
+    @Column(name = "user_name", unique = true, length = 30)
+    private String userName;
     
     @Column(unique = true, length = 30)
     private String email;
@@ -28,17 +28,13 @@ public class User extends BaseEntity {
     @Column(length = 30)
     private String surname;
 
-    @Column(length = 10)
-    private String passwordSalt;
-
     public User(){}
 
-    public User(String uname, String email, String password, String name, String surname, String passwordSalt) {
-        this.uname = uname;
+    public User(String userName, String email, String password, String name, String surname) {
+        this.userName = userName;
         this.email = email;
         this.password = password;
         this.name = name;
         this.surname = surname;
-        this.passwordSalt = passwordSalt;
     }
 }
