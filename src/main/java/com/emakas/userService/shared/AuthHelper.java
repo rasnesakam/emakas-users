@@ -38,9 +38,9 @@ public class AuthHelper {
     public static boolean checkPassword(User user, LoginModel userDto){
 
         byte[] userPasswordHash = user.getPassword()
-                .concat(user.getPasswordSalt()).getBytes(Charset.defaultCharset());
+                .getBytes(Charset.defaultCharset());
         byte[] providedPasswordHash = MESSAGE_DIGEST.digest(
-                userDto.getPassword().concat(user.getPasswordSalt()).getBytes(CHARSET)
+                userDto.getPassword().getBytes(CHARSET)
         );
         return Arrays.equals(userPasswordHash,providedPasswordHash);
     }
