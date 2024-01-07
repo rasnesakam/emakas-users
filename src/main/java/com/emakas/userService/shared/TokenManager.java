@@ -34,14 +34,25 @@ public class TokenManager implements Serializable {
         ALGORITHM = Algorithm.HMAC256(jwtSecret);
     }
 
-    public String generateJwtToken(UserToken userToken) {
-        Map<String, Object> claims = new HashMap<>();
+    public UserToken createUserToken(User user, long expireDateSecond, @Nullable String... audience){
+        UserToken userToken = new UserToken();
+        userToken.setIss(issuer);
+        if (audience != null && audience.length > 0)
+            userToken.setAud(String.join(",",audience));
+        userToken.setSub(user.getId().toString());
+        userToken.setIat(Instant.now().getEpochSecond());
+        userToken.setExp(expireDateSecond);
+        userToken.setSerializedToken(generateJwtToken(userToken));
+        return userToken;
+    }
 
+    public String generateJwtToken(UserToken userToken) {
         return JWT.create()
                 .withIssuer(issuer)
                 .withSubject(userToken.getSub())
-                .withAudience(userToken.getAud().split(" "))
+                .withAudience(Optional.ofNullable(userToken.getAud()).orElse("").split(","))
                 .withExpiresAt(Instant.ofEpochSecond(userToken.getExp()))
+                .withIssuedAt(Instant.ofEpochSecond(userToken.getIat()))
                 .sign(ALGORITHM);
     }
 
