@@ -14,10 +14,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class TokenManager implements Serializable {
@@ -38,7 +36,7 @@ public class TokenManager implements Serializable {
         UserToken userToken = new UserToken();
         userToken.setIss(issuer);
         if (audience != null && audience.length > 0)
-            userToken.setAud(String.join(",",audience));
+            userToken.setAud(Set.of(audience));
         userToken.setSub(user.getId().toString());
         userToken.setIat(Instant.now().getEpochSecond());
         userToken.setExp(expireDateSecond);
@@ -50,7 +48,11 @@ public class TokenManager implements Serializable {
         return JWT.create()
                 .withIssuer(issuer)
                 .withSubject(userToken.getSub())
-                .withAudience(Optional.ofNullable(userToken.getAud()).orElse("").split(","))
+                .withAudience(
+                        Optional.ofNullable(userToken.getAud())
+                                .orElse(new HashSet<>())
+                                .toArray(new String[0]
+                ))
                 .withExpiresAt(Instant.ofEpochSecond(userToken.getExp()))
                 .withIssuedAt(Instant.ofEpochSecond(userToken.getIat()))
                 .sign(ALGORITHM);
@@ -61,7 +63,7 @@ public class TokenManager implements Serializable {
              DecodedJWT decodedJWT = JWT.decode(token);
              return Optional.of(new UserToken(
                      decodedJWT.getIssuer(),
-                     String.join(",",decodedJWT.getAudience()),
+                     new HashSet<>(decodedJWT.getAudience()),
                      decodedJWT.getSubject(),
                      decodedJWT.getExpiresAt().getTime(),token
              ));
@@ -107,7 +109,7 @@ public class TokenManager implements Serializable {
         token.setId(UUID.randomUUID());
         token.setSub(user.getId().toString());
         if (audiences != null)
-            token.setAud(String.join(" ",audiences));
+            token.setAud(Set.of(audiences));
         token.setExp(Instant.now().plusSeconds(secondsToExpire).getEpochSecond());
         token.setSerializedToken(generateJwtToken(token));
         return token;
