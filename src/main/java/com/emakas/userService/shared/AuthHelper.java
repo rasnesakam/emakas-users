@@ -1,8 +1,7 @@
 package com.emakas.userService.shared;
 
-import com.emakas.userService.model.LoginModel;
+import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.model.User;
-import com.emakas.userService.model.UserDto;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
