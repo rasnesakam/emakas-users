@@ -1,6 +1,5 @@
 package com.emakas.userService.service;
 
-import com.emakas.userService.model.UserDto;
 import com.emakas.userService.model.UserToken;
 import com.emakas.userService.repository.UserTokenRepository;
 
