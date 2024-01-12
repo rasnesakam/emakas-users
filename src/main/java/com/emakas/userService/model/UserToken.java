@@ -24,8 +24,10 @@ public class UserToken extends BaseEntity {
     /**
      * Represents <b>iss</b> claim for the JWT
      */
+    @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_token_audiences", joinColumns = @JoinColumn(name = "user_token_id"))
     @Column
-    private String aud; // Audience of token
+    private Set<String> aud; // Audience of token
 
 
     /**
@@ -61,7 +63,7 @@ public class UserToken extends BaseEntity {
     @Column
     private String serializedToken;
 
-    public UserToken(String iss, String aud, String sub, long exp, String serializedToken) {
+    public UserToken(String iss, Set<String> aud, String sub, long exp, String serializedToken) {
         this.iss = iss;
         this.aud = aud;
         this.sub = sub;
