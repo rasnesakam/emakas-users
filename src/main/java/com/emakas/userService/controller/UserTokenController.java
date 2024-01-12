@@ -1,5 +1,7 @@
 package com.emakas.userService.controller;
 
+import com.emakas.userService.dto.LoginModel;
+import com.emakas.userService.dto.Response;
 import com.emakas.userService.model.*;
 import com.emakas.userService.shared.AuthHelper;
 import com.emakas.userService.shared.TokenManager;
@@ -10,9 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.service.UserTokenService;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping(path = "oauth")
