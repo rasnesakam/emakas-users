@@ -29,7 +29,8 @@ public class JwtAuthentication extends AbstractAuthenticationToken {
     }
 
     public static JwtAuthentication getInstance(UserToken token){
-        List<GrantedAuthority> authorityList = AuthorityUtils.commaSeparatedStringToAuthorityList(token.getAud());
+        List<GrantedAuthority> authorityList = AuthorityUtils
+                .commaSeparatedStringToAuthorityList(String.join(",",token.getAud()));
         String issuer = token.getIss();
         String subject = token.getSub();
         return new JwtAuthentication(authorityList, issuer, subject);
