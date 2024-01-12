@@ -1,4 +1,4 @@
-package com.emakas.userService.model;
+package com.emakas.userService.dto;
 
 import lombok.Getter;
 import lombok.Setter;

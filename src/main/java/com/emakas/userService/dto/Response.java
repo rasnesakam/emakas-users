@@ -1,4 +1,4 @@
-package com.emakas.userService.model;
+package com.emakas.userService.dto;
 
 public class Response <T>{
     public final T content;
