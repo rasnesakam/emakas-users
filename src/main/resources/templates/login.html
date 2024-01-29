@@ -25,10 +25,14 @@
     <script>
         document.getElementById("form-sign-in").onsubmit = function(e) {
             e.preventDefault();
+            let query = window.location.search
+            let queryParam = new URLSearchParams(query)
+            let audiences = queryParam.get("audience")
+            let scopes = queryParam.get("scopes")
             let formdata = new FormData(this);
             let jsonObject = {}
             formdata.forEach((value, key) => jsonObject[key] = value)
-            fetch("/api/users/sign-in",{
+            fetch(`/api/auth/sign-in?audiences=${audiences}&scopes=${scopes}`,{
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -49,7 +53,7 @@
             let formdata = new FormData(this);
             let jsonObject = {}
             formdata.forEach((value, key) => jsonObject[key] = value)
-            fetch("/api/users/sign-up",{
+            fetch("/api/auth/sign-up",{
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
