@@ -3,15 +3,18 @@ package com.emakas.userService.controller;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
-import com.emakas.userService.dto.TokenResponse;
 import com.emakas.userService.dto.UserRegistrationDto;
 import com.emakas.userService.model.*;
+import com.emakas.userService.service.UserLoginService;
 import com.emakas.userService.service.UserTokenService;
 import com.emakas.userService.shared.TokenManager;
+import com.emakas.userService.shared.enums.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,22 +31,24 @@ import org.springframework.web.bind.annotation.*;
 import com.emakas.userService.service.UserService;
 
 @RestController
-@RequestMapping("api/users")
-public class UserController {
+@RequestMapping("api/auth")
+public class AuthController {
 
     private final UserService userService;
     private final UserTokenService userTokenService;
     private final AuthenticationManager authenticationManager;
     private final TokenManager tokenManager;
     private final PasswordEncoder passwordEncoder;
+    private final UserLoginService userLoginService;
 
     @Autowired
-    public UserController(UserService service, UserTokenService userTokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder) {
+    public AuthController(UserService service, UserTokenService userTokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService) {
         this.userService = service;
         this.userTokenService = userTokenService;
         this.authenticationManager = authenticationManager;
         this.tokenManager = tokenManager;
         this.passwordEncoder = passwordEncoder;
+        this.userLoginService = userLoginService;
     }
 
 
@@ -66,7 +71,7 @@ public class UserController {
 
     @PostMapping("sign-in")
     @ResponseBody
-    public ResponseEntity<Response<TokenResponse>> signIn(@RequestBody LoginModel loginModel){
+    public ResponseEntity<Response<String>> signIn(@RequestBody LoginModel loginModel, @RequestParam String[] audiences, @RequestParam Scope[] scopes){
         try{
             UserDetails userDetails = this.userService.loadUserByUsername(loginModel.getUname());
 
@@ -76,17 +81,13 @@ public class UserController {
             ));
             if (auth.isAuthenticated()){
                 User user = this.userService.getByUserName(loginModel.getUname());
-                UserToken userToken = tokenManager.createUserToken(
-                        user, Instant.now().plus(1, ChronoUnit.HOURS).getEpochSecond()
-                );
-                TokenResponse tokenResponse = new TokenResponse(
-                        user.getUserName(),
-                        user.getName(),
-                        user.getSurname(),
-                        user.getEmail(),
-                        userToken.getSerializedToken()
-                );
-                return new ResponseEntity<>(new Response<>(tokenResponse,"Login Success"), HttpStatus.OK);
+                UserLogin userLogin = new UserLogin(user, Set.of(audiences),Set.of(scopes));
+                Optional<UserLogin> savedUserLogin = userLoginService.saveUserLogin(userLogin);
+                return savedUserLogin.map(login -> new ResponseEntity<>(
+                        new Response<>(login.getAuthorizationGrant().toString(), "Login Success"),
+                        HttpStatus.OK))
+                        .orElseGet(() -> new ResponseEntity<>(new Response<>(null, "sign in failed due to server error"),
+                                HttpStatus.INTERNAL_SERVER_ERROR));
             }
             return new ResponseEntity<>(new Response<>(null,"Invalid credentials"), HttpStatus.NOT_FOUND);
         }catch (UsernameNotFoundException | BadCredentialsException exception){
@@ -97,7 +98,18 @@ public class UserController {
         }
     }
 
-    //@PutMapping("user")
+    @GetMapping("token")
+    public ResponseEntity<Response<String>> getToken(@RequestParam String grant){
+        Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
+        if (userLogin.isPresent()){
+            User loggedUser = userLogin.get().getLoggedUser();
+            UserToken userToken = tokenManager.createUserToken(
+                    loggedUser, Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond()
+            );
+            return new ResponseEntity<>(new Response<>(userToken.getSerializedToken()),HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
+    }
 
     @DeleteMapping("delete/{uuid}")
     @ResponseBody
