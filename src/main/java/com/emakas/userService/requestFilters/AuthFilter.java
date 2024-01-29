@@ -30,7 +30,7 @@ public class AuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String url = request.getRequestURI();
-        return !url.startsWith("/api") || url.startsWith("/api/users/sign");
+        return !url.startsWith("/api") || url.startsWith("/api/auth/sign");
     }
 
     @Override
