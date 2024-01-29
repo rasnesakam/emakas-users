@@ -23,22 +23,18 @@ public class BaseEntity {
     @Column
     private LocalDateTime createdTime;
 
-    @Column
-    private LocalDateTime updatedTime;
-
-    public BaseEntity(UUID id, LocalDateTime createdTime, LocalDateTime updatedTime) {
+    public BaseEntity(UUID id, LocalDateTime createdTime) {
         this.id = id;
 		this.createdTime = createdTime;
-		this.updatedTime = updatedTime;
 	}
     
-    public BaseEntity(LocalDateTime createdTime, LocalDateTime updatedTime) {
-		this(UUID.randomUUID(),createdTime, updatedTime);
+    public BaseEntity(LocalDateTime createdTime) {
+		this(UUID.randomUUID(),createdTime);
 	}
 
 
 	public BaseEntity() {
-    	this(LocalDateTime.now(), LocalDateTime.now());
+    	this(LocalDateTime.now());
 	}
 
     @Override
@@ -63,7 +59,4 @@ public class BaseEntity {
         this.createdTime = createdTime;
     }
 
-    public void setUpdatedTime(LocalDateTime updatedTime) {
-        this.updatedTime = updatedTime;
-    }
 }
