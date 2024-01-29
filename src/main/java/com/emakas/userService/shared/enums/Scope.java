@@ -1,16 +1,26 @@
 package com.emakas.userService.shared.enums;
 
+import java.util.stream.Stream;
+
 public enum Scope   {
-    READ("read"),
-    WRITE("write");
+    USERS_R(AccessModifier.READ),
+    USERS_W(AccessModifier.WRITE),
+    USERS_RW(AccessModifier.READ, AccessModifier.WRITE),
+    ;
 
-    private final String scope;
+    private final AccessModifier[] modifiers;
 
-    Scope(String scope) {
-        this.scope = scope;
+    Scope(AccessModifier... modifier) {
+        this.modifiers = modifier;
     }
 
-    public String getScope() {
-        return scope;
+    @Override
+    public String toString() {
+        return String.format(
+                "%s/%s",
+                super.toString().toLowerCase(),
+                Stream.of(this.modifiers)
+                        .map(Enum::toString).reduce(String::concat)
+        );
     }
 }
