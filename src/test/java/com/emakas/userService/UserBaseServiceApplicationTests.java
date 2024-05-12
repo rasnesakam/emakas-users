@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
-@SpringBootTest
-@ContextConfiguration(locations = "/test-context.xml")
+@SpringBootTest(classes = UserBaseServiceApplicationTests.class)
 class UserBaseServiceApplicationTests {
 
 
