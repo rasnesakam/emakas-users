@@ -14,5 +14,12 @@ class UserBaseServiceApplicationTests {
 
 	}
 
+	@Test
+	void validToken() {}
 
+	@Test
+	void expiredToken() {}
+
+	@Test
+	void unsignedToken() {}
 }
