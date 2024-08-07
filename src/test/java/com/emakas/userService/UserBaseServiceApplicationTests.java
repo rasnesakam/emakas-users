@@ -22,4 +22,9 @@ class UserBaseServiceApplicationTests {
 
 	@Test
 	void unsignedToken() {}
+
+	@Test
+	void audienceCheck() {}
+
+	@Test scopeTest() {}
 }
