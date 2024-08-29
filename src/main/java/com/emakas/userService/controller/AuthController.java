@@ -54,9 +54,9 @@ public class AuthController {
 
     @PostMapping("sign-up")
     @ResponseBody
-    public ResponseEntity<User> createUser(@RequestBody UserRegistrationDto userDto){
+    public ResponseEntity<Response<User>> createUser(@RequestBody UserRegistrationDto userDto){
         if (this.userService.existsByEmailOrUserName(userDto.getEmail(), userDto.getUserName()))
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new Response<>(null, String.format("User %s (%s) already exists", userDto.getUserName(), userDto.getEmail())), HttpStatus.BAD_REQUEST);
         String hashedPassword = passwordEncoder.encode(userDto.getPassword());
         User user = new User(
                 userDto.getUserName(),
@@ -66,7 +66,7 @@ public class AuthController {
                 userDto.getSurname()
         );
         userService.save(user);
-    	return new ResponseEntity<>(user, HttpStatus.CREATED);
+    	return new ResponseEntity<>(new Response<>(user), HttpStatus.CREATED);
     }
 
     @PostMapping("sign-in")
