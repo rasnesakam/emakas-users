@@ -16,7 +16,7 @@ import java.util.UUID;
 @Entity
 public class UserLogin extends BaseEntity{
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "logged_user_id")
     private User loggedUser;
 
@@ -25,11 +25,13 @@ public class UserLogin extends BaseEntity{
     @Column
     private Set<String> authorizedAudiences;
 
+
+    @ElementCollection(targetClass = Scope.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "authorized_scopes", joinColumns = @JoinColumn(name = "authorized_scopes_id"))
     @Column
     private Set<Scope> authorizedScopes;
 
     @Column
-    @GeneratedValue
     private UUID authorizationGrant;
 
     @Column
@@ -41,6 +43,8 @@ public class UserLogin extends BaseEntity{
      */
     @PrePersist
     public void prePersist(){
+        if (this.getAuthorizationGrant() == null)
+            this.setAuthorizationGrant(UUID.randomUUID());
         if (this.expirationDateInSeconds == 0)
             this.expirationDateInSeconds = Instant.now().plus( 10, ChronoUnit.MINUTES).getEpochSecond();
     }
