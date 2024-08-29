@@ -3,6 +3,40 @@
 User authentication service simply operates user actions such as authentication and authorization
 It produces Json Web Tokens for successfull operations. 
 
+Run the Application
+-------------------
+Before run the application, you need to generate two files in order to configure the app
+1. Create file named `application.yml` under `src/main/resources/` directory and fill it as follows:
+    ```yaml
+    java-jwt:
+      secret: YOUR SECRET HERE
+      issuer: YOUR ISSUER HERE
+      expiration: EXPIRATION TIMES IN SECONDS
+    spring:
+      datasource:
+        url: jdbc:postgresql://DB_URL/DB_NAME
+        username: DB_USERNAME
+        password: DB_PASSWORD
+      jpa:
+        hibernate:
+          ddl-auto: none
+        properties:
+          hibernate:
+            dialect: org.hibernate.dialect.PostgreSQLDialect
+    ```
+2. Create file named `.env` inside root directory of project in order to configure database
+    ```.dotenv
+    DB_PASSWORD=DB_PASSWORD
+    DB_NAME=DB_NAME
+    DB_USER=DB_USER_NAME
+    ```
+
+3. You can create docker image with command:
+    ```bash
+   docker build -t emakas-users .
+    ```
+4. After creation, you can start
+
 JWT has this claims
 -------------------
 - iss: Issuer of this token
