@@ -15,7 +15,7 @@
         <form id="form-sign-up">
             <input type="text" name="name" placeholder="name">
             <input type="text" name="surname" placeholder="surname">
-            <input type="text" name="uname" placeholder="username">
+            <input type="text" name="userName" placeholder="username">
             <input type="email" name="email" placeholder="email">
             <input type="password" name="password" placeholder="password">
             <button type="submit">Sign Up</button>
@@ -32,7 +32,7 @@
             let formdata = new FormData(this);
             let jsonObject = {}
             formdata.forEach((value, key) => jsonObject[key] = value)
-            fetch(`/api/auth/sign-in?audiences=${audiences}&scopes=${scopes}`,{
+            fetch(`/api/auth/sign-in?audiences=${audiences != null ? audiences : ""}&scopes=${scopes != null ? scopes: ""}`,{
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
