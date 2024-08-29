@@ -1,6 +1,6 @@
 package com.emakas.userService.repository;
 
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.emakas.userService.model.User;
@@ -12,5 +12,6 @@ public interface UserRepository extends BaseRepository<User, UUID> {
 
 	User getByUserName(String user);
 
-	boolean existsUserByEmailOrUserName(String email, String uname);
+	boolean existsUserByEmailOrUserName(String email, String userName);
+
 }
