@@ -26,5 +26,6 @@ class UserBaseServiceApplicationTests {
 	@Test
 	void audienceCheck() {}
 
-	@Test scopeTest() {}
+	@Test
+	void scopeTest() {}
 }
