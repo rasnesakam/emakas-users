@@ -1,3 +1,6 @@
+volumes:
+  volume_db:
+
 services:
   app:
     build:
@@ -11,3 +14,5 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
+    volumes:
+      - volume_db:/var/lib/postgresql/data
