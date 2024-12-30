@@ -7,17 +7,38 @@
 <body>
     <div>
         <form id="form-sign-in">
-            <input type="text" name="uname" placeholder="username">
-            <input type="password" name="password" placeholder="password">
+            <label>
+                Username
+                <input type="text" name="uname" placeholder="username">
+            </label>
+            <label>
+                Password
+                <input type="password" name="password" placeholder="password">
+            </label>
             <button type="submit">Sign In</button>
         </form>
 
         <form id="form-sign-up">
-            <input type="text" name="name" placeholder="name">
-            <input type="text" name="surname" placeholder="surname">
-            <input type="text" name="userName" placeholder="username">
-            <input type="email" name="email" placeholder="email">
-            <input type="password" name="password" placeholder="password">
+            <label>
+                Name
+                <input type="text" name="name" placeholder="name">
+            </label>
+            <label>
+                Surname
+                <input type="text" name="surname" placeholder="surname">
+            </label>
+            <label>
+                Username
+                <input type="text" name="userName" placeholder="username">
+            </label>
+            <label>
+                Email Address
+                <input type="email" name="email" placeholder="email">
+            </label>
+            <label>
+                Password
+                <input type="password" name="password" placeholder="password">
+            </label>
             <button type="submit">Sign Up</button>
         </form>
     </div>
@@ -43,7 +64,10 @@
                     throw Error(response.statusText)
                 return response.json()
             }).then(data => {
+                let returnUrl = queryParam.get("returnUrl");
                 console.log(data)
+                if (returnUrl != null)
+                    location.replace(`${returnUrl}?grant=${data.content}`)
             }).catch(err => {
                 console.error(`Cached error: ${err}`)
             })

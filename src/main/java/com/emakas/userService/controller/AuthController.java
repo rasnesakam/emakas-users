@@ -104,8 +104,11 @@ public class AuthController {
         if (userLogin.isPresent()){
             User loggedUser = userLogin.get().getLoggedUser();
             UserToken userToken = tokenManager.createUserToken(
-                    loggedUser, Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond()
+                    loggedUser, Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
+                    userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
+                    userLogin.get().getAuthorizedScopes().stream().map(Scope::toString).toArray(String[]::new)
             );
+            userTokenService.save(userToken);
             return new ResponseEntity<>(new Response<>(userToken.getSerializedToken()),HttpStatus.OK);
         }
         return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
@@ -118,7 +121,7 @@ public class AuthController {
     	if (user == null)
     		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     	userService.delete(user);
-    	return new ResponseEntity<User>(user,HttpStatus.OK);
+    	return new ResponseEntity<>(user,HttpStatus.OK);
     }
     
     @GetMapping("")

@@ -7,6 +7,7 @@ import com.auth0.jwt.exceptions.*;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.emakas.userService.model.User;
 import com.emakas.userService.model.UserToken;
+import com.emakas.userService.shared.enums.TokenVerificationStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -16,27 +17,32 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class TokenManager implements Serializable {
 
     @Value("${java-jwt.expiration}")
     private long secondsToExpire;
+    @Value("${java-jwt.secret}")
     private String jwtSecret;
+    @Value("${java-jwt.issuer}")
     private String issuer;
     private final Algorithm ALGORITHM;
 
-    public TokenManager(@Value("${java-jwt.secret}") String jwtSecret, @Value("${java-jwt.issuer}")String issuer) {
-        this.jwtSecret = jwtSecret;
-        this.issuer = issuer;
+    public TokenManager() {
         ALGORITHM = Algorithm.HMAC256(jwtSecret);
     }
 
-    public UserToken createUserToken(User user, long expireDateSecond, @Nullable String... audience){
+    public UserToken createUserToken(User user, long expireDateSecond, @Nullable String[] audience, @Nullable String[] scopes){
         UserToken userToken = new UserToken();
         userToken.setIss(issuer);
         if (audience != null && audience.length > 0)
             userToken.setAud(Set.of(audience));
+        if (scopes != null && scopes.length > 0)
+            userToken.setScope(Stream.of(scopes)
+                    .map(StringToScopeArrayConverter::convertStringToScope)
+                    .collect(Collectors.toSet()));
         userToken.setSub(user.getId().toString());
         userToken.setIat(Instant.now().getEpochSecond());
         userToken.setExp(expireDateSecond);
@@ -76,8 +82,8 @@ public class TokenManager implements Serializable {
     /**
      * <h3>Verifies json that given in request</h3>
      * <p>Verifies token signature end expiration date</p>
-     * @param jwtToken
-     * @return true, if verification successful, false if verification is failed for some reason
+     * @param jwtToken The token that should be verified
+     * @return The status that indicates result of verification
      */
     public TokenVerificationStatus verifyJwtToken(String jwtToken, @Nullable String... audiences){
         try{

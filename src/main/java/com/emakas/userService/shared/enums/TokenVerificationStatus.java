@@ -1,5 +1,8 @@
-package com.emakas.userService.shared;
+package com.emakas.userService.shared.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum TokenVerificationStatus {
     SUCCESS,
     EXPIRED,
@@ -8,10 +11,8 @@ public enum TokenVerificationStatus {
     FAILED;
 
     private Exception exception;
-    public Exception getException(){
-        return this.exception;
-    }
-    public TokenVerificationStatus withException(Exception e){
+
+    public TokenVerificationStatus withException(Exception exception){
         this.exception = exception;
         return this;
     }
