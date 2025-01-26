@@ -14,7 +14,7 @@ import com.emakas.userService.service.UserService;
 import com.emakas.userService.service.UserTokenService;
 
 @RestController
-@RequestMapping(path = "oauth")
+@RequestMapping(path = "api/oauth")
 public class UserTokenController {
 
     private TokenManager tokenManager;
@@ -63,7 +63,7 @@ public class UserTokenController {
 
     @PostMapping("token/generate/")
     public ResponseEntity<Response<String>> getToken(@RequestBody LoginModel login, @RequestParam String[] audiences){
-    	User user = userService.getByUserName(login.getUname());
+    	User user = userService.getByUserName(login.getUsername());
         if (!AuthHelper.checkPassword(user,login))
     	    return new ResponseEntity<>(new Response<>(null,"User credentials did not match"),
                     HttpStatus.UNAUTHORIZED);

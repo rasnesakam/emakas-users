@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
+import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.dto.UserRegistrationDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.service.UserLoginService;
@@ -73,14 +74,14 @@ public class AuthController {
     @ResponseBody
     public ResponseEntity<Response<String>> signIn(@RequestBody LoginModel loginModel, @RequestParam String[] audiences, @RequestParam Scope[] scopes){
         try{
-            UserDetails userDetails = this.userService.loadUserByUsername(loginModel.getUname());
+            UserDetails userDetails = this.userService.loadUserByUsername(loginModel.getUsername());
 
             Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                     userDetails.getUsername(),
                     loginModel.getPassword()
             ));
             if (auth.isAuthenticated()){
-                User user = this.userService.getByUserName(loginModel.getUname());
+                User user = this.userService.getByUserName(loginModel.getUsername());
                 UserLogin userLogin = new UserLogin(user, Set.of(audiences),Set.of(scopes));
                 Optional<UserLogin> savedUserLogin = userLoginService.saveUserLogin(userLogin);
                 return savedUserLogin.map(login -> new ResponseEntity<>(
@@ -99,7 +100,7 @@ public class AuthController {
     }
 
     @GetMapping("token")
-    public ResponseEntity<Response<String>> getToken(@RequestParam String grant){
+    public ResponseEntity<Response<TokenResponseDto>> getToken(@RequestParam String grant){
         Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
         if (userLogin.isPresent()){
             User loggedUser = userLogin.get().getLoggedUser();
@@ -109,7 +110,11 @@ public class AuthController {
                     userLogin.get().getAuthorizedScopes().stream().map(Scope::toString).toArray(String[]::new)
             );
             userTokenService.save(userToken);
-            return new ResponseEntity<>(new Response<>(userToken.getSerializedToken()),HttpStatus.OK);
+            TokenResponseDto tokenResponseDto = new TokenResponseDto(
+                    loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
+                    loggedUser.getEmail(), userToken.getSerializedToken()
+            );
+            return new ResponseEntity<>(new Response<>(tokenResponseDto),HttpStatus.OK);
         }
         return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
     }

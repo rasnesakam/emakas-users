@@ -30,7 +30,7 @@ public class UserLoginService {
         UserLogin userLogin = userLoginRepository.findUserLoginByAuthorizationGrant(UUID.fromString(grant));
         Instant exprirationInstant = Instant.ofEpochSecond(userLogin.getExpirationDateInSeconds());
         Instant currentInstant = Instant.now();
-        if (exprirationInstant.isAfter(currentInstant))
+        if (exprirationInstant.isBefore(currentInstant))
             return Optional.empty();
         return Optional.of(userLogin);
     }

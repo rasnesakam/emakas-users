@@ -22,15 +22,21 @@ import java.util.stream.Stream;
 @Component
 public class TokenManager implements Serializable {
 
-    @Value("${java-jwt.expiration}")
-    private long secondsToExpire;
-    @Value("${java-jwt.secret}")
-    private String jwtSecret;
-    @Value("${java-jwt.issuer}")
-    private String issuer;
+    private final long secondsToExpire;
+
+    private final String issuer;
+
     private final Algorithm ALGORITHM;
 
-    public TokenManager() {
+
+    public TokenManager(
+            @Value("${java-jwt.expiration}") String issuer,
+            @Value("${java-jwt.expiration}") String jwtSecret,
+            @Value("${java-jwt.expiration}") long secondsToExpire
+    ) {
+        this.issuer = issuer;
+        this.secondsToExpire = secondsToExpire;
+
         ALGORITHM = Algorithm.HMAC256(jwtSecret);
     }
 

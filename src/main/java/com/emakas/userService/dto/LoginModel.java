@@ -8,14 +8,14 @@ import org.springframework.stereotype.Component;
 @Setter
 @Component
 public class LoginModel {
-    private String uname;
+    private String username;
     private String password;
 
     public LoginModel() {
     }
 
-    public LoginModel(String uname, String password) {
-        this.uname = uname;
+    public LoginModel(String username, String password) {
+        this.username = username;
         this.password = password;
     }
 }
