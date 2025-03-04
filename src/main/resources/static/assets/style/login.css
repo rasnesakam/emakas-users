@@ -4,6 +4,10 @@
     --bg-button-primary: #5b5b5b;
     --bg-button-primary-hover: black;
     --text-button-primary: white;
+    --text-sm: 1rem;
+    --text-md: 2rem;
+    --text-lg: 3rem;
+    --text-xl: 4rem;
 }
 
 * {
@@ -28,23 +32,49 @@ body {
     width: 30%;
 }
 
+.content-logo img {
+    width: 15rem;
+    height: 15rem;
+}
+
 .login-form-container {
     margin: auto;
-    width: 50%;
+    width: 100%;
     border-radius: 16px;
-    padding: 4rem;
+    padding: 2rem;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);;
+    align-items: center;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+
+@media screen and (min-width: 768px) {
+    .login-form-container {
+        display: flex;
+        flex-direction: row;
+    }
+}
+
+@media screen and (min-width: 1024px) {
+
+}
+
+@media screen and (min-width: 1440px) {
+
+}
+
+@media screen and (min-width: 2560px) {
+
 }
 
 .login-form-container .content {
-    width: 70%;
+    width: 100%;
 }
 
 .form-header {
-
+    font-size: 4rem;
     margin: 2rem;
 }
 
@@ -57,7 +87,7 @@ body {
 }
 
 .toggle-password-visibility {
-    width: 32px;
+    width: 5rem;
     color: black;
     background: none;
     border: none;
@@ -77,8 +107,10 @@ input {
     border: none;
     background: none;
     border-bottom: var(--bg-button-primary) solid 2px;
-    font-size: medium;
+    font-size: 3rem;
     width: 100%;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 
 
@@ -87,12 +119,14 @@ input:hover {
 }
 
 .button-primary {
-    padding: 0.5rem 1rem;
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+    margin-top: 2rem;
     background: var(--bg-button-primary);
     color: var(--text-button-primary);
     border-radius: 8px;
     font-weight: bold;
-    font-size: large;
+    font-size: 3rem;
     border: none;
 }
 

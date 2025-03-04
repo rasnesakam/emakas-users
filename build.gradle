@@ -37,6 +37,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security:3.1.2'
 	// Jwt implementation
 	implementation 'com.auth0:java-jwt:4.3.0'
+	// Kafka
+	implementation 'org.springframework.kafka:spring-kafka'
 	// Lombok
 	compileOnly 'org.projectlombok:lombok:1.18.28'
 	annotationProcessor 'org.projectlombok:lombok:1.18.28'
@@ -46,8 +48,15 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 	// View renderer
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.1.2'
+	//devtools
+	implementation 'org.springframework.boot:spring-boot-devtools:3.3.4'
 	// Testing
 	testImplementation 'org.springframework.boot:spring-boot-starter-test:3.1.2'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	// Kafka Test
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testImplementation 'org.testcontainers:kafka'
+
 }
 
 tasks.named('test') {
