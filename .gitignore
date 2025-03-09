@@ -44,6 +44,6 @@ src/test/resources/*
 !src/main/resources/templates/
 
 ### Static resource files
-!src/main/resources/static/
+src/main/resources/static/
 
 .env
