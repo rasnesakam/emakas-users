@@ -20,15 +20,9 @@ export function AppRouter (){
                 </Route>
                 <Route index element={<Home />}/>
                 <Route element={<AppLayout/>}>
-                    <Route path={"account"} element={<UnderConstruction />}>
-
-                    </Route>
-                    <Route path={"teams"} element={<UnderConstruction />}>
-
-                    </Route>
-                    <Route path={"resources"} element={<UnderConstruction />}>
-
-                    </Route>
+                    <Route path={"account"} element={<UnderConstruction />} />
+                    <Route path={"teams"} element={<UnderConstruction />} />
+                    <Route path={"resources"} element={<UnderConstruction />} />
                     <Route path={"permissions"} element={<UnderConstruction />} />
                 </Route>
                 <Route path={"*"} element={<NotFound />}/>
