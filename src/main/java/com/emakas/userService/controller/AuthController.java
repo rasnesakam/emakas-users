@@ -99,26 +99,6 @@ public class AuthController {
         }
     }
 
-    @GetMapping("token")
-    public ResponseEntity<Response<TokenResponseDto>> getToken(@RequestParam String grant){
-        Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
-        if (userLogin.isPresent()){
-            User loggedUser = userLogin.get().getLoggedUser();
-            UserToken userToken = tokenManager.createUserToken(
-                    loggedUser, Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
-                    userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
-                    userLogin.get().getAuthorizedScopes().stream().map(Scope::toString).toArray(String[]::new)
-            );
-            userTokenService.save(userToken);
-            TokenResponseDto tokenResponseDto = new TokenResponseDto(
-                    loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
-                    loggedUser.getEmail(), userToken.getSerializedToken()
-            );
-            return new ResponseEntity<>(new Response<>(tokenResponseDto),HttpStatus.OK);
-        }
-        return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
-    }
-
     @DeleteMapping("delete/{uuid}")
     @ResponseBody
     public ResponseEntity<User> deleteUser(@PathVariable UUID uuid) {

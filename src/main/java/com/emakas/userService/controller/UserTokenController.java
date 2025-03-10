@@ -2,9 +2,12 @@ package com.emakas.userService.controller;
 
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
+import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.model.*;
+import com.emakas.userService.service.UserLoginService;
 import com.emakas.userService.shared.AuthHelper;
 import com.emakas.userService.shared.TokenManager;
+import com.emakas.userService.shared.enums.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -13,22 +16,30 @@ import org.springframework.web.bind.annotation.*;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.service.UserTokenService;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
+
 @RestController
 @RequestMapping(path = "api/oauth")
 public class UserTokenController {
 
-    private TokenManager tokenManager;
-    private UserTokenService tokenService;
-    private UserService userService;
+    private final TokenManager tokenManager;
+    private final UserTokenService tokenService;
+    private final UserService userService;
+    private final UserLoginService userLoginService;
+    private final UserTokenService userTokenService;
 
     @Autowired
-    public UserTokenController(UserTokenService tokenService, UserService userService, TokenManager tokenManager){
+    public UserTokenController(UserTokenService tokenService, UserService userService, TokenManager tokenManager, UserLoginService userLoginService, UserTokenService userTokenService){
         this.tokenService = tokenService;
         this.userService = userService;
         this.tokenManager = tokenManager;
+        this.userLoginService = userLoginService;
+        this.userTokenService = userTokenService;
     }
     
-    @GetMapping("token")
+    @GetMapping("token/verify")
     public ResponseEntity<Response<Boolean>> authorizeToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token, @RequestParam String[] audiences){
         /*
         System.out.println(String.format("Authorization: %s",token));
@@ -60,6 +71,28 @@ public class UserTokenController {
                 HttpStatus.BAD_REQUEST
         );
     }
+
+
+    @GetMapping("token/issue")
+    public ResponseEntity<Response<TokenResponseDto>> getToken(@RequestParam String grant){
+        Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
+        if (userLogin.isPresent()){
+            User loggedUser = userLogin.get().getLoggedUser();
+            UserToken userToken = tokenManager.createUserToken(
+                    loggedUser, Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
+                    userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
+                    userLogin.get().getAuthorizedScopes().stream().map(Scope::toString).toArray(String[]::new)
+            );
+            userTokenService.save(userToken);
+            TokenResponseDto tokenResponseDto = new TokenResponseDto(
+                    loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
+                    loggedUser.getEmail(), userToken.getSerializedToken()
+            );
+            return new ResponseEntity<>(new Response<>(tokenResponseDto),HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
+    }
+
 
     @PostMapping("token/generate/")
     public ResponseEntity<Response<String>> getToken(@RequestBody LoginModel login, @RequestParam String[] audiences){
