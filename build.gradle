@@ -15,9 +15,9 @@ java {
 }
 
 node {
-	version = '20.12.1' // Node.js sürümünü belirtin
-	npmVersion = '10.5.0' // npm sürümünü belirtin
-	download = true // Node.js ve npm'i otomatik olarak indir
+	version = '20.12.1'
+	npmVersion = '10.5.0'
+	download = true
 }
 
 repositories {
