@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("page")
 public class UserMvcController {
 
-    @GetMapping(value = {"", "/", "/{path:[^\\.]*}"})
+    @GetMapping(value = {"", "/", "/**"})
     public String login(@PathVariable(value = "path", required = false) String path){
         return "forward:/index.html";
     }
