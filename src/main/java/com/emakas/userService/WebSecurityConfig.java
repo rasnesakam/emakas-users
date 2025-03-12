@@ -1,5 +1,6 @@
 package com.emakas.userService;
 
+import com.emakas.userService.csrfTokenHandlers.SpaCsrfTokenRequestHandler;
 import com.emakas.userService.handlers.UnauthorizedHandler;
 import com.emakas.userService.requestFilters.AuthFilter;
 import com.emakas.userService.service.UserService;
@@ -18,8 +19,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableMethodSecurity
@@ -53,12 +59,14 @@ public class WebSecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http.csrf(config -> {
-            config.requireCsrfProtectionMatcher(new OrRequestMatcher(
-                    new AntPathRequestMatcher("/api/auth/**"),
-                    new AntPathRequestMatcher("/page/**")
-            ));
+
+            AntPathRequestMatcher authMatcher = new AntPathRequestMatcher("/api/auth/**");
+            config.requireCsrfProtectionMatcher(authMatcher);
             config.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+            config.csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler());
+
 
         }).sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
