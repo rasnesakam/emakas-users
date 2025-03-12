@@ -25,6 +25,11 @@ import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAmount;
+import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 
 @Configuration
@@ -64,7 +69,14 @@ public class WebSecurityConfig {
 
             AntPathRequestMatcher authMatcher = new AntPathRequestMatcher("/api/auth/**");
             config.requireCsrfProtectionMatcher(authMatcher);
-            config.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+            CookieCsrfTokenRepository cookieCsrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+            cookieCsrfTokenRepository.setCookieCustomizer(customizer -> {
+                customizer.httpOnly(false);
+                customizer.maxAge(Duration.of(10, ChronoUnit.SECONDS));
+                customizer.sameSite("Strict");
+
+            });
+            config.csrfTokenRepository(cookieCsrfTokenRepository);
             config.csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler());
 
 
