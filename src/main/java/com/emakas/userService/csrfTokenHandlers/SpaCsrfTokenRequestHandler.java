@@ -7,6 +7,7 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler{
@@ -22,7 +23,7 @@ public final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler
     @Override
     public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
         String headerValue = request.getHeader(csrfToken.getHeaderName());
-        CsrfTokenRequestHandler handler = !headerValue.isEmpty() ? this.plainHandler : this.xorHandler;
+        CsrfTokenRequestHandler handler = headerValue != null && !headerValue.isEmpty() ? this.plainHandler : this.xorHandler;
         return handler.resolveCsrfTokenValue(request, csrfToken);
     }
 }

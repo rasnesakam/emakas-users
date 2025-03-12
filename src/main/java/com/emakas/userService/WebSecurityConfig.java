@@ -72,7 +72,7 @@ public class WebSecurityConfig {
             CookieCsrfTokenRepository cookieCsrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
             cookieCsrfTokenRepository.setCookieCustomizer(customizer -> {
                 customizer.httpOnly(false);
-                customizer.maxAge(Duration.of(10, ChronoUnit.SECONDS));
+                customizer.maxAge(Duration.of(10, ChronoUnit.MINUTES));
                 customizer.sameSite("Strict");
 
             });
