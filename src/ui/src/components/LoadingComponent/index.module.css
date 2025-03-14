@@ -1,0 +1,44 @@
+
+.animTranslateHorizontal1{
+    -moz-animation: spinHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -o-animation: spinHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -webkit-animation: spinHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+
+}
+
+.animTranslateHorizontal2{
+    -moz-animation: spinHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -o-animation: spinHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -webkit-animation: spinHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation-delay:0.1s;
+
+}
+
+.animTranslateHorizontal3{
+    -moz-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -o-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -webkit-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation-delay:0.2s;
+}
+.animTranslateHorizontal4{
+    -moz-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -o-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -webkit-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation-delay:0.3s;
+}
+.animTranslateHorizontal5{
+    -moz-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -o-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    -webkit-animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation: translateHorizontal 3s infinite cubic-bezier(0.14, 0.58, 0.86, 0.38);
+    animation-delay:0.4s;
+}
+
+@keyframes translateHorizontal {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+}

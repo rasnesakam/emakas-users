@@ -20,6 +20,11 @@
   --ease-fluid: cubic-bezier(0.3, 0, 0, 1);
   --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
 
+  --animate-translate-horizontal: translate-horizontal infinite 2s cubic-bezier(0.14, 0.58, 0.86, 0.38);
+  @keyframes translate-horizontal {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+  }
   /* ... */
 }
 

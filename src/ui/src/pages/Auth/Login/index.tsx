@@ -1,43 +1,59 @@
-import {FormEvent} from "react";
-import {getCookie} from "@utils/getToken.ts";
-import {openAlert} from "@utils/openAlert.ts";
+import {FormEvent, useState} from "react";
+import {useSearchParams} from "react-router";
+import {ExternalResourceInfo} from "../../../models/resources.ts";
+import {getExternalResourceInfo} from "@services/resources";
+import {LoginCredentials} from "../../../models/auth.ts";
+import {login} from "@services/auth";
+import {LoadingComponent} from "@components/LoadingComponent";
+
+
 
 export function Login(){
+
+    const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
+    const [urlSearch] = useSearchParams();
+    const [resourceInfo, setResourceInfo] = useState<ExternalResourceInfo | undefined>(undefined);
+    if (urlSearch.has("redirect") && urlSearch.has("public_key") ) {
+        const publicKey: string = urlSearch.get("public_key")!;
+        const redirectUri: string = urlSearch.get("redirect")!;
+        getExternalResourceInfo(publicKey, redirectUri)
+            .then(resource => setResourceInfo(resource))
+    }
+
     const onFormSubmit = (e: FormEvent) => {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
-        const csrf = getCookie("XSRF-TOKEN");
-        const audiences = "emakas.net";
-        const scopes = "";
 
-        const loginInput = {
-            username: formData.get("username")?.toString(),
-            password: formData.get("password")?.toString(),
+
+        const loginInput: LoginCredentials = {
+            username: formData.get("username")!.toString(),
+            password: formData.get("password")!.toString(),
         }
-        if (!csrf)
-            openAlert("Güvenlik sebebiyle sayfa yenilenecektir.").then(() => location.reload());
-        else {
-            fetch(`/api/auth/sign-in?audiences=${audiences}&scopes${scopes}`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-XSRF-TOKEN': csrf
-                },
-                body: JSON.stringify(loginInput)
-            }).then(response => response.json()).then(json => console.log(json))
-        }
+        login(loginInput)
+            .then(loginResponse => {
+                if (resourceInfo != undefined){
+                    location.replace(`${resourceInfo.redirectUri}?grant=${loginResponse.content}`)
+                }
+            })
+            .catch(err => {
+                console.error(err)
+            })
+
+
     }
+
+
     return <>
         <div className="border rounded-md shadow-md px-10 pb-10 pt-2 bg-gray-50 w-2/3 text-black">
-            <div className="h-1 bg-primary w-full -mt-2"></div>
+            <LoadingComponent active={true} />
             <div className="flex flex-row justify-start items-center pb-4">
-                <img src="/vectors/icons8-e-100.svg" className="w-10 h-10"/>
-                <img src="/vectors/icons8-m-100.svg" className="w-10 h-10"/>
+                <img src="/vectors/icons8-e-100.svg" className="w-10 h-10" alt={"Logo E for Ensar"}/>
+                <img src="/vectors/icons8-m-100.svg" className="w-10 h-10" alt={"Logo M for Makas"}/>
             </div>
             <div className="grid grid-cols-2">
                 <div className="flex flex-col justify-start items-start">
                     <h1 className="text-3xl mb-4">Oturum Açın</h1>
-                    <p></p>
+                    <p>{loginMessage}</p>
                 </div>
                 <div>
                     <form onSubmit={onFormSubmit} className="flex flex-col space-between">
