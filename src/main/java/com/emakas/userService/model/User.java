@@ -8,6 +8,8 @@ import lombok.*;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "users")
@@ -28,13 +30,4 @@ public class User extends BaseEntity {
     @Column(length = 30)
     private String surname;
 
-    public User(){}
-
-    public User(String userName, String email, String password, String name, String surname) {
-        this.userName = userName;
-        this.email = email;
-        this.password = password;
-        this.name = name;
-        this.surname = surname;
-    }
 }
