@@ -7,7 +7,6 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 public final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler{
