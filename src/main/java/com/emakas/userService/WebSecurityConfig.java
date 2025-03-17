@@ -79,7 +79,6 @@ public class WebSecurityConfig {
             config.csrfTokenRepository(cookieCsrfTokenRepository);
             config.csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler());
 
-
         }).sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
