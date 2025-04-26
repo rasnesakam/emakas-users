@@ -1,16 +1,13 @@
 package com.emakas.userService.controller;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
-import com.emakas.userService.dto.TokenResponseDto;
-import com.emakas.userService.dto.UserRegistrationDto;
+import com.emakas.userService.dto.UserRegistrationReadDto;
+import com.emakas.userService.dto.UserWriteDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.service.UserLoginService;
 import com.emakas.userService.service.UserTokenService;
@@ -55,7 +52,7 @@ public class AuthController {
 
     @PostMapping("sign-up")
     @ResponseBody
-    public ResponseEntity<Response<User>> createUser(@RequestBody UserRegistrationDto userDto){
+    public ResponseEntity<Response<User>> createUser(@RequestBody UserWriteDto userDto, @RequestParam(value = "invite-code") String inviteCode){
         if (this.userService.existsByEmailOrUserName(userDto.getEmail(), userDto.getUserName()))
             return new ResponseEntity<>(new Response<>(null, String.format("User %s (%s) already exists", userDto.getUserName(), userDto.getEmail())), HttpStatus.BAD_REQUEST);
         String hashedPassword = passwordEncoder.encode(userDto.getPassword());
@@ -108,9 +105,5 @@ public class AuthController {
     	userService.delete(user);
     	return new ResponseEntity<>(user,HttpStatus.OK);
     }
-    
-    @GetMapping("")
-    public ResponseEntity<List<User>> getAllUsers(){
-    	return new ResponseEntity<>(userService.getAll(),HttpStatus.OK);
-    }
+
 }

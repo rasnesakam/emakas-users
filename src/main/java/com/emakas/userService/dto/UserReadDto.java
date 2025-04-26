@@ -7,12 +7,15 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-public class UserDto {
+public class UserReadDto {
 
     private String userName;
 
+    private String name;
+
+    private String surname;
+
     private String email;
 
-    private String password;
 
 }

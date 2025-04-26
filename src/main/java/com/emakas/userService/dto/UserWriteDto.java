@@ -7,10 +7,14 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-public class UserRegistrationDto extends UserDto{
+public class UserWriteDto {
     private String name;
+
     private String surname;
 
-    public UserRegistrationDto(){}
+    private String userName;
 
+    private String email;
+
+    private String password;
 }

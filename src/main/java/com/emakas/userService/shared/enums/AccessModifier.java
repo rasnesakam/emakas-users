@@ -2,7 +2,8 @@ package com.emakas.userService.shared.enums;
 
 public enum AccessModifier {
     READ,
-    WRITE;
+    WRITE,
+    UPDATE;
 
 
     @Override

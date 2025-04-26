@@ -35,12 +35,9 @@ public class UserService extends BaseService<User, UUID>  implements UserDetails
         User user = repository.getByUserName(username);
         if (user == null)
             throw new UsernameNotFoundException(String.format("User with username \"%s\" not found",username));
-        List<String> roles = new ArrayList<>();
-        roles.add("USER");
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUserName())
                 .password(user.getPassword())
-                .roles(roles.toArray(new String[0]))
                 .build();
     }
 }

@@ -2,8 +2,7 @@ package com.emakas.userService.model;
 
 import com.emakas.userService.shared.enums.Scope;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -14,6 +13,9 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class UserLogin extends BaseEntity{
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -49,8 +51,6 @@ public class UserLogin extends BaseEntity{
             this.expirationDateInSeconds = Instant.now().plus( 10, ChronoUnit.MINUTES).getEpochSecond();
     }
 
-    public UserLogin() {
-    }
 
     public UserLogin(User loggedUser, Set<String> authorizedAudiences, Set<Scope> authorizedScopes) {
         this.loggedUser = loggedUser;
