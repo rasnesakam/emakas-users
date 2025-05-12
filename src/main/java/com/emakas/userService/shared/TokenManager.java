@@ -8,19 +8,15 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.emakas.userService.model.User;
 import com.emakas.userService.model.UserToken;
-import com.emakas.userService.shared.enums.PermissionTargetType;
 import com.emakas.userService.shared.enums.TokenType;
 import com.emakas.userService.shared.enums.TokenVerificationStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
-
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 public class TokenManager implements Serializable {
@@ -139,7 +135,7 @@ public class TokenManager implements Serializable {
     public UserToken generateUserToken(User user, String... audiences) {
         UserToken token = new UserToken();
         token.setIss(issuer);
-        token.setId(UUID.randomUUID());
+        token.setJti(UUID.randomUUID().toString());
         token.setSub(user.getId().toString());
         if (audiences != null)
             token.setAud(Set.of(audiences));
