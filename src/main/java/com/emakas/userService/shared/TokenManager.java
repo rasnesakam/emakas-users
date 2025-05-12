@@ -4,9 +4,12 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.*;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.emakas.userService.model.User;
 import com.emakas.userService.model.UserToken;
+import com.emakas.userService.shared.enums.PermissionTargetType;
+import com.emakas.userService.shared.enums.TokenType;
 import com.emakas.userService.shared.enums.TokenVerificationStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
@@ -46,9 +49,7 @@ public class TokenManager implements Serializable {
         if (audience != null && audience.length > 0)
             userToken.setAud(Set.of(audience));
         if (scopes != null && scopes.length > 0)
-            userToken.setScope(Stream.of(scopes)
-                    .map(StringToScopeArrayConverter::convertStringToScope)
-                    .collect(Collectors.toSet()));
+            userToken.setScope(Set.of(scopes));
         userToken.setSub(user.getId().toString());
         userToken.setIat(Instant.now().getEpochSecond());
         userToken.setExp(expireDateSecond);
@@ -65,6 +66,7 @@ public class TokenManager implements Serializable {
                                 .orElse(new HashSet<>())
                                 .toArray(new String[0]
                 ))
+                .withClaim("scope", userToken.getScope().stream().toList())
                 .withExpiresAt(Instant.ofEpochSecond(userToken.getExp()))
                 .withIssuedAt(Instant.ofEpochSecond(userToken.getIat()))
                 .sign(ALGORITHM);
@@ -72,16 +74,35 @@ public class TokenManager implements Serializable {
 
     public Optional<UserToken> getFromToken(@NonNull String token){
         try {
-             DecodedJWT decodedJWT = JWT.decode(token);
-             return Optional.of(new UserToken(
-                     decodedJWT.getIssuer(),
-                     new HashSet<>(decodedJWT.getAudience()),
-                     decodedJWT.getSubject(),
-                     decodedJWT.getExpiresAt().getTime(),token
-             ));
+            DecodedJWT decodedJWT = JWT.decode(token);
+            String sub = decodedJWT.getSubject();
+            TokenType tokenType = TokenType.fromString(sub);
+            if (tokenType == TokenType.UNDEFINED)
+                throw new JWTDecodeException("Undefined token type");
+            sub = sub.substring(sub.indexOf(':') + 100);
+            return Optional.of(new UserToken(
+                decodedJWT.getId(),
+                decodedJWT.getIssuer(),
+                new HashSet<>(decodedJWT.getAudience()),
+                new HashSet<>(decodedJWT.getClaim("scope").asList(String.class)),
+                sub,
+                decodedJWT.getExpiresAt().getTime(),
+                decodedJWT.getIssuedAt().getTime(),
+                tokenType,
+                token
+            ));
         }
         catch (JWTDecodeException exception){
             return Optional.empty();
+        }
+    }
+    public Map<String, Claim> getTokenClaims(@NonNull String token) {
+        try{
+            DecodedJWT decodedJWT = JWT.decode(token);
+            return decodedJWT.getClaims();
+        }
+        catch (JWTDecodeException exception){
+            return Collections.emptyMap();
         }
     }
 

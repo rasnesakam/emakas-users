@@ -1,18 +1,26 @@
 package com.emakas.userService.model;
 
-import com.emakas.userService.shared.enums.Scope;
+import com.emakas.userService.shared.enums.TokenType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Set;
 
+@EqualsAndHashCode
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @Entity
 @Table(name="user_tokens")
-public class UserToken extends BaseEntity {
+public class UserToken {
 
+
+    /**
+     * Represents <b>jti</b> claim for the JWT
+     */
+    @Id
+    private String jti;
 
     /**
      * Represents <b>iss</b> claim for the JWT
@@ -33,11 +41,10 @@ public class UserToken extends BaseEntity {
     /**
      * Represents <b>scope</b> claim for the JWT
      */
-    @ElementCollection(targetClass = Scope.class, fetch = FetchType.EAGER)
+    @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_token_scopes", joinColumns = @JoinColumn(name = "user_token_id"))
-    @Enumerated(EnumType.STRING)
     @Column
-    private Set<Scope> scope; // Audience of token
+    private Set<String> scope; // Audience of token
 
 
     /**
@@ -61,16 +68,10 @@ public class UserToken extends BaseEntity {
     private long iat; // Date of the creation of token
 
     @Column
+    private TokenType tokenType;
+
+    @Column
     private String serializedToken;
 
-    public UserToken(String iss, Set<String> aud, String sub, long exp, String serializedToken) {
-        this.iss = iss;
-        this.aud = aud;
-        this.sub = sub;
-        this.exp = exp;
-        this.serializedToken = serializedToken;
-    }
-
-    public UserToken(){}
 
 }

@@ -1,44 +1,33 @@
 package com.emakas.userService.auth;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
+import com.emakas.userService.model.UserToken;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.stream.Collectors;
 
-import java.util.Collection;
-import java.util.List;
+public class JwtAuthentication extends AbstractAuthenticationToken {
 
-public class JwtAuthentication implements Authentication {
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+    private final UserToken userToken;
+
+    public JwtAuthentication(UserToken userToken) {
+        super(userToken.getScope().stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet()));
+        this.userToken = userToken;
+        setAuthenticated(true);
     }
+
 
     @Override
     public Object getCredentials() {
-        return null;
-    }
-
-    @Override
-    public Object getDetails() {
-        return null;
+        return userToken.getSerializedToken();
     }
 
     @Override
     public Object getPrincipal() {
-        return null;
-    }
-
-    @Override
-    public boolean isAuthenticated() {
-        return false;
-    }
-
-    @Override
-    public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-
+        return userToken.getSub();
     }
 
     @Override
     public String getName() {
-        return "";
+        return userToken.getSub();
     }
 }

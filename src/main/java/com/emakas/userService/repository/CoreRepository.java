@@ -6,5 +6,5 @@ import com.emakas.userService.model.BaseEntity;
 
 import java.io.Serializable;
 
-public interface BaseRepository<ENTITY extends BaseEntity, ID extends Serializable> extends JpaRepository<ENTITY, ID> {
+public interface CoreRepository<ENTITY extends BaseEntity, ID extends Serializable> extends JpaRepository<ENTITY, ID> {
 }

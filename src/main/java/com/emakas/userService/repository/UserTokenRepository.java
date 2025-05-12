@@ -7,5 +7,5 @@ import com.emakas.userService.model.UserToken;
 import java.util.UUID;
 
 @Repository
-public interface UserTokenRepository extends BaseRepository<UserToken, UUID> {
+public interface UserTokenRepository extends CoreRepository<UserToken, UUID> {
 }

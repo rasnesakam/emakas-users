@@ -20,13 +20,13 @@ public class Team extends BaseEntity{
     private String description;
 
     @Column
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @CollectionTable(name = "team_members", joinColumns = @JoinColumn(name = "member_id"))
 
     private Collection<User> members;
 
     @Column
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @CollectionTable(name = "team_leads", joinColumns = @JoinColumn(name = "team_lead_id"))
     private User lead;
 

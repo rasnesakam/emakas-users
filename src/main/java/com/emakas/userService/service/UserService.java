@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class UserService extends BaseService<User, UUID>  implements UserDetailsService{
+public class UserService extends CoreService<User, UUID> implements UserDetailsService{
 	private UserRepository repository;
     @Autowired
     public UserService(UserRepository repository) {
@@ -29,6 +29,7 @@ public class UserService extends BaseService<User, UUID>  implements UserDetails
     public boolean existsByEmailOrUserName(String email, String userName){
         return this.repository.existsUserByEmailOrUserName(email,userName);
     }
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

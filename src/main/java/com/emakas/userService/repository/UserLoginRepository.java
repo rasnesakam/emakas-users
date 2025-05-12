@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface UserLoginRepository extends BaseRepository<UserLogin, UUID> {
+public interface UserLoginRepository extends CoreRepository<UserLogin, UUID> {
     UserLogin findUserLoginByAuthorizationGrant(UUID authorizationGrant);
 }
