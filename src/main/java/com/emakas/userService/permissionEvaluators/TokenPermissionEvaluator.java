@@ -48,7 +48,7 @@ public class TokenPermissionEvaluator implements PermissionEvaluator {
         if (authentication instanceof JwtAuthentication jwtAuthentication){
             UserToken userToken = jwtAuthentication.getUserToken();
             Optional<AccessModifier> requestedAccessModifierOptional = stringToAccessModifierConverter.convert(permission.toString());
-            if (requestedAccessModifierOptional.isEmpty())
+            if (requestedAccessModifierOptional.isEmpty() || !authentication.isAuthenticated())
                 return false;
             AccessModifier requestedAccessModifier = requestedAccessModifierOptional.get();
             String requestedResourceUri = targetDomainObject.toString();
