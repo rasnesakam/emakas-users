@@ -1,11 +1,11 @@
 import {FormEvent, useState} from "react";
-import {useSearchParams} from "react-router";
+import {useNavigate, useSearchParams} from "react-router";
 import {ExternalResourceInfo} from "../../../models/resources.ts";
 import {getExternalResourceInfo} from "@services/resources";
 import {LoginCredentials} from "../../../models/auth.ts";
 import {login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
-
+import {LoginMethods} from "@utils/enums/LoginMethods.ts";
 
 
 export function Login(){
@@ -13,11 +13,14 @@ export function Login(){
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
     const [resourceInfo, setResourceInfo] = useState<ExternalResourceInfo | undefined>(undefined);
+    const [loginMethod, setLoginMethod] = useState(LoginMethods.INTERNAL);
+    const navigate = useNavigate();
     if (urlSearch.has("redirect") && urlSearch.has("public_key") ) {
         const publicKey: string = urlSearch.get("public_key")!;
         const redirectUri: string = urlSearch.get("redirect")!;
         getExternalResourceInfo(publicKey, redirectUri)
             .then(resource => setResourceInfo(resource))
+            .then(() => setLoginMethod(LoginMethods.EXTERNAL))
     }
 
     const onFormSubmit = (e: FormEvent) => {
@@ -31,8 +34,11 @@ export function Login(){
         }
         login(loginInput)
             .then(loginResponse => {
-                if (resourceInfo != undefined){
+                if (loginMethod === LoginMethods.EXTERNAL && resourceInfo != undefined){
                     location.replace(`${resourceInfo.redirectUri}?grant=${loginResponse.content}`)
+                }
+                else if (loginMethod === LoginMethods.INTERNAL){
+                    navigate("page/account");
                 }
             })
             .catch(err => {
