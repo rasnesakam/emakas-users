@@ -21,19 +21,19 @@ public class ResourcePermission extends BaseEntity{
 
 
     @JoinColumn(name = "resource_id")
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Resource resource;
 
     @JoinColumn(name = "user_id")
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private User user;
 
     @JoinColumn(name = "team_id")
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Team team;
 
     @JoinColumn(name = "application_id")
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Application application;
 
     @Column
