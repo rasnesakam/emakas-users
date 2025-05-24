@@ -28,10 +28,10 @@ public class UserLogin extends BaseEntity{
     private Set<String> authorizedAudiences;
 
 
-    @ElementCollection(targetClass = Scope.class, fetch = FetchType.EAGER)
+    @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "authorized_scopes", joinColumns = @JoinColumn(name = "authorized_scopes_id"))
     @Column
-    private Set<Scope> authorizedScopes;
+    private Set<String> authorizedScopes;
 
     @Column
     private UUID authorizationGrant;
@@ -52,7 +52,7 @@ public class UserLogin extends BaseEntity{
     }
 
 
-    public UserLogin(User loggedUser, Set<String> authorizedAudiences, Set<Scope> authorizedScopes) {
+    public UserLogin(User loggedUser, Set<String> authorizedAudiences, Set<String> authorizedScopes) {
         this.loggedUser = loggedUser;
         this.authorizedAudiences = authorizedAudiences;
         this.authorizedScopes = authorizedScopes;

@@ -20,8 +20,8 @@ public class TeamService extends CoreService<Team, UUID> {
         this.teamRepository = teamRepository;
     }
 
-    public Optional<Team> findById(UUID id) {
-        return teamRepository.findById(id);
+    public Optional<Team> getByName(String name) {
+        return teamRepository.findByName(name);
     }
 
     public Optional<Team> addMember(UUID teamId, User newMember) {
@@ -32,6 +32,8 @@ public class TeamService extends CoreService<Team, UUID> {
             return teamRepository.save(team);
         });
     }
+
+
 
     public Optional<Team> removeMember(UUID teamId, User removeUser) {
         Optional<Team> teamOptional = teamRepository.findById(teamId);

@@ -40,21 +40,27 @@ public class ResourcePermissionService extends CoreService<ResourcePermission, U
         return repository.findByApplicationIdAndResourceUri(application.getId(), resource.getUri());
     }
 
-    public boolean hasPermissionFor(ResourcePermission resourcePermission, AccessModifier modifier, User user){
+
+    public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier){
+        return resourcePermission.getAccessModifier() == modifier
+                && resourcePermission.getResource().getUri().equals(targetDomainUri);
+    }
+
+    public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier, User user){
         return resourcePermission.getPermissionTargetType() == PermissionTargetType.USER
                 && resourcePermission.getUser() == user
                 && resourcePermission.getAccessModifier() == modifier;
     }
 
 
-    public boolean hasPermissionFor(ResourcePermission resourcePermission, AccessModifier modifier, Team team){
+    public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier, Team team){
         return resourcePermission.getPermissionTargetType() == PermissionTargetType.TEAM
                 && resourcePermission.getTeam() == team
                 && resourcePermission.getAccessModifier() == modifier;
     }
 
 
-    public boolean hasPermissionFor(ResourcePermission resourcePermission, AccessModifier modifier, Application application){
+    public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier, Application application){
         return resourcePermission.getPermissionTargetType() == PermissionTargetType.APP
                 && resourcePermission.getApplication() == application
                 && resourcePermission.getAccessModifier() == modifier;

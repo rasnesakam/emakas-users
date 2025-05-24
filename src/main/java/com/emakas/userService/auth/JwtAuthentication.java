@@ -15,7 +15,9 @@ public class JwtAuthentication extends AbstractAuthenticationToken {
         setAuthenticated(true);
     }
 
-
+    public UserToken getUserToken() {
+        return userToken;
+    }
     @Override
     public Object getCredentials() {
         return userToken.getSerializedToken();

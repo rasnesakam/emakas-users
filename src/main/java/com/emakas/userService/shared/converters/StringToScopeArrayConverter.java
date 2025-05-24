@@ -1,4 +1,4 @@
-package com.emakas.userService.shared;
+package com.emakas.userService.shared.converters;
 import com.emakas.userService.shared.enums.Scope;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;

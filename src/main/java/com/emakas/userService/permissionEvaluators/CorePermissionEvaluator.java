@@ -45,18 +45,18 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
                 User user = userService.getById(UUID.fromString(userId));
                 Collection<Team> userTeams = teamService.getUserTeams(user);
                 boolean hasUserPermission = resourcePermissionService.getUserPermissionsByResource(user, resource).stream()
-                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, modifier, user));
+                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, user));
                 boolean hasTeamPermission = userTeams.stream()
                         .anyMatch(team ->
                                 resourcePermissionService.getTeamPermissionsByResource(team, resource).stream()
-                                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, modifier, team))
+                                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, team))
                         );
                 return hasUserPermission || hasTeamPermission;
             }
             else if (userToken.getTokenType() == TokenType.APP) {
                 Application app = applicationService.getById(UUID.fromString(userId));
                 return resourcePermissionService.getApplicationPermissionsByResource(app, resource).stream()
-                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, modifier, app));
+                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, app));
             }
             else return false;
         }

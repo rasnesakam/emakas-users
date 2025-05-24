@@ -81,7 +81,7 @@ public class UserTokenController {
             UserToken userToken = tokenManager.createUserToken(
                     loggedUser, Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
                     userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
-                    userLogin.get().getAuthorizedScopes().stream().map(Scope::toString).toArray(String[]::new)
+                    userLogin.get().getAuthorizedScopes().toArray(String[]::new)
             );
             userTokenService.save(userToken);
             TokenResponseDto tokenResponseDto = new TokenResponseDto(

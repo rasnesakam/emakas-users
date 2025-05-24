@@ -10,11 +10,13 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
-public class UserTokenService extends  CoreService<UserToken, UUID> {
-
+public class UserTokenService {
+    private final UserTokenRepository userTokenRepository;
     @Autowired
     public UserTokenService(UserTokenRepository repository) {
-        super(repository);
+        this.userTokenRepository = repository;
     }
-
+    public UserToken save(UserToken userToken) {
+        return userTokenRepository.save(userToken);
+    }
 }

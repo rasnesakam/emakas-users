@@ -1,7 +1,9 @@
 package com.emakas.userService.model;
 
 import com.emakas.userService.modelValidation.ResourcePermissionUTAValidation;
+import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
 import com.emakas.userService.shared.enums.AccessModifier;
+import com.emakas.userService.shared.enums.PermissionScope;
 import com.emakas.userService.shared.enums.PermissionTargetType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,29 +19,45 @@ import java.security.Permission;
 @ResourcePermissionUTAValidation
 public class ResourcePermission extends BaseEntity{
 
-    @Column
+
+    @JoinColumn(name = "resource_id")
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @CollectionTable(name = "resource_permission_resources", joinColumns = @JoinColumn(name = "resource_id"))
     private Resource resource;
 
-    @Column
+    @JoinColumn(name = "user_id")
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @CollectionTable(name = "resource_permission_users", joinColumns = @JoinColumn(name = "user_id"))
     private User user;
 
-    @Column
+    @JoinColumn(name = "team_id")
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @CollectionTable(name = "resource_permission_teams", joinColumns = @JoinColumn(name = "team_id"))
     private Team team;
 
-    @Column
+    @JoinColumn(name = "application_id")
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @CollectionTable(name = "resource_permission_apps", joinColumns = @JoinColumn(name = "app_id"))
     private Application application;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private PermissionTargetType permissionTargetType;
 
     @Column
+    @Enumerated(EnumType.STRING)
+    private PermissionScope permissionScope;
+
+    @Column
+    @Enumerated(EnumType.STRING)
     private AccessModifier accessModifier;
+
+    /**
+     * <h1>ResourcePermission.toString()</h1>
+     * <p>String representation of resource permission</p>
+     * <p>Format of string should be as follows</p>
+     * <code>[permissionScope]:[accessModifier]:[resourceUri]</code>
+     * @return String representation of resource permission
+     * @author Ensar Makas
+     */
+    @Override
+    public String toString() {
+        return String.join(StringToResourcePermissionConverter.SEPARATOR, this.permissionScope.name(), this.accessModifier.name(), this.resource.getUri());
+    }
 }

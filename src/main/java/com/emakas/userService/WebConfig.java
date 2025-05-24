@@ -1,17 +1,19 @@
 package com.emakas.userService;
 
+import com.emakas.userService.shared.converters.StringToAccessModifierConverter;
+import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedHeaders("*")
-                .allowedMethods("*")
-                .allowedOrigins("*");
-    }
+public class WebConfig {
 
+    @Bean
+    public StringToResourcePermissionConverter stringToResourcePermissionConverter() {
+        return new StringToResourcePermissionConverter();
+    }
+    @Bean
+    public StringToAccessModifierConverter stringToAccessModifierConverter(){
+        return new StringToAccessModifierConverter();
+    }
 }

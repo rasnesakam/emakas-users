@@ -69,7 +69,7 @@ public class AuthController {
 
     @PostMapping("sign-in")
     @ResponseBody
-    public ResponseEntity<Response<String>> signIn(@RequestBody LoginModel loginModel, @RequestParam String[] audiences, @RequestParam Scope[] scopes){
+    public ResponseEntity<Response<String>> signIn(@RequestBody LoginModel loginModel, @RequestParam String[] audiences, @RequestParam String[] scopes){
         try{
             UserDetails userDetails = this.userService.loadUserByUsername(loginModel.getUsername());
 

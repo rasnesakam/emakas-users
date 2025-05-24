@@ -13,7 +13,7 @@ import java.util.Collection;
 @Entity
 @Table(name = "teams")
 public class Team extends BaseEntity{
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Column
@@ -25,9 +25,8 @@ public class Team extends BaseEntity{
 
     private Collection<User> members;
 
-    @Column
+    @JoinColumn(name = "team_lead_id")
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @CollectionTable(name = "team_leads", joinColumns = @JoinColumn(name = "team_lead_id"))
     private User lead;
 
     @PrePersist
