@@ -92,13 +92,14 @@ public class InitializeRootVariables implements CommandLineRunner {
         return resources.collect(Collectors.toSet());
     }
     public void assignAdminPermissions(User user, Collection<Resource> resources){
-        resources.parallelStream().forEach(resource -> {
+        resources.stream().forEach(resource -> {
             ResourcePermission resourcePermission = new ResourcePermission();
             resourcePermission.setUser(user);
             resourcePermission.setPermissionTargetType(PermissionTargetType.USER);
             resourcePermission.setResource(resource);
             resourcePermission.setPermissionScope(PermissionScope.ALL);
             resourcePermission.setAccessModifier(AccessModifier.READ_WRITE);
+            logger.info(String.format("Assigning Role '%s' to user '%s'",resource.getUri(), user.getUserName()));
             resourcePermissionService.save(resourcePermission);
         });
     }
@@ -116,9 +117,13 @@ public class InitializeRootVariables implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        logger.info("Creating Admin User");
         User admin = createAdminUserIfNotExists();
+        logger.info("Creating Core Team");
         Team coreTeam = createCoreTeamIfNotExists(admin);
+        logger.info("Creating Default Resources");
         Collection<Resource> appResources = createDefaultResources();
+        logger.info("Assigning roles to admin user");
         assignAdminPermissions(admin,appResources);
     }
 }
