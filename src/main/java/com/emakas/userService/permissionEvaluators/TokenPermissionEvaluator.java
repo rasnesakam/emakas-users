@@ -2,25 +2,20 @@ package com.emakas.userService.permissionEvaluators;
 
 import com.emakas.userService.auth.JwtAuthentication;
 import com.emakas.userService.model.ResourcePermission;
-import com.emakas.userService.model.User;
 import com.emakas.userService.model.UserToken;
 import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.shared.converters.StringToAccessModifierConverter;
 import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
 import com.emakas.userService.shared.enums.AccessModifier;
-import com.emakas.userService.shared.enums.PermissionTargetType;
 import com.emakas.userService.shared.enums.TokenType;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -46,20 +41,18 @@ public class TokenPermissionEvaluator implements PermissionEvaluator {
      * checked. In this case, it is corresponding to uri of the resource.
      * @param permission a representation of the permission object as supplied by the
      * expression system. Not null. In this case, it is corresponding to access modifier of permission.
-     * @return
+     * @return <code>true</code> if has permission, else <code>false</code>
      */
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
         if (authentication instanceof JwtAuthentication jwtAuthentication){
             UserToken userToken = jwtAuthentication.getUserToken();
-            TokenType tokenType = userToken.getTokenType();
             Optional<AccessModifier> requestedAccessModifierOptional = stringToAccessModifierConverter.convert(permission.toString());
             if (requestedAccessModifierOptional.isEmpty())
                 return false;
             AccessModifier requestedAccessModifier = requestedAccessModifierOptional.get();
             String requestedResourceUri = targetDomainObject.toString();
             Stream<ResourcePermission> resourcePermissions = getResourcePermissionsFromToken(userToken, targetDomainObject);
-            //TODO: Authorize jwt tokens.
             return resourcePermissions.anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, requestedResourceUri, requestedAccessModifier));
         }
         return false;
