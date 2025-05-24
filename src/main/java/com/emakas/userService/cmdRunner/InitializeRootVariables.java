@@ -80,7 +80,7 @@ public class InitializeRootVariables implements CommandLineRunner {
         }
         return coreTeam.get();
     }
-    public Collection<Resource> createResources(){
+    public Collection<Resource> createDefaultResources(){
         Stream<Resource> resources = Stream.of(
                 new Resource("Teams", "", "users/teams"),
                 new Resource("Members", "", "users/members"),
@@ -91,11 +91,22 @@ public class InitializeRootVariables implements CommandLineRunner {
         resources = resources.map(resourceService::save);
         return resources.collect(Collectors.toSet());
     }
-    public void AssignUserPermissions(User user, Collection<Resource> resources){
+    public void assignAdminPermissions(User user, Collection<Resource> resources){
         resources.parallelStream().forEach(resource -> {
             ResourcePermission resourcePermission = new ResourcePermission();
             resourcePermission.setUser(user);
             resourcePermission.setPermissionTargetType(PermissionTargetType.USER);
+            resourcePermission.setResource(resource);
+            resourcePermission.setPermissionScope(PermissionScope.ALL);
+            resourcePermission.setAccessModifier(AccessModifier.READ_WRITE);
+            resourcePermissionService.save(resourcePermission);
+        });
+    }
+    public void assignAdminPermissionsToTeam(Team team, Collection<Resource> resources){
+        resources.parallelStream().forEach(resource -> {
+            ResourcePermission resourcePermission = new ResourcePermission();
+            resourcePermission.setTeam(team);
+            resourcePermission.setPermissionTargetType(PermissionTargetType.TEAM);
             resourcePermission.setResource(resource);
             resourcePermission.setPermissionScope(PermissionScope.ALL);
             resourcePermission.setAccessModifier(AccessModifier.READ_WRITE);
@@ -107,6 +118,7 @@ public class InitializeRootVariables implements CommandLineRunner {
     public void run(String... args) throws Exception {
         User admin = createAdminUserIfNotExists();
         Team coreTeam = createCoreTeamIfNotExists(admin);
-        Collection<Resource> appResources = createResources();
+        Collection<Resource> appResources = createDefaultResources();
+        assignAdminPermissions(admin,appResources);
     }
 }
