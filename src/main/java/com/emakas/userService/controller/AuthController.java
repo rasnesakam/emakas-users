@@ -3,12 +3,14 @@ package com.emakas.userService.controller;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.UserRegistrationReadDto;
 import com.emakas.userService.dto.UserWriteDto;
 import com.emakas.userService.model.*;
+import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.service.UserLoginService;
 import com.emakas.userService.service.UserTokenService;
 import com.emakas.userService.shared.TokenManager;
@@ -38,15 +40,17 @@ public class AuthController {
     private final TokenManager tokenManager;
     private final PasswordEncoder passwordEncoder;
     private final UserLoginService userLoginService;
+    private final ResourcePermissionService resourcePermissionService;
 
     @Autowired
-    public AuthController(UserService service, UserTokenService userTokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService) {
+    public AuthController(UserService service, UserTokenService userTokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService) {
         this.userService = service;
         this.userTokenService = userTokenService;
         this.authenticationManager = authenticationManager;
         this.tokenManager = tokenManager;
         this.passwordEncoder = passwordEncoder;
         this.userLoginService = userLoginService;
+        this.resourcePermissionService = resourcePermissionService;
     }
 
 
@@ -79,7 +83,10 @@ public class AuthController {
             ));
             if (auth.isAuthenticated()){
                 User user = this.userService.getByUserName(loginModel.getUsername());
-                UserLogin userLogin = new UserLogin(user, Set.of(audiences),Set.of(scopes));
+                Set<String> audienceSet = Set.of(audiences);
+                Set<String> scopeSet = getDefinedOrDefaultScopes(scopes, user);
+
+                UserLogin userLogin = new UserLogin(user, audienceSet,scopeSet);
                 Optional<UserLogin> savedUserLogin = userLoginService.saveUserLogin(userLogin);
                 return savedUserLogin.map(login -> new ResponseEntity<>(
                         new Response<>(login.getAuthorizationGrant().toString(), "Login Success"),
@@ -94,6 +101,18 @@ public class AuthController {
         catch (DisabledException exception){
             return new ResponseEntity<>(new Response<>(null,"User is suspended"), HttpStatus.FORBIDDEN);
         }
+    }
+
+    private Set<String> getDefinedOrDefaultScopes(String[] scopes, User user){
+        return scopes.length > 0 ? Set.of(scopes) :
+                resourcePermissionService.getPermissionsByUser(user)
+                        .stream().map(ResourcePermission::toString).collect(Collectors.toSet());
+    }
+
+    private Set<String> getDefinedOrDefaultAudiences(String[] audiences, User user){
+        return audiences.length > 0 ? Set.of(audiences) :
+                resourcePermissionService.getPermissionsByUser(user)
+                        .stream().map(ResourcePermission::toString).collect(Collectors.toSet());
     }
 
     @DeleteMapping("delete/{uuid}")
