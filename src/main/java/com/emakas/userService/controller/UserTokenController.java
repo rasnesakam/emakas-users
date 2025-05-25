@@ -94,15 +94,4 @@ public class UserTokenController {
     }
 
 
-    @PostMapping("token/generate/")
-    public ResponseEntity<Response<String>> getToken(@RequestBody LoginModel login, @RequestParam String[] audiences){
-    	User user = userService.getByUserName(login.getUsername());
-        if (!AuthHelper.checkPassword(user,login))
-    	    return new ResponseEntity<>(new Response<>(null,"User credentials did not match"),
-                    HttpStatus.UNAUTHORIZED);
-        UserToken token = tokenManager.generateUserToken(user, audiences);
-        tokenService.save(token);
-        Response<String> response = new Response<>(tokenManager.generateJwtToken(token));
-        return new ResponseEntity<>(response,HttpStatus.OK);
-    }
 }
