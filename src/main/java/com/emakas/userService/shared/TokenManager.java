@@ -29,8 +29,8 @@ public class TokenManager implements Serializable {
 
 
     public TokenManager(
-            @Value("${java-jwt.expiration}") String issuer,
-            @Value("${java-jwt.expiration}") String jwtSecret,
+            @Value("${java-jwt.issuer}") String issuer,
+            @Value("${java-jwt.secret}") String jwtSecret,
             @Value("${java-jwt.expiration}") long secondsToExpire
     ) {
         this.issuer = issuer;
@@ -46,7 +46,7 @@ public class TokenManager implements Serializable {
             userToken.setAud(Set.of(audience));
         if (scopes != null && scopes.length > 0)
             userToken.setScope(Set.of(scopes));
-        userToken.setSub(user.getId().toString());
+        userToken.setSub(TokenType.USR.toString().concat(Constants.SEPARATOR).concat(user.getId().toString()));
         userToken.setIat(Instant.now().getEpochSecond());
         userToken.setExp(expireDateSecond);
         userToken.setSerializedToken(generateJwtToken(userToken));
@@ -75,7 +75,7 @@ public class TokenManager implements Serializable {
             TokenType tokenType = TokenType.fromString(sub);
             if (tokenType == TokenType.UNDEFINED)
                 throw new JWTDecodeException("Undefined token type");
-            sub = sub.substring(sub.indexOf(':') + 100);
+            sub = sub.substring(sub.indexOf(Constants.SEPARATOR) + 100);
             return Optional.of(new UserToken(
                 decodedJWT.getId(),
                 decodedJWT.getIssuer(),
