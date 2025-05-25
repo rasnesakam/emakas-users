@@ -14,6 +14,7 @@ import com.emakas.userService.shared.enums.PermissionTargetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -31,14 +32,23 @@ public class InitializeRootVariables implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private static final Logger logger = LoggerFactory.getLogger(InitializeRootVariables.class);
     private final ResourceService resourceService;
+    private final String appDomainName;
 
     @Autowired
-    public InitializeRootVariables(UserService userService, TeamService teamService, ResourcePermissionService resourcePermissionService, PasswordEncoder passwordEncoder, ResourceService resourceService) {
+    public InitializeRootVariables(
+            UserService userService,
+            TeamService teamService,
+            ResourcePermissionService resourcePermissionService,
+            PasswordEncoder passwordEncoder,
+            ResourceService resourceService,
+            @Value("${app.domain}") String appDomainName
+    ) {
         this.userService = userService;
         this.teamService = teamService;
         this.resourcePermissionService = resourcePermissionService;
         this.passwordEncoder = passwordEncoder;
         this.resourceService = resourceService;
+        this.appDomainName = appDomainName;
     }
 
     public String getRandomPasswordText(){
@@ -82,11 +92,11 @@ public class InitializeRootVariables implements CommandLineRunner {
     }
     public Collection<Resource> createDefaultResources(){
         Stream<Resource> resources = Stream.of(
-                new Resource("Teams", "", "users/teams"),
-                new Resource("Members", "", "users/members"),
-                new Resource("Team Members", "", "users/teamMembers"),
-                new Resource("Applications", "", "users/applications"),
-                new Resource("Resource", "", "users/resources")
+                new Resource("Teams", "", String.format("%s/teams",appDomainName)),
+                new Resource("Members", "", String.format("%s/members",appDomainName)),
+                new Resource("Team Members", "", String.format("%s/teamMembers",appDomainName)),
+                new Resource("Applications", "", String.format("%s/applications",appDomainName)),
+                new Resource("Resource", "", String.format("%s/resources",appDomainName))
         );
         resources = resources.map(resourceService::save);
         return resources.collect(Collectors.toSet());
