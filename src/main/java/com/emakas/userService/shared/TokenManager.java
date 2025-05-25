@@ -16,6 +16,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Component
@@ -26,17 +27,20 @@ public class TokenManager implements Serializable {
     private final String issuer;
 
     private final Algorithm ALGORITHM;
+    private final String appDomainName;
 
 
     public TokenManager(
             @Value("${java-jwt.issuer}") String issuer,
             @Value("${java-jwt.secret}") String jwtSecret,
-            @Value("${java-jwt.expiration}") long secondsToExpire
+            @Value("${java-jwt.expiration}") long secondsToExpire,
+            @Value("${app.domain}") String appDomainName
     ) {
         this.issuer = issuer;
         this.secondsToExpire = secondsToExpire;
 
         ALGORITHM = Algorithm.HMAC256(jwtSecret);
+        this.appDomainName = appDomainName;
     }
 
     public UserToken createUserToken(User user, long expireDateSecond, @Nullable String[] audience, @Nullable String[] scopes){
@@ -51,6 +55,16 @@ public class TokenManager implements Serializable {
         userToken.setExp(expireDateSecond);
         userToken.setSerializedToken(generateJwtToken(userToken));
         return userToken;
+    }
+
+    public UserToken createRefreshToken(User user){
+        String refreshScope = String.format("%s/token/refresh", appDomainName);
+        return createUserToken(
+                user,
+                Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
+                null,
+                new String[]{refreshScope}
+        );
     }
 
     public String generateJwtToken(UserToken userToken) {

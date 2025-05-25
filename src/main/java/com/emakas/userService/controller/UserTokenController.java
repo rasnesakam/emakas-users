@@ -79,14 +79,15 @@ public class UserTokenController {
         if (userLogin.isPresent()){
             User loggedUser = userLogin.get().getLoggedUser();
             UserToken userToken = tokenManager.createUserToken(
-                    loggedUser, Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
+                    loggedUser, Instant.now().plus(5, ChronoUnit.MINUTES).getEpochSecond(),
                     userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
                     userLogin.get().getAuthorizedScopes().toArray(String[]::new)
             );
+            UserToken refreshToken = tokenManager.createRefreshToken(loggedUser);
             userTokenService.save(userToken);
             TokenResponseDto tokenResponseDto = new TokenResponseDto(
                     loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
-                    loggedUser.getEmail(), userToken.getSerializedToken()
+                    loggedUser.getEmail(), userToken.getSerializedToken(), refreshToken.getSerializedToken()
             );
             return new ResponseEntity<>(new Response<>(tokenResponseDto),HttpStatus.OK);
         }

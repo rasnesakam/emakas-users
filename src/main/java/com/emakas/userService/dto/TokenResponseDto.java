@@ -1,8 +1,12 @@
 package com.emakas.userService.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 public class TokenResponseDto {
@@ -10,16 +14,7 @@ public class TokenResponseDto {
     private String name;
     private String surname;
     private String email;
-    private String token;
+    private String accessToken;
+    private String refreshToken;
 
-    public TokenResponseDto(String username, String name, String surname, String email, String token) {
-        this.username = username;
-        this.name = name;
-        this.surname = surname;
-        this.email = email;
-        this.token = token;
-    }
-
-    public TokenResponseDto() {
-    }
 }
