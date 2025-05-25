@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Set;
+import java.util.UUID;
 
 @EqualsAndHashCode
 @NoArgsConstructor
@@ -70,8 +71,14 @@ public class UserToken {
     @Column
     private TokenType tokenType;
 
-    @Column
+    @Column(length = 2048)
     private String serializedToken;
 
 
+    @PrePersist
+    public void generateJtiIfNotExists() {
+        if (this.jti == null || this.jti.isBlank()) {
+            this.jti = UUID.randomUUID().toString();
+        }
+    }
 }
