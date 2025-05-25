@@ -1,4 +1,4 @@
-import {LoginCredentials, LoginResponse} from "../../models/auth.ts";
+import {LoginCredentials, LoginResponse, TokenCollection} from "../../models/auth.ts";
 import {getCookie} from "@utils/getToken.ts";
 
 export async function login(credentials: LoginCredentials){
@@ -21,4 +21,12 @@ export async function login(credentials: LoginCredentials){
                 return loginResponse;
             throw new Error(loginResponse.message);
         })
+}
+
+export async function getToken(grant: string): Promise<TokenCollection>{
+    return fetch(`/api/oauth/token/issue?grant=${grant}`).then(response =>{
+        if (response.ok)
+            return response.json()
+        throw new Error(response.statusText)
+    }).then(data => data as TokenCollection)
 }

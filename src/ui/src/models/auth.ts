@@ -7,3 +7,8 @@ export interface LoginResponse {
     content: string;
     message: string;
 }
+
+export interface TokenCollection {
+    accessToken: string,
+    refreshToken: string
+}

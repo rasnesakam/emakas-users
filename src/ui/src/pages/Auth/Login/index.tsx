@@ -3,7 +3,7 @@ import {useNavigate, useSearchParams} from "react-router";
 import {ExternalResourceInfo} from "../../../models/resources.ts";
 import {getExternalResourceInfo} from "@services/resources";
 import {LoginCredentials} from "../../../models/auth.ts";
-import {login} from "@services/auth";
+import {getToken, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
 import {LoginMethods} from "@utils/enums/LoginMethods.ts";
 
@@ -34,10 +34,14 @@ export function Login(){
         }
         login(loginInput)
             .then(loginResponse => {
+                const grant = loginResponse.content;
                 if (loginMethod === LoginMethods.EXTERNAL && resourceInfo != undefined){
-                    location.replace(`${resourceInfo.redirectUri}?grant=${loginResponse.content}`)
+                    location.replace(`${resourceInfo.redirectUri}?grant=${grant}`)
                 }
                 else if (loginMethod === LoginMethods.INTERNAL){
+                    alert(LoginMethods.INTERNAL)
+                    getToken(grant).then(tokenCollection => console.log(tokenCollection));
+                    // set token as cookie or session key
                     navigate("page/account");
                 }
             })
