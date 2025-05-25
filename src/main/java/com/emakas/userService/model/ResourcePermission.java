@@ -1,14 +1,14 @@
 package com.emakas.userService.model;
 
 import com.emakas.userService.modelValidation.ResourcePermissionUTAValidation;
-import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
+import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.enums.AccessModifier;
 import com.emakas.userService.shared.enums.PermissionScope;
 import com.emakas.userService.shared.enums.PermissionTargetType;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.security.Permission;
+import java.util.Locale;
 
 @Getter
 @Setter
@@ -58,6 +58,11 @@ public class ResourcePermission extends BaseEntity{
      */
     @Override
     public String toString() {
-        return String.join(StringToResourcePermissionConverter.SEPARATOR, this.permissionScope.name(), this.accessModifier.name(), this.resource.getUri());
+        return String.join(
+                Constants.SEPARATOR,
+                this.permissionScope.name().toLowerCase(Locale.ROOT),
+                this.accessModifier.name().toLowerCase(Locale.ROOT),
+                this.resource.getUri()
+        );
     }
 }
