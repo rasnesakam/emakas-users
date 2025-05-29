@@ -24,18 +24,22 @@ public class BaseEntity {
     @Column
     private LocalDateTime createdTime;
 
-    public BaseEntity(UUID id, LocalDateTime createdTime) {
+    @Column
+    private LocalDateTime updatedTime;
+
+    public BaseEntity(UUID id, LocalDateTime createdTime, LocalDateTime updatedTime) {
         this.id = id;
 		this.createdTime = createdTime;
+        this.updatedTime = updatedTime;
 	}
     
-    public BaseEntity(LocalDateTime createdTime) {
-		this(UUID.randomUUID(),createdTime);
+    public BaseEntity(LocalDateTime createdTime, LocalDateTime updatedTime) {
+		this(UUID.randomUUID(),createdTime, updatedTime);
 	}
 
 
 	public BaseEntity() {
-    	this(LocalDateTime.now());
+    	this(LocalDateTime.now(), LocalDateTime.now());
 	}
 
 
