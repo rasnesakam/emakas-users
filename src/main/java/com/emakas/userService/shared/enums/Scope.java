@@ -2,6 +2,7 @@ package com.emakas.userService.shared.enums;
 
 import java.util.stream.Stream;
 
+@Deprecated
 public enum Scope   {
     USERS_R(AccessModifier.READ),
     USERS_W(AccessModifier.WRITE),

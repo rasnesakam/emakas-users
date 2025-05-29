@@ -107,7 +107,7 @@ public class InitializeRootVariables implements CommandLineRunner {
             resourcePermission.setUser(user);
             resourcePermission.setPermissionTargetType(PermissionTargetType.USER);
             resourcePermission.setResource(resource);
-            resourcePermission.setPermissionScope(PermissionScope.ALL);
+            resourcePermission.setPermissionScope(PermissionScope.GLOBAL);
             resourcePermission.setAccessModifier(AccessModifier.READ_WRITE);
             logger.info(String.format("Assigning Role '%s' to user '%s'",resource.getUri(), user.getUserName()));
             resourcePermissionService.save(resourcePermission);
@@ -119,7 +119,7 @@ public class InitializeRootVariables implements CommandLineRunner {
             resourcePermission.setTeam(team);
             resourcePermission.setPermissionTargetType(PermissionTargetType.TEAM);
             resourcePermission.setResource(resource);
-            resourcePermission.setPermissionScope(PermissionScope.ALL);
+            resourcePermission.setPermissionScope(PermissionScope.GLOBAL);
             resourcePermission.setAccessModifier(AccessModifier.READ_WRITE);
             resourcePermissionService.save(resourcePermission);
         });

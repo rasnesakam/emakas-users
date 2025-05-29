@@ -17,6 +17,6 @@ public class Resource extends BaseEntity {
     private String name;
     @Column
     private String description;
-    @Column
+    @Column(unique = true)
     private String uri;
 }

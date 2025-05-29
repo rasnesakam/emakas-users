@@ -19,6 +19,9 @@ public class Team extends BaseEntity{
     @Column
     private String description;
 
+    @Column(unique = true)
+    private String uri;
+
     @ManyToOne
     @JoinColumn(name = "parent_team_id")
     private Team parentTeam;
