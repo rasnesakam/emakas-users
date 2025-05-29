@@ -23,13 +23,13 @@ public class UserLogin extends BaseEntity{
     private User loggedUser;
 
     @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "authorized_audiences", joinColumns = @JoinColumn(name = "authorized_audience_id"))
+    @CollectionTable(name = "authorized_audiences", joinColumns = @JoinColumn(name = "user_login_id"))
     @Column
     private Set<String> authorizedAudiences;
 
 
     @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "authorized_scopes", joinColumns = @JoinColumn(name = "authorized_scopes_id"))
+    @CollectionTable(name = "authorized_scopes", joinColumns = @JoinColumn(name = "user_login_id"))
     @Column
     private Set<String> authorizedScopes;
 
