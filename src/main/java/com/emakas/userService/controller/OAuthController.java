@@ -1,17 +1,13 @@
 package com.emakas.userService.controller;
 
 import com.emakas.userService.auth.JwtAuthentication;
-import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
 import com.emakas.userService.service.UserLoginService;
-import com.emakas.userService.shared.AuthHelper;
 import com.emakas.userService.shared.TokenManager;
-import com.emakas.userService.shared.enums.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,12 +19,11 @@ import com.emakas.userService.service.UserTokenService;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Objects;
 import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "api/oauth")
-public class UserTokenController {
+public class OAuthController {
 
     private final TokenManager tokenManager;
     private final UserTokenService tokenService;
@@ -38,7 +33,7 @@ public class UserTokenController {
     private final TokenPermissionEvaluator tokenPermissionEvaluator;
 
     @Autowired
-    public UserTokenController(UserTokenService tokenService, UserService userService, TokenManager tokenManager, UserLoginService userLoginService, UserTokenService userTokenService, TokenPermissionEvaluator tokenPermissionEvaluator){
+    public OAuthController(UserTokenService tokenService, UserService userService, TokenManager tokenManager, UserLoginService userLoginService, UserTokenService userTokenService, TokenPermissionEvaluator tokenPermissionEvaluator){
         this.tokenService = tokenService;
         this.userService = userService;
         this.tokenManager = tokenManager;
