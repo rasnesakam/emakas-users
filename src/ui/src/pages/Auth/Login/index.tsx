@@ -7,17 +7,22 @@ import {getToken, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
 import {LoginMethods} from "@utils/enums/LoginMethods.ts";
 
+enum PageParameters {
+    PUBLIC_KEY = "public_key",
+    REDIRECT_URL = "redirect"
+}
 
-export function Login(){
+export function LoginPage(){
 
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
     const [resourceInfo, setResourceInfo] = useState<ExternalResourceInfo | undefined>(undefined);
     const [loginMethod, setLoginMethod] = useState(LoginMethods.INTERNAL);
     const navigate = useNavigate();
-    if (urlSearch.has("redirect") && urlSearch.has("public_key") ) {
-        const publicKey: string = urlSearch.get("public_key")!;
-        const redirectUri: string = urlSearch.get("redirect")!;
+    const [loadingState, setLoadingState] = useState<boolean>(false);
+    if (urlSearch.has(PageParameters.REDIRECT_URL) && urlSearch.has(PageParameters.PUBLIC_KEY) ) {
+        const publicKey: string = urlSearch.get(PageParameters.PUBLIC_KEY)!;
+        const redirectUri: string = urlSearch.get(PageParameters.REDIRECT_URL)!;
         getExternalResourceInfo(publicKey, redirectUri)
             .then(resource => setResourceInfo(resource))
             .then(() => setLoginMethod(LoginMethods.EXTERNAL))
@@ -25,12 +30,17 @@ export function Login(){
 
     const onFormSubmit = (e: FormEvent) => {
         e.preventDefault();
+        setLoadingState(true);
+
         const formData = new FormData(e.target as HTMLFormElement);
-
-
         const loginInput: LoginCredentials = {
             username: formData.get("username")!.toString(),
             password: formData.get("password")!.toString(),
+        }
+        if (resourceInfo) {
+            loginInput.app_redirect = resourceInfo.redirectUri;
+            loginInput.app_audiences = resourceInfo.audiences;
+            loginInput.app_scopes = resourceInfo.scopes;
         }
         login(loginInput)
             .then(loginResponse => {
@@ -48,6 +58,10 @@ export function Login(){
             .catch(err => {
                 console.error(err)
             })
+            .finally(() => {
+
+                setLoadingState(false);
+            })
 
 
     }
@@ -55,7 +69,7 @@ export function Login(){
 
     return <>
         <div className="border rounded-md shadow-md px-10 pb-10 pt-2 bg-gray-50 w-2/3 text-black">
-            <LoadingComponent active={true} />
+            <LoadingComponent active={loadingState} />
             <div className="flex flex-row justify-start items-center pb-4">
                 <img src="/vectors/icons8-e-100.svg" className="w-10 h-10" alt={"Logo E for Ensar"}/>
                 <img src="/vectors/icons8-m-100.svg" className="w-10 h-10" alt={"Logo M for Makas"}/>
