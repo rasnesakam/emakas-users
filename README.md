@@ -1,5 +1,8 @@
 # emakas-users
-## User authentication api made with love and Spring Framework in java
+
+ User authentication api made with love and Spring Framework in java
+--------------------------------------------------------------------
+
 `emakas-users` is an identity-authorization module that stores user datas, handles their authentications and authorizations according to [OAuth 2.0](https://datatracker.ietf.org/doc/html/rfc6749) specification.  
 Also whith this module, you can restrict your users (members) by that which services (resources) they can use and how can they use it. In addition to this, you can create secrets for your applications that uses spesific resources.
 
