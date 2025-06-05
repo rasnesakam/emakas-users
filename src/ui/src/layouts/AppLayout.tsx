@@ -1,15 +1,20 @@
 import {Outlet} from "react-router";
-import React from "react";
-interface AppLayoutProps {
-    children?: React.ReactNode;
-}
-export function AppLayout({children}: AppLayoutProps) {
+import {Sidebar} from "@components/Sidebar";
+import {NavBar} from "@components/NavBar";
+
+export function AppLayout() {
     return <>
         <title>Users Dashboard</title>
         <meta name={"description"} content={"Manage your team here!"}/>
-        <main className="flex flex-col items-center min-h-screen">
-            {children || <Outlet />}
-        </main>
+        <div>
+            <NavBar />
+            <div className="flex flex-row flex-start">
+                <Sidebar className={"w-1/12"}/>
+                <main className=" min-h-screen  w-11/12">
+                    <Outlet/>
+                </main>
+            </div>
+        </div>
         <footer></footer>
     </>
 }
