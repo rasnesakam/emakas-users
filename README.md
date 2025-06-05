@@ -195,9 +195,28 @@ An example Jwt is as folows
 
 ### Application
 ### Auth
+
+#### Signing In
+`POST` `/api/auth/sign-in`
+
+This endpoint is using for signin users in. It should not be use by applications directly. It has XSS protection.
+To sign users into your systems, you need to redirect users to [User Sign Page](#login-page)
+
 ### Members
 ### OAuth
 ### Pages
+#### Login Page
+`GET` `/page/auth/login?public_key=string&redirect=base64_string`
+
+This is the static page that users can log in and redirect to their systems. You need to insert these query parameters
+in order to use it for your external services. If you don't, user will redirect to dashboard page.
+
+| Query Parameter |  Type  |                                  Description                                   |
+|:---------------:|:------:|:------------------------------------------------------------------------------:|
+|   public key    | string |          Public key is unique value for each services you registered           |
+|    redirect     | string | The URL that user will be redirected to. It must encrypted with Base 64 format |
+
+
 ### Resource Permissions
 ### Resources
 ### Teams
