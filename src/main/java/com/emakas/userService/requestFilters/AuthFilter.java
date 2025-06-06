@@ -58,12 +58,6 @@ public class AuthFilter extends OncePerRequestFilter {
                     Optional<UserToken> optionalUserToken = tokenManager.getFromToken(token);
                     if (optionalUserToken.isPresent()){
                         UserToken userToken = optionalUserToken.get();
-                        String principal = "";
-                        if (userToken.getTokenType() == TokenType.USR)
-                            principal = userService.getById(UUID.fromString(userToken.getSub())).orElseThrow(() -> new RuntimeException("Unknown principal")).getUserName();
-                        else if (userToken.getTokenType() == TokenType.APP) {
-                            principal = applicationService.getById(UUID.fromString(userToken.getSub())).orElseThrow(() -> new RuntimeException("Unknown principal")).getName();
-                        }
                         JwtAuthentication jwtAuthentication = new JwtAuthentication(userToken);
                         SecurityContextHolder.getContext().setAuthentication(jwtAuthentication);
                         filterChain.doFilter(request,response);
