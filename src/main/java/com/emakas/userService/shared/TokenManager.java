@@ -18,6 +18,10 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.emakas.userService.shared.Constants.SEPARATOR;
 
 @Component
 public class TokenManager implements Serializable {
@@ -89,7 +93,7 @@ public class TokenManager implements Serializable {
             TokenType tokenType = TokenType.fromString(sub);
             if (tokenType == TokenType.UNDEFINED)
                 throw new JWTDecodeException("Undefined token type");
-            sub = TokenType.getCleanSubject(tokenType, sub).orElseThrow(() -> new RuntimeException("Unknown token."));
+            sub = getCleanSubject(tokenType, sub).orElseThrow(() -> new RuntimeException("Unknown token."));
             return Optional.of(new UserToken(
                 decodedJWT.getId(),
                 decodedJWT.getIssuer(),
@@ -144,6 +148,15 @@ public class TokenManager implements Serializable {
         catch (JWTVerificationException exception){
             return TokenVerificationStatus.FAILED.withException(exception);
         }
+    }
+
+    public Optional<String> getCleanSubject(@NonNull TokenType tokenType, String tokenSubject) {
+        Pattern tokenPattern = Pattern.compile(String.format("^%s%s(.*)$",tokenType, SEPARATOR));
+        Matcher matcher = tokenPattern.matcher(tokenSubject);
+        if (matcher.matches()) {
+            return Optional.of(matcher.group(1));
+        }
+        return Optional.empty();
     }
 
     public UserToken generateUserToken(User user, String... audiences) {

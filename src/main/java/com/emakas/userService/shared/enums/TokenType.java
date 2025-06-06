@@ -6,12 +6,13 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.emakas.userService.shared.Constants.SEPARATOR;
+
 public enum TokenType {
     APP,
     USR,
     UNDEFINED;
 
-    private static final String SEPARATOR = ":";
     @Override
     public String toString() {
         return name().toLowerCase();
@@ -24,12 +25,5 @@ public enum TokenType {
         else
             return UNDEFINED;
     }
-    public static Optional<String> getCleanSubject(@NonNull TokenType tokenType, String tokenSubject) {
-        Pattern tokenPattern = Pattern.compile(String.format("^%s%s(.*)$",tokenType, SEPARATOR));
-        Matcher matcher = tokenPattern.matcher(tokenSubject);
-        if (matcher.matches()) {
-            return Optional.of(matcher.group(1));
-        }
-        return Optional.empty();
-    }
+
 }
