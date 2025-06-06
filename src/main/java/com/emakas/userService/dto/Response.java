@@ -12,4 +12,15 @@ public class Response <T>{
     public Response(T content) {
         this(content,null);
     }
+
+    public static <T> Response<T> of(T content) {
+        return new Response<T>(content,null);
+    }
+
+    public static <T> Response<T> of(T content, String message) {
+        return new Response<T>(content, message);
+    }
+    public static <T> Response<T> of(String message) {
+        return new Response<T>(null,message);
+    }
 }
