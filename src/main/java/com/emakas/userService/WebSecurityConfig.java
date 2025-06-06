@@ -2,6 +2,7 @@ package com.emakas.userService;
 
 import com.emakas.userService.csrfTokenHandlers.SpaCsrfTokenRequestHandler;
 import com.emakas.userService.handlers.UnauthorizedHandler;
+import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
 import com.emakas.userService.requestFilters.AuthFilter;
 import com.emakas.userService.service.ApplicationService;
 import com.emakas.userService.service.UserService;
@@ -10,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -35,7 +38,7 @@ import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
 
     private final UnauthorizedHandler handler;
@@ -65,11 +68,6 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public AuthFilter getAuthenticationFilter(){
-        return new AuthFilter(tokenManager, userService, applicationService);
-    }
-
-    @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http.csrf(config -> {
@@ -89,6 +87,13 @@ public class WebSecurityConfig {
         }).sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
+    }
+
+    @Bean
+    public MethodSecurityExpressionHandler methodSecurityExpressionHandler(TokenPermissionEvaluator permissionEvaluator) {
+        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+        expressionHandler.setPermissionEvaluator(permissionEvaluator);
+        return expressionHandler;
     }
 
 }
