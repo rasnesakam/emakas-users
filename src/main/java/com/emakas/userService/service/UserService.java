@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,7 +23,7 @@ public class UserService extends CoreService<User, UUID> implements UserDetailsS
         this.repository = repository;
     }
     
-    public User getByUserName(String userName) {
+    public Optional<User> getByUserName(String userName) {
     	return repository.getByUserName(userName);
     }
 
@@ -33,12 +34,13 @@ public class UserService extends CoreService<User, UUID> implements UserDetailsS
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = repository.getByUserName(username);
-        if (user == null)
+        Optional<User> user = repository.getByUserName(username);
+        if (user.isEmpty())
             throw new UsernameNotFoundException(String.format("User with username \"%s\" not found",username));
+
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUserName())
-                .password(user.getPassword())
+                .username(user.get().getUserName())
+                .password(user.get().getPassword())
                 .build();
     }
 }

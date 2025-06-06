@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Optional;
 
 public class CoreService<ENTITY extends BaseEntity,ID extends Serializable> {
 
@@ -20,8 +21,8 @@ public class CoreService<ENTITY extends BaseEntity,ID extends Serializable> {
         return coreRepository.findAll();
     }
 
-    public ENTITY getById(ID id){
-        return coreRepository.findById(id).orElse(null);
+    public Optional<ENTITY> getById(ID id){
+        return Optional.ofNullable(coreRepository.findById(id).orElse(null));
     }
 
     public ENTITY save(ENTITY entity){

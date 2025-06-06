@@ -65,8 +65,8 @@ public class InitializeRootVariables implements CommandLineRunner {
     }
 
     public User createAdminUserIfNotExists(){
-        User user = userService.getByUserName("admin");
-        if (user == null) {
+        Optional<User> user = userService.getByUserName("admin");
+        if (user.isEmpty()) {
             User adminUser = new User();
             adminUser.setUserName("admin");
             String password = getRandomPasswordText();
@@ -77,7 +77,7 @@ public class InitializeRootVariables implements CommandLineRunner {
             return adminUser;
         }
         System.out.println("Admin user already exists");
-        return user;
+        return user.get();
     }
 
     public Team createCoreTeamIfNotExists(User lead){

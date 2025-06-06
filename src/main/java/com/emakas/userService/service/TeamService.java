@@ -44,6 +44,10 @@ public class TeamService extends CoreService<Team, UUID> {
         });
     }
 
+    public Collection<Team> getTeamsByOwner(UUID ownerId) {
+        return teamRepository.findByLeadId(ownerId);
+    }
+
     public Collection<Team> getUserTeams(User user){
         return teamRepository.findTeamsByMembers(user);
     }

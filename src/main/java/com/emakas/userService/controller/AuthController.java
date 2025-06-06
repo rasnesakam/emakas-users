@@ -82,7 +82,7 @@ public class AuthController {
                     loginModel.getPassword()
             ));
             if (auth.isAuthenticated()){
-                User user = this.userService.getByUserName(loginModel.getUsername());
+                User user = this.userService.getByUserName(loginModel.getUsername()).get();
                 Set<String> audienceSet = Set.of(audiences);
                 Set<String> scopeSet = getDefinedOrDefaultScopes(scopes, user);
 
@@ -118,11 +118,11 @@ public class AuthController {
     @DeleteMapping("delete/{uuid}")
     @ResponseBody
     public ResponseEntity<User> deleteUser(@PathVariable UUID uuid) {
-    	User user = userService.getById(uuid);
-    	if (user == null)
+    	Optional<User> user = userService.getById(uuid);
+    	if (user.isEmpty())
     		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    	userService.delete(user);
-    	return new ResponseEntity<>(user,HttpStatus.OK);
+    	userService.delete(user.get());
+    	return new ResponseEntity<>(user.get(),HttpStatus.OK);
     }
 
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -42,10 +43,12 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
             Resource resource = resourceService.getByUri(resourceUri);
             AccessModifier modifier = AccessModifier.valueOf(permission.toString());
             if (userToken.getTokenType() == TokenType.USR) {
-                User user = userService.getById(UUID.fromString(userId));
-                Collection<Team> userTeams = teamService.getUserTeams(user);
-                boolean hasUserPermission = resourcePermissionService.getUserPermissionsByResource(user, resource).stream()
-                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, user));
+                Optional<User> user = userService.getById(UUID.fromString(userId));
+                if (user.isEmpty())
+                    return false;
+                Collection<Team> userTeams = teamService.getUserTeams(user.get());
+                boolean hasUserPermission = resourcePermissionService.getUserPermissionsByResource(user.get(), resource).stream()
+                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, user.get()));
                 boolean hasTeamPermission = userTeams.stream()
                         .anyMatch(team ->
                                 resourcePermissionService.getTeamPermissionsByResource(team, resource).stream()
@@ -54,9 +57,9 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
                 return hasUserPermission || hasTeamPermission;
             }
             else if (userToken.getTokenType() == TokenType.APP) {
-                Application app = applicationService.getById(UUID.fromString(userId));
-                return resourcePermissionService.getApplicationPermissionsByResource(app, resource).stream()
-                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, app));
+                Optional<Application> app = applicationService.getById(UUID.fromString(userId));
+                return app.isPresent() && resourcePermissionService.getApplicationPermissionsByResource(app.get(), resource).stream()
+                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, app.get()));
             }
             else return false;
         }

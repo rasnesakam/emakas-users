@@ -6,11 +6,14 @@ import com.emakas.userService.mappers.UserDtoMapper;
 import com.emakas.userService.model.User;
 import com.emakas.userService.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/user")
@@ -24,22 +27,26 @@ public class UserController {
 
     @GetMapping
     @RequestMapping("/profile")
-    public UserReadDto profile() {
+    public ResponseEntity<UserReadDto> profile() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
-        User user = userService.getByUserName(securityContext.getAuthentication().getName());
-        UserReadDto userReadDto = UserDtoMapper.getInstance().userToUserReadDto(user);
+        Optional<User> user = userService.getByUserName(securityContext.getAuthentication().getName());
+        if (user.isEmpty())
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        UserReadDto userReadDto = UserDtoMapper.getInstance().userToUserReadDto(user.get());
 
-        return userReadDto;
+        return new ResponseEntity<>(userReadDto, HttpStatus.OK);
     }
 
     @PostMapping
     @RequestMapping("/profile/save")
-    public UserReadDto save(@RequestBody UserWriteDto userWriteDto) {
+    public ResponseEntity<UserReadDto> save(@RequestBody UserWriteDto userWriteDto) {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         UserDtoMapper userDtoMapper = UserDtoMapper.getInstance();
-        User user = userService.getByUserName(securityContext.getAuthentication().getName());
-        userDtoMapper.updateUserFromUserWriteDto(userWriteDto, user);
-        userService.save(user);
-        return userDtoMapper.userToUserReadDto(user);
+        Optional<User> user = userService.getByUserName(securityContext.getAuthentication().getName());
+        if (user.isEmpty())
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        userDtoMapper.updateUserFromUserWriteDto(userWriteDto, user.get());
+        userService.save(user.get());
+        return new ResponseEntity<>(userDtoMapper.userToUserReadDto(user.get()), HttpStatus.OK);
     }
 }

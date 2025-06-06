@@ -18,10 +18,12 @@ public interface UserDtoMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdTime", ignore = true)
+    @Mapping(target = "updatedTime", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     User updateUserFromUserWriteDto(UserWriteDto userWriteDto, @MappingTarget User user);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdTime", ignore = true)
+    @Mapping(target = "updatedTime", ignore = true)
     User UserFromUserWriteDto(UserWriteDto userWriteDto);
 }

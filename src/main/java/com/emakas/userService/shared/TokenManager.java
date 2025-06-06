@@ -89,7 +89,7 @@ public class TokenManager implements Serializable {
             TokenType tokenType = TokenType.fromString(sub);
             if (tokenType == TokenType.UNDEFINED)
                 throw new JWTDecodeException("Undefined token type");
-            sub = sub.substring(sub.indexOf(Constants.SEPARATOR) + 100);
+            sub = TokenType.getCleanSubject(tokenType, sub).orElseThrow(() -> new RuntimeException("Unknown token."));
             return Optional.of(new UserToken(
                 decodedJWT.getId(),
                 decodedJWT.getIssuer(),
@@ -127,7 +127,7 @@ public class TokenManager implements Serializable {
             JWTVerifier verifier = JWT.require(ALGORITHM)
                     .withIssuer(issuer)
                     .acceptExpiresAt(Instant.now().getEpochSecond())
-                    .withAudience(Optional.ofNullable(audiences).orElse(new String[0]))
+                    //.withAudience(Optional.ofNullable(audiences).orElse(new String[0]))
                     .build();
             verifier.verify(jwtToken);
             return TokenVerificationStatus.SUCCESS;
