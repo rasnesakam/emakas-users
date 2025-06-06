@@ -42,27 +42,27 @@ public class ResourcePermissionService extends CoreService<ResourcePermission, U
 
 
     public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier){
-        return resourcePermission.getAccessModifier() == modifier
+        return (resourcePermission.getAccessModifier() == modifier || resourcePermission.getAccessModifier() == AccessModifier.READ_WRITE)
                 && resourcePermission.getResource().getUri().equals(targetDomainUri);
     }
 
     public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier, User user){
-        return resourcePermission.getPermissionTargetType() == PermissionTargetType.USER
-                && resourcePermission.getUser() == user
-                && resourcePermission.getAccessModifier() == modifier;
+        return hasPermissionFor(resourcePermission, targetDomainUri, modifier)
+                && resourcePermission.getPermissionTargetType() == PermissionTargetType.USER
+                && resourcePermission.getUser().getId().equals(user.getId());
     }
 
 
     public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier, Team team){
-        return resourcePermission.getPermissionTargetType() == PermissionTargetType.TEAM
-                && resourcePermission.getTeam() == team
-                && resourcePermission.getAccessModifier() == modifier;
+        return hasPermissionFor(resourcePermission, targetDomainUri, modifier)
+                && resourcePermission.getPermissionTargetType() == PermissionTargetType.TEAM
+                && resourcePermission.getTeam().getId().equals(team.getId());
     }
 
 
     public boolean hasPermissionFor(ResourcePermission resourcePermission,  String targetDomainUri, AccessModifier modifier, Application application){
-        return resourcePermission.getPermissionTargetType() == PermissionTargetType.APP
-                && resourcePermission.getApplication() == application
-                && resourcePermission.getAccessModifier() == modifier;
+        return hasPermissionFor(resourcePermission, targetDomainUri, modifier)
+                && resourcePermission.getPermissionTargetType() == PermissionTargetType.APP
+                && resourcePermission.getApplication().getId().equals(application.getId());
     }
 }
