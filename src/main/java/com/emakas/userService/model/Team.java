@@ -37,10 +37,11 @@ public class Team extends BaseEntity{
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private User lead;
 
-    @PrePersist
+    @Override
     public void prePersist(){
         if (lead != null && members != null && !members.contains(lead)) {
             members.add(lead);
         }
+        super.prePersist();
     }
 }

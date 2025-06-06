@@ -76,7 +76,7 @@ public class UserToken {
 
 
     @PrePersist
-    public void generateJtiIfNotExists() {
+    public void prePersist() {
         if (this.jti == null || this.jti.isBlank()) {
             this.jti = UUID.randomUUID().toString();
         }

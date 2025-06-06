@@ -44,13 +44,13 @@ public class BaseEntity {
 
 
     @PrePersist
-    public void setDatesOnCreate() {
+    public void prePersist() {
         this.createdTime = LocalDateTime.now();
         this.updatedTime = LocalDateTime.now();
     }
 
     @PreUpdate
-    public void setDatesOnUpdate() {
+    public void preUpdate() {
         this.updatedTime = LocalDateTime.now();
     }
 }

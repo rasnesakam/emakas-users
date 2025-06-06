@@ -43,12 +43,13 @@ public class UserLogin extends BaseEntity{
      * Prepersist function will be executed before object being persisted.
      * Set expirationDate 10 minutes after current date
      */
-    @PrePersist
+    @Override
     public void prePersist(){
         if (this.getAuthorizationGrant() == null)
             this.setAuthorizationGrant(UUID.randomUUID());
         if (this.expirationDateInSeconds == 0)
             this.expirationDateInSeconds = Instant.now().plus( 10, ChronoUnit.MINUTES).getEpochSecond();
+        super.prePersist();
     }
 
 
