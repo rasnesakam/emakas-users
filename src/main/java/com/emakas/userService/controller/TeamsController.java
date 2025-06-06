@@ -1,8 +1,12 @@
 package com.emakas.userService.controller;
 
+import com.emakas.userService.auth.JwtAuthentication;
+import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TeamReadDto;
 import com.emakas.userService.mappers.TeamsDtoMapper;
+import com.emakas.userService.model.Team;
 import com.emakas.userService.service.TeamService;
+import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.TokenType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,23 +28,27 @@ import java.util.stream.Collectors;
 public class TeamsController {
     private final TeamService teamService;
     private final TeamsDtoMapper teamsDtoMapper;
+    private final TokenManager tokenManager;
 
     @Autowired
-    public TeamsController(TeamService teamService, TeamsDtoMapper teamsDtoMapper) {
+    public TeamsController(TeamService teamService, TeamsDtoMapper teamsDtoMapper, TokenManager tokenManager) {
         this.teamService = teamService;
         this.teamsDtoMapper = teamsDtoMapper;
+        this.tokenManager = tokenManager;
     }
 
     @GetMapping("/owned")
-    public ResponseEntity<Collection<TeamReadDto>> getOwnedTeams(){
+    public ResponseEntity<Response<Collection<TeamReadDto>>> getOwnedTeams(){
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = securityContext.getAuthentication();
-        String userPrincipal = (String) authentication.getPrincipal();
-        Optional<UUID> userId = TokenType.getCleanSubject(TokenType.USR,userPrincipal).map(UUID::fromString);
-        if (userId.isEmpty()) {
-            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        if (authentication instanceof JwtAuthentication jwtAuthentication) {
+            String userPrincipal = (String) jwtAuthentication.getPrincipal();
+            UUID userId = UUID.fromString(userPrincipal);
+            if (jwtAuthentication.getUserToken().getTokenType() != TokenType.USR)
+                return new ResponseEntity<>(Response.of("Invalid Token Type"), HttpStatus.UNAUTHORIZED);
+            Collection<Team> teams = teamService.getTeamsByOwner(userId);
+            return new ResponseEntity<>(Response.of(teams.stream().map(teamsDtoMapper::teamToTeamReadDto).toList()), HttpStatus.OK);
         }
-        Collection<TeamReadDto> teams = teamService.getTeamsByOwner(userId.get()).stream().map(teamsDtoMapper::teamToTeamReadDto).toList();
-        return new ResponseEntity<>(teams, HttpStatus.OK);
+        return new ResponseEntity<>(Response.of("Invalid Token"), HttpStatus.UNAUTHORIZED);
     }
 }
