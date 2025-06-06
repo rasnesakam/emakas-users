@@ -1,5 +1,7 @@
 package com.emakas.userService.shared.enums;
 
+import java.util.Locale;
+
 public enum PermissionScope {
     /**
      * <h1>PermissionScope.SELF</h1>
@@ -18,4 +20,10 @@ public enum PermissionScope {
      * Represents that user can acces on their own, team's and sub team's resources
      */
     GLOBAL;
+
+
+    @Override
+    public String toString() {
+        return name().toLowerCase(Locale.ROOT);
+    }
 }

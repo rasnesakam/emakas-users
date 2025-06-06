@@ -60,8 +60,8 @@ public class ResourcePermission extends BaseEntity{
     public String toString() {
         return String.join(
                 Constants.SEPARATOR,
-                this.permissionScope.name().toLowerCase(Locale.ROOT),
-                this.accessModifier.name().toLowerCase(Locale.ROOT),
+                this.permissionScope.toString(),
+                this.accessModifier.toString(),
                 this.resource.getUri()
         );
     }

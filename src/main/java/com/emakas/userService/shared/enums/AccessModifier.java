@@ -1,5 +1,7 @@
 package com.emakas.userService.shared.enums;
 
+import java.util.Locale;
+
 public enum AccessModifier {
     READ,
     WRITE,
@@ -8,6 +10,6 @@ public enum AccessModifier {
 
     @Override
     public String toString() {
-        return super.toString().substring(0,1).toLowerCase();
+        return name().toLowerCase(Locale.ROOT);
     }
 }
