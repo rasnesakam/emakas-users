@@ -17,7 +17,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Component
+@Deprecated
+// @Component
 public class CorePermissionEvaluator implements PermissionEvaluator {
     private final ResourcePermissionService resourcePermissionService;
     private final UserService userService;
@@ -25,7 +26,7 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
     private final ApplicationService applicationService;
     private final ResourceService resourceService;
 
-    @Autowired
+    // @Autowired
     public CorePermissionEvaluator(ResourcePermissionService resourcePermissionService, UserService userService, TeamService teamService, ApplicationService applicationService, ResourceService resourceService) {
         this.resourcePermissionService = resourcePermissionService;
         this.userService = userService;
