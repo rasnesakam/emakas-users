@@ -38,7 +38,8 @@ public class TeamsController {
         this.tokenManager = tokenManager;
     }
 
-    @PreAuthorize("hasPermission('iam.emakas.net/teams','read')")
+    //TODO: Domain names will be dynamic. Find a way to implement dynamic resource uri for PreAuthorize. You can implement Variables
+    @PreAuthorize("hasPermission(#RSC_TEAMS,'read')")
     @GetMapping("/owned")
     public ResponseEntity<Response<Collection<TeamReadDto>>> getOwnedTeams(){
         SecurityContext securityContext = SecurityContextHolder.getContext();

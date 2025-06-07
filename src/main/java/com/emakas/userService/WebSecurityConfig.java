@@ -7,9 +7,15 @@ import com.emakas.userService.requestFilters.AuthFilter;
 import com.emakas.userService.service.ApplicationService;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.shared.TokenManager;
+import com.emakas.userService.shared.expressionHandlers.CustomMethodSecurityExpressionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
@@ -89,11 +95,12 @@ public class WebSecurityConfig {
         return http.build();
     }
 
+    /*
     @Bean
     public MethodSecurityExpressionHandler methodSecurityExpressionHandler(TokenPermissionEvaluator permissionEvaluator) {
-        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setPermissionEvaluator(permissionEvaluator);
-        return expressionHandler;
+        CustomMethodSecurityExpressionHandler customMethodSecurityExpressionHandler = new CustomMethodSecurityExpressionHandler();
+        customMethodSecurityExpressionHandler.setPermissionEvaluator(permissionEvaluator);
+        return customMethodSecurityExpressionHandler;
     }
-
+    */
 }
