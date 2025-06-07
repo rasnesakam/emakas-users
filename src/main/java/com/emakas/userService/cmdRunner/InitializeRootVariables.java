@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,6 +34,7 @@ public class InitializeRootVariables implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(InitializeRootVariables.class);
     private final ResourceService resourceService;
     private final String appDomainName;
+    private final Map<String, Resource> resourceMap;
 
     @Autowired
     public InitializeRootVariables(
@@ -41,7 +43,7 @@ public class InitializeRootVariables implements CommandLineRunner {
             ResourcePermissionService resourcePermissionService,
             PasswordEncoder passwordEncoder,
             ResourceService resourceService,
-            @Value("${app.domain}") String appDomainName
+            @Value("${app.domain}") String appDomainName, Map<String, Resource> resourceMap
     ) {
         this.userService = userService;
         this.teamService = teamService;
@@ -49,6 +51,7 @@ public class InitializeRootVariables implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
         this.resourceService = resourceService;
         this.appDomainName = appDomainName;
+        this.resourceMap = resourceMap;
     }
 
     public String getRandomPasswordText(){
@@ -91,18 +94,12 @@ public class InitializeRootVariables implements CommandLineRunner {
         return coreTeam.get();
     }
     public Collection<Resource> createDefaultResources(){
-        Stream<Resource> resources = Stream.of(
-                new Resource("Teams", "", String.format("%s/teams",appDomainName)),
-                new Resource("Members", "", String.format("%s/members",appDomainName)),
-                new Resource("Team Members", "", String.format("%s/teamMembers",appDomainName)),
-                new Resource("Applications", "", String.format("%s/applications",appDomainName)),
-                new Resource("Resource", "", String.format("%s/resources",appDomainName))
-        );
+        Stream<Resource> resources = resourceMap.values().stream();
         resources = resources.map(resourceService::save);
         return resources.collect(Collectors.toSet());
     }
     public void assignAdminPermissions(User user, Collection<Resource> resources){
-        resources.stream().forEach(resource -> {
+        resources.forEach(resource -> {
             ResourcePermission resourcePermission = new ResourcePermission();
             resourcePermission.setUser(user);
             resourcePermission.setPermissionTargetType(PermissionTargetType.USER);
