@@ -2,12 +2,11 @@ package com.emakas.userService.permissionEvaluators;
 
 import com.emakas.userService.auth.JwtAuthentication;
 import com.emakas.userService.model.ResourcePermission;
-import com.emakas.userService.model.UserToken;
+import com.emakas.userService.model.Token;
 import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.shared.converters.StringToAccessModifierConverter;
 import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
 import com.emakas.userService.shared.enums.AccessModifier;
-import com.emakas.userService.shared.enums.TokenType;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.PermissionEvaluator;
@@ -46,20 +45,20 @@ public class TokenPermissionEvaluator implements PermissionEvaluator {
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
         if (authentication instanceof JwtAuthentication jwtAuthentication){
-            UserToken userToken = jwtAuthentication.getUserToken();
+            Token token = jwtAuthentication.getUserToken();
             Optional<AccessModifier> requestedAccessModifierOptional = stringToAccessModifierConverter.convert(permission.toString());
             if (requestedAccessModifierOptional.isEmpty() || !authentication.isAuthenticated())
                 return false;
             AccessModifier requestedAccessModifier = requestedAccessModifierOptional.get();
             String requestedResourceUri = targetDomainObject.toString();
-            Stream<ResourcePermission> resourcePermissions = getResourcePermissionsFromToken(userToken, targetDomainObject);
+            Stream<ResourcePermission> resourcePermissions = getResourcePermissionsFromToken(token, targetDomainObject);
             return resourcePermissions.anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, requestedResourceUri, requestedAccessModifier));
         }
         return false;
     }
 
-    private Stream<ResourcePermission> getResourcePermissionsFromToken(@NotNull UserToken userToken, Object targetDomainObject) {
-        return userToken.getScope().stream()
+    private Stream<ResourcePermission> getResourcePermissionsFromToken(@NotNull Token token, Object targetDomainObject) {
+        return token.getScope().stream()
                 .map(stringToResourcePermissionConverter::convert)
                 .filter(Objects::nonNull).filter(Optional::isPresent)
                 .map(Optional::get)

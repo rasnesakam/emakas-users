@@ -7,14 +7,12 @@ import java.util.stream.Collectors;
 
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
-import com.emakas.userService.dto.UserRegistrationReadDto;
 import com.emakas.userService.dto.UserWriteDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.service.UserLoginService;
-import com.emakas.userService.service.UserTokenService;
+import com.emakas.userService.service.TokenService;
 import com.emakas.userService.shared.TokenManager;
-import com.emakas.userService.shared.enums.Scope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +33,7 @@ import com.emakas.userService.service.UserService;
 public class AuthController {
 
     private final UserService userService;
-    private final UserTokenService userTokenService;
+    private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
     private final TokenManager tokenManager;
     private final PasswordEncoder passwordEncoder;
@@ -43,9 +41,9 @@ public class AuthController {
     private final ResourcePermissionService resourcePermissionService;
 
     @Autowired
-    public AuthController(UserService service, UserTokenService userTokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService) {
+    public AuthController(UserService service, TokenService tokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService) {
         this.userService = service;
-        this.userTokenService = userTokenService;
+        this.tokenService = tokenService;
         this.authenticationManager = authenticationManager;
         this.tokenManager = tokenManager;
         this.passwordEncoder = passwordEncoder;

@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Table(name="user_tokens")
-public class UserToken {
+public class Token {
 
 
     /**

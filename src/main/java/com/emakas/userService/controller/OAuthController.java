@@ -5,20 +5,22 @@ import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
+import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.service.UserLoginService;
 import com.emakas.userService.shared.TokenManager;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import com.emakas.userService.service.UserService;
-import com.emakas.userService.service.UserTokenService;
+import com.emakas.userService.service.TokenService;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @RestController
@@ -26,20 +28,18 @@ import java.util.Optional;
 public class OAuthController {
 
     private final TokenManager tokenManager;
-    private final UserTokenService tokenService;
-    private final UserService userService;
+    private final TokenService tokenService;
     private final UserLoginService userLoginService;
-    private final UserTokenService userTokenService;
     private final TokenPermissionEvaluator tokenPermissionEvaluator;
+    private final ResourcePermissionService resourcePermissionService;
 
     @Autowired
-    public OAuthController(UserTokenService tokenService, UserService userService, TokenManager tokenManager, UserLoginService userLoginService, UserTokenService userTokenService, TokenPermissionEvaluator tokenPermissionEvaluator){
+    public OAuthController(TokenService tokenService, TokenManager tokenManager, UserLoginService userLoginService, TokenPermissionEvaluator tokenPermissionEvaluator, ResourcePermissionService resourcePermissionService){
         this.tokenService = tokenService;
-        this.userService = userService;
         this.tokenManager = tokenManager;
         this.userLoginService = userLoginService;
-        this.userTokenService = userTokenService;
         this.tokenPermissionEvaluator = tokenPermissionEvaluator;
+        this.resourcePermissionService = resourcePermissionService;
     }
     
     @GetMapping("token/verify")
@@ -74,21 +74,46 @@ public class OAuthController {
         Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
         if (userLogin.isPresent()){
             User loggedUser = userLogin.get().getLoggedUser();
-            UserToken userToken = tokenManager.createUserToken(
-                    loggedUser, Instant.now().plus(5, ChronoUnit.MINUTES).getEpochSecond(),
+            Token token = tokenManager.createUserAccessToken(
+                    loggedUser,
                     userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
                     userLogin.get().getAuthorizedScopes().toArray(String[]::new)
             );
-            UserToken refreshToken = tokenManager.createRefreshToken(loggedUser);
-            userTokenService.save(userToken);
+            Token refreshToken = tokenManager.createUserRefreshToken(loggedUser, userLogin.get().getAuthorizedAudiences().toArray(String[]::new));
+            tokenService.saveBatch(token, refreshToken);
             TokenResponseDto tokenResponseDto = new TokenResponseDto(
                     loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
-                    loggedUser.getEmail(), userToken.getSerializedToken(), refreshToken.getSerializedToken()
+                    loggedUser.getEmail(), token.getSerializedToken(), refreshToken.getSerializedToken()
             );
             return new ResponseEntity<>(new Response<>(tokenResponseDto),HttpStatus.OK);
         }
         return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
     }
 
-
+    @GetMapping("token/refresh")
+    @PreAuthorize("hasPermission('REFRESH_TOKEN','read_write')")
+    public ResponseEntity<Response<TokenResponseDto>> refreshToken(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof JwtAuthentication jwtAuthentication){
+            String origin = request.getHeader(HttpHeaders.ORIGIN);
+            if (jwtAuthentication.getUserToken().getAud().stream().anyMatch(audience -> audience.equals(origin))){
+                Optional<User> optionalUser = tokenManager.loadUserFromToken(jwtAuthentication.getUserToken());
+                if (optionalUser.isEmpty())
+                    return new ResponseEntity<>(Response.of("Invalid Token"), HttpStatus.BAD_REQUEST);
+                User user = optionalUser.get();
+                String[] audiences = jwtAuthentication.getUserToken().getAud().toArray(String[]::new);
+                String[] scopes = resourcePermissionService.getPermissionsByUser(user)
+                        .stream().map(ResourcePermission::toString).toArray(String[]::new);
+                Token newAccessToken = tokenManager.createUserAccessToken(user, audiences, scopes);
+                Token newRefreshToken = tokenManager.createUserRefreshToken(user, audiences);
+                tokenService.saveBatch(newAccessToken, newRefreshToken);
+                TokenResponseDto tokenResponseDto = new TokenResponseDto(
+                        user.getUserName(), user.getName(), user.getSurname(),
+                        user.getEmail(), newAccessToken.getSerializedToken(), newRefreshToken.getSerializedToken()
+                );
+                return new ResponseEntity<>(Response.of(tokenResponseDto), HttpStatus.OK);
+            }
+        }
+        else return new ResponseEntity<>(Response.of("Invalid Token"),HttpStatus.BAD_REQUEST);
+    }
 }

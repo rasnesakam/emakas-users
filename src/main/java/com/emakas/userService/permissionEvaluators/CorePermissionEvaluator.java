@@ -5,17 +5,13 @@ import com.emakas.userService.model.*;
 import com.emakas.userService.service.*;
 import com.emakas.userService.shared.enums.AccessModifier;
 import com.emakas.userService.shared.enums.TokenType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Deprecated
 // @Component
@@ -39,11 +35,11 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
         if (authentication instanceof JwtAuthentication) {
             String userId = authentication.getName();
-            UserToken userToken = (UserToken) authentication.getCredentials();
+            Token token = (Token) authentication.getCredentials();
             String resourceUri = targetDomainObject.toString();
             Resource resource = resourceService.getByUri(resourceUri);
             AccessModifier modifier = AccessModifier.valueOf(permission.toString());
-            if (userToken.getTokenType() == TokenType.USR) {
+            if (token.getTokenType() == TokenType.USR) {
                 Optional<User> user = userService.getById(UUID.fromString(userId));
                 if (user.isEmpty())
                     return false;
@@ -57,7 +53,7 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
                         );
                 return hasUserPermission || hasTeamPermission;
             }
-            else if (userToken.getTokenType() == TokenType.APP) {
+            else if (token.getTokenType() == TokenType.APP) {
                 Optional<Application> app = applicationService.getById(UUID.fromString(userId));
                 return app.isPresent() && resourcePermissionService.getApplicationPermissionsByResource(app.get(), resource).stream()
                         .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, modifier, app.get()));
