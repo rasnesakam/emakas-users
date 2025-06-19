@@ -114,6 +114,6 @@ public class OAuthController {
                 return new ResponseEntity<>(Response.of(tokenResponseDto), HttpStatus.OK);
             }
         }
-        else return new ResponseEntity<>(Response.of("Invalid Token"),HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(Response.of("Invalid Token"),HttpStatus.BAD_REQUEST);
     }
 }
