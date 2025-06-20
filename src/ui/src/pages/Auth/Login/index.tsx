@@ -44,8 +44,7 @@ export function LoginPage(){
             loginInput.app_scopes = resourceInfo.scopes;
         }
         login(loginInput)
-            .then(loginResponse => {
-                const grant = loginResponse.content;
+            .then(grant => {
                 if (loginMethod === LoginMethods.EXTERNAL && resourceInfo != undefined){
                     location.replace(`${resourceInfo.redirectUri}?grant=${grant}`)
                 }
