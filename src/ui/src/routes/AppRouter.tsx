@@ -19,8 +19,8 @@ export function AppRouter (){
                         <Route path={"sign-up"} element={<LoginPage/>}/>
                     </Route>
                 </Route>
-                <Route index element={<HomePage />}/>
                 <Route element={<RestrictLayout/>}>
+                    <Route index element={<HomePage />}/>
                     <Route path={"account"} element={<AccountPage />} />
                     <Route path={"teams"} element={<UnderConstruction />} />
                     <Route path={"resources"} element={<UnderConstruction />} />
