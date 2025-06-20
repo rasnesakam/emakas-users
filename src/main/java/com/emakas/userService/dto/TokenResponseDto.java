@@ -11,16 +11,12 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TokenResponseDto {
-    @JsonProperty("username")
     private String username;
 
-    @JsonProperty("name")
     private String name;
 
-    @JsonProperty("surname")
     private String surname;
 
-    @JsonProperty("email")
     private String email;
 
     @JsonProperty("access_token")
