@@ -1,4 +1,4 @@
-import {Authentication, LoginCredentials } from "../../models/auth.ts";
+import {Authentication, LoginCredentials } from "../../models/Auth.ts";
 import {getCookie} from "@utils/getToken.ts";
 import {ResponseWrapper} from "../../models/ResponseWrapper.ts";
 

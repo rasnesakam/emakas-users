@@ -1,8 +1,8 @@
 import {FormEvent, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router";
-import {ExternalResourceInfo} from "../../../models/resources.ts";
+import {ExternalResourceInfo} from "../../../models/Resource.ts";
 import {getExternalResourceInfo} from "@services/resources";
-import {LoginCredentials} from "../../../models/auth.ts";
+import {LoginCredentials} from "../../../models/Auth.ts";
 import {getToken, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
 import {LoginMethods} from "@utils/enums/LoginMethods.ts";
@@ -53,7 +53,7 @@ export function LoginPage(){
                         console.log(tokenCollection)
                         if (tokenCollection){
                             setAuth(tokenCollection);
-                            navigate("/page/account", {replace: true});
+                            navigate("/page/home/", {replace: true});
                         }
                     }).catch(err => {
                         console.error(err);
