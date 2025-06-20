@@ -7,6 +7,7 @@ import com.emakas.userService.model.*;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
 import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.service.UserLoginService;
+import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.TokenManager;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ import org.springframework.web.bind.annotation.*;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.service.TokenService;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @RestController
@@ -81,9 +85,11 @@ public class OAuthController {
             );
             Token refreshToken = tokenManager.createUserRefreshToken(loggedUser, userLogin.get().getAuthorizedAudiences().toArray(String[]::new));
             tokenService.saveBatch(token, refreshToken);
+            long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
             TokenResponseDto tokenResponseDto = new TokenResponseDto(
                     loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
-                    loggedUser.getEmail(), token.getSerializedToken(), refreshToken.getSerializedToken()
+                    loggedUser.getEmail(), token.getSerializedToken(), expiresAt, refreshToken.getSerializedToken(),
+                    Constants.BEARER_TOKEN
             );
             return new ResponseEntity<>(new Response<>(tokenResponseDto),HttpStatus.OK);
         }
@@ -106,10 +112,12 @@ public class OAuthController {
                         .stream().map(ResourcePermission::toString).toArray(String[]::new);
                 Token newAccessToken = tokenManager.createUserAccessToken(user, audiences, scopes);
                 Token newRefreshToken = tokenManager.createUserRefreshToken(user, audiences);
+                long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(newAccessToken.getExp())).toSeconds();
                 tokenService.saveBatch(newAccessToken, newRefreshToken);
                 TokenResponseDto tokenResponseDto = new TokenResponseDto(
                         user.getUserName(), user.getName(), user.getSurname(),
-                        user.getEmail(), newAccessToken.getSerializedToken(), newRefreshToken.getSerializedToken()
+                        user.getEmail(), newAccessToken.getSerializedToken(), expiresAt, newRefreshToken.getSerializedToken(),
+                        Constants.BEARER_TOKEN
                 );
                 return new ResponseEntity<>(Response.of(tokenResponseDto), HttpStatus.OK);
             }
