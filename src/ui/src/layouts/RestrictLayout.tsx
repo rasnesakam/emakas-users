@@ -22,11 +22,13 @@ export function RestrictLayout() {
                         setAuth(newCredentials);
                         setIsAuthenticated(true);
                     }
-                    else
+                    else{
+                        setAuth(undefined);
                         navigate("/page/auth/login", {replace: true})
+                    }
                 })
             }
-        })
+        }).catch(err => console.error(err));
         const authIntervalHandler = () => {
             if (auth && auth.refresh_token){
                 tryRefreshToken(auth.refresh_token).then((newCredentials) => {
@@ -42,7 +44,7 @@ export function RestrictLayout() {
         const authTimeOut = setTimeout(authIntervalHandler, auth.expires_in * 1000);
         return () => clearTimeout(authTimeOut);
 
-    }, [auth]);
+    }, []);
     if (!isAuthenticated)
         return null;
     return <>
