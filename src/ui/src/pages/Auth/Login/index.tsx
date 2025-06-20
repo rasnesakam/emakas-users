@@ -6,6 +6,7 @@ import {LoginCredentials} from "../../../models/auth.ts";
 import {getToken, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
 import {LoginMethods} from "@utils/enums/LoginMethods.ts";
+import {useAuthContext} from "../../../contexts/AuthContext";
 
 enum PageParameters {
     PUBLIC_KEY = "public_key",
@@ -13,7 +14,7 @@ enum PageParameters {
 }
 
 export function LoginPage(){
-
+    const { setAuth} = useAuthContext();
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
     const [resourceInfo, setResourceInfo] = useState<ExternalResourceInfo | undefined>(undefined);
@@ -49,10 +50,17 @@ export function LoginPage(){
                     location.replace(`${resourceInfo.redirectUri}?grant=${grant}`)
                 }
                 else if (loginMethod === LoginMethods.INTERNAL){
-                    alert(LoginMethods.INTERNAL)
-                    getToken(grant).then(tokenCollection => console.log(tokenCollection));
+                    getToken(grant).then(tokenCollection => {
+                        console.log(tokenCollection)
+                        if (tokenCollection){
+                            setAuth(tokenCollection);
+                            navigate("/page/account", {replace: true});
+                        }
+                    }).catch(err => {
+                        console.error(err);
+                    });
                     // set token as cookie or session key
-                    navigate("page/account");
+
                 }
             })
             .catch(err => {

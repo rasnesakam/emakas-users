@@ -1,11 +1,11 @@
 import {Route, Routes} from "react-router";
 import {AuthLayout} from "@layouts/AuthLayout.tsx";
 import {LoginPage} from "@pages/Auth/Login";
-import {AppLayout} from "@layouts/AppLayout.tsx";
 import {HomePage} from "@pages/Home";
 import {UnderConstruction} from "@pages/UnderConstruction";
 import {NotFound} from "@pages/NotFound";
 import {AccountPage} from "@pages/Account";
+import {RestrictLayout} from "@layouts/RestrictLayout.tsx";
 
 export function AppRouter (){
 
@@ -20,7 +20,7 @@ export function AppRouter (){
                     </Route>
                 </Route>
                 <Route index element={<HomePage />}/>
-                <Route element={<AppLayout/>}>
+                <Route element={<RestrictLayout/>}>
                     <Route path={"account"} element={<AccountPage />} />
                     <Route path={"teams"} element={<UnderConstruction />} />
                     <Route path={"resources"} element={<UnderConstruction />} />

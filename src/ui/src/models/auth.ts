@@ -6,12 +6,21 @@ export interface LoginCredentials {
     app_redirect?: string;
 }
 
-export interface LoginResponse {
-    content: string;
-    message: string;
+
+
+export interface Authentication {
+    name?: string;
+    surname?: string;
+    username: string;
+    email: string;
+    expires_in: number;
+    refresh_token: string;
+    access_token: string;
+    token_type: string;
 }
 
-export interface TokenCollection {
-    accessToken: string,
-    refreshToken: string
+export enum TokenStatus {
+    VALID,
+    INVALID,
+    EXPIRED
 }
