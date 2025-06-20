@@ -34,7 +34,6 @@
       "@services/*": ["services/*"],
       "@utils/*": ["utils/*"],
       "@models/*": ["models/*"],
-      "@lib/*": ["lib/*"],
       "@hooks/*": ["hooks/*"]
     }
   },
