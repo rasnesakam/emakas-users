@@ -27,12 +27,13 @@
     "paths": {
       "@assets/*": ["assets/*"],
       "@components/*": ["components/*"],
-      "@hooks/*": ["hooks/*"],
+      "@contexts/*": ["contexts/*"],
       "@layouts/*": ["layouts/*"],
       "@pages/*": ["pages/*"],
       "@routes/*": ["routes/*"],
       "@services/*": ["services/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@models/*": ["models/*"]
     }
   },
   "include": ["src"]

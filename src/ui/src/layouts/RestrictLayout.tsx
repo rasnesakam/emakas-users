@@ -1,6 +1,6 @@
 import {Outlet, useNavigate} from "react-router";
 import {AppLayout} from "@layouts/AppLayout.tsx";
-import {useAuthContext} from "../contexts/AuthContext";
+import {useAuthContext} from "@contexts/AuthContext";
 import {tryRefreshToken, validateToken} from "@services/auth";
 import {useEffect, useState} from "react";
 

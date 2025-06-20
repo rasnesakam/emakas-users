@@ -1,5 +1,5 @@
 import {createContext, useContext, useState} from "react";
-import {Authentication} from "../../models/Auth.ts";
+import {Authentication} from "@models/Auth.ts";
 import {registerLocalAuthentication, retrieveLocalAuthentication} from "@services/auth";
 import {JSX} from "react/jsx-runtime";
 

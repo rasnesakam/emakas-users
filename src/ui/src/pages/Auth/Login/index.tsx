@@ -1,12 +1,12 @@
 import {FormEvent, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router";
-import {ExternalResourceInfo} from "../../../models/Resource.ts";
+import {ExternalResourceInfo} from "@models/Resource.ts";
 import {getExternalResourceInfo} from "@services/resources";
-import {LoginCredentials} from "../../../models/Auth.ts";
+import {LoginCredentials} from "@models/Auth.ts";
 import {getToken, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
 import {LoginMethods} from "@utils/enums/LoginMethods.ts";
-import {useAuthContext} from "../../../contexts/AuthContext";
+import {useAuthContext} from "@contexts/AuthContext";
 
 enum PageParameters {
     PUBLIC_KEY = "public_key",
