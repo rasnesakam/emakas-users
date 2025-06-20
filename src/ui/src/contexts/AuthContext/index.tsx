@@ -5,7 +5,7 @@ import {JSX} from "react/jsx-runtime";
 
 interface AuthContextParams {
     auth: Authentication | undefined;
-    setAuth: (auth: Authentication) => void;
+    setAuth: (auth: Authentication | undefined) => void;
 }
 
 const AuthContext = createContext<AuthContextParams>({
@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextParams>({
 
 function AuthContextAdapter ({children}: {children: JSX.Element}) {
     const [auth, setAuth] = useState<Authentication | undefined>(retrieveLocalAuthentication());
-    const setPersistedAuth = (auth: Authentication) => {
+    const setPersistedAuth = (auth: Authentication | undefined) => {
         if (auth){
             registerLocalAuthentication(auth);
             setAuth(auth);
