@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserReadDto {
 
-    private String userName;
+    private String username;
 
     private String name;
 
