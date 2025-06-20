@@ -2,7 +2,7 @@ import {Authentication, LoginCredentials } from "../../models/auth.ts";
 import {getCookie} from "@utils/getToken.ts";
 import {ResponseWrapper} from "../../models/ResponseWrapper.ts";
 
-export async function login(credentials: LoginCredentials): Promise<Authentication>{
+export async function login(credentials: LoginCredentials): Promise<string>{
     const csrf = getCookie("XSRF-TOKEN");
     const audiences = "emakas.net";
     const scopes = "";
@@ -17,7 +17,7 @@ export async function login(credentials: LoginCredentials): Promise<Authenticati
         body: JSON.stringify(credentials)
     })
         .then(async response => {
-            const loginResponse: ResponseWrapper<Authentication> = await response.json();
+            const loginResponse: ResponseWrapper<string> = await response.json();
             if (response.ok)
                 return loginResponse.content;
             throw new Error(loginResponse.message);
@@ -27,9 +27,9 @@ export async function login(credentials: LoginCredentials): Promise<Authenticati
 export async function getToken(grant: string): Promise<Authentication | undefined>{
     return fetch(`/api/oauth/token/issue?grant=${grant}`).then(response =>{
         if (response.ok)
-            return response.json()
+            return response.json() as Promise<ResponseWrapper<Authentication>>;
         throw new Error(response.statusText)
-    }).then(data => data as Authentication)
+    }).then(data => data.content as Authentication)
         .catch(err => {
             console.error(err);
             return undefined;
@@ -43,7 +43,7 @@ export async function validateToken(token: string): Promise<boolean> {
             "Authorization": `Bearer ${token}`
         }
     }
-    return fetch(`api/oauth/token/verify`, fetchOptions).then(response => response.ok)
+    return fetch(`/api/oauth/token/verify`, fetchOptions).then(response => response.ok)
 }
 
 export async function tryRefreshToken(refreshToken: string): Promise<Authentication | undefined> {
@@ -53,7 +53,7 @@ export async function tryRefreshToken(refreshToken: string): Promise<Authenticat
             "Authorization": `Bearer ${refreshToken}`
         }
     }
-    return fetch(`api/oauth/token/refresh`, fetchOptions).then(response => {
+    return fetch(`/api/oauth/token/refresh`, fetchOptions).then(response => {
         if (response.ok)
             return response.json()
         throw new Error(response.statusText)
@@ -71,7 +71,10 @@ export function retrieveLocalAuthentication(): Authentication | undefined {
         return undefined;
     return JSON.parse(authString) as Authentication;
 }
-export function registerLocalAuthentication(auth: Authentication): Authentication {
-    window.localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+export function registerLocalAuthentication(auth: Authentication | undefined): Authentication | undefined {
+    if (!auth)
+        window.localStorage.removeItem(AUTH_KEY);
+    else
+        window.localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
     return auth;
 }
