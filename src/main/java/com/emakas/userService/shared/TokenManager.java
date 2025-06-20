@@ -151,8 +151,6 @@ public class TokenManager implements Serializable {
         try{
             JWTVerifier verifier = JWT.require(ALGORITHM)
                     .withIssuer(issuer)
-                    .acceptExpiresAt(Instant.now().getEpochSecond())
-                    //.withAudience(Optional.ofNullable(audiences).orElse(new String[0]))
                     .build();
             verifier.verify(jwtToken);
             return TokenVerificationStatus.SUCCESS;
