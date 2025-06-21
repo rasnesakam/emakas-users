@@ -24,7 +24,11 @@ public class TeamService extends CoreService<Team, UUID> {
         return teamRepository.findByName(name);
     }
 
-    public Optional<Team> addMember(UUID teamId, User newMember) {
+    public Optional<Team> getByUri(String uri) {
+        return teamRepository.findByUri(uri);
+    }
+
+    public Optional<Team> findTeamAndAddMember(UUID teamId, User newMember) {
         Optional<Team> teamOptional = teamRepository.findById(teamId);
         return teamOptional.map(team -> {
             if (!team.getMembers().contains(newMember))
@@ -33,7 +37,11 @@ public class TeamService extends CoreService<Team, UUID> {
         });
     }
 
-
+    public Team addMemberToTeam(Team team, User newMember) {
+        if (!team.getMembers().contains(newMember))
+            team.getMembers().add(newMember);
+        return teamRepository.save(team);
+    }
 
     public Optional<Team> removeMember(UUID teamId, User removeUser) {
         Optional<Team> teamOptional = teamRepository.findById(teamId);

@@ -12,8 +12,14 @@ import java.util.UUID;
 
 @Repository
 public interface TeamRepository extends CoreRepository<Team, UUID> {
-    Collection<Team> findTeamsByMembers(User member);
+
+    @Query("SELECT t FROM Team t WHERE :member IN elements(t.members)")
+    Collection<Team> findTeamsByMembers(@Param("member") User member);
+
     Optional<Team> findByName(String name);
+
     Collection<Team> findByLeadId(UUID leadId);
+
+    Optional<Team> findByUri(String uri);
 
 }
