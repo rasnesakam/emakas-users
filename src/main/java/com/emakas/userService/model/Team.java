@@ -1,9 +1,12 @@
 package com.emakas.userService.model;
 
+import com.emakas.userService.shared.StringUtils;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -41,6 +44,13 @@ public class Team extends BaseEntity{
     public void prePersist(){
         if (lead != null && members != null && !members.contains(lead)) {
             members.add(lead);
+        }
+        if (Objects.isNull(members) || members.isEmpty()) {
+            members = new ArrayList<>();
+            members.add(lead);
+        }
+        if (Objects.isNull(uri) || uri.isEmpty()) {
+            uri = StringUtils.normalizeString(name);
         }
     }
 }
