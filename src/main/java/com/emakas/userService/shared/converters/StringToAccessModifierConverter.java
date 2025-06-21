@@ -10,13 +10,10 @@ public class StringToAccessModifierConverter implements Converter<String, Option
     @Override
     @NotNull
     public Optional<AccessModifier> convert(@NotNull String source) {
-        if (source.equals(AccessModifier.READ.toString().toLowerCase()))
-            return Optional.of(AccessModifier.READ);
-        else if (source.equals(AccessModifier.WRITE.toString().toLowerCase()))
-            return Optional.of(AccessModifier.WRITE);
-        else if (source.equals(AccessModifier.READ_WRITE.toString().toLowerCase()))
-            return Optional.of(AccessModifier.READ_WRITE);
-        else
+        try {
+            return Optional.of(AccessModifier.valueOf(source.toUpperCase()));
+        } catch (IllegalArgumentException ex) {
             return Optional.empty();
+        }
     }
 }
