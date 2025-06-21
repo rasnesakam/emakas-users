@@ -6,6 +6,7 @@ import {UnderConstruction} from "@pages/UnderConstruction";
 import {NotFound} from "@pages/NotFound";
 import {AccountPage} from "@pages/Account";
 import {RestrictLayout} from "@layouts/RestrictLayout.tsx";
+import {TeamsPage} from "@pages/Teams";
 
 export function AppRouter (){
 
@@ -22,7 +23,7 @@ export function AppRouter (){
                 <Route element={<RestrictLayout/>}>
                     <Route index element={<HomePage />}/>
                     <Route path={"account"} element={<AccountPage />} />
-                    <Route path={"teams"} element={<UnderConstruction />} />
+                    <Route path={"teams"} element={<TeamsPage />} />
                     <Route path={"resources"} element={<UnderConstruction />} />
                     <Route path={"permissions"} element={<UnderConstruction />} />
                 </Route>
