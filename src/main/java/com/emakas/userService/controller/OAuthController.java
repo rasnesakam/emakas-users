@@ -28,7 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(path = "api/oauth")
+@RequestMapping(path = "/api/oauth")
 public class OAuthController {
 
     private final TokenManager tokenManager;

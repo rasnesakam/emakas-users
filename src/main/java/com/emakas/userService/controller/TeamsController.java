@@ -25,7 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("api/teams")
+@RequestMapping("/api/teams")
 public class TeamsController {
     private final TeamService teamService;
     private final TeamsDtoMapper teamsDtoMapper;

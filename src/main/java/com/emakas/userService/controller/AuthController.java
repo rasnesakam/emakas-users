@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import com.emakas.userService.service.UserService;
 
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserService userService;
@@ -56,7 +56,7 @@ public class AuthController {
     }
 
 
-    @PostMapping("sign-up")
+    @PostMapping("/sign-up")
     @ResponseBody
     public ResponseEntity<Response<User>> createUser(@RequestBody UserWriteDto userDto, @RequestParam(value = "invite-code") String inviteCode){
         if (this.userService.existsByEmailOrUserName(userDto.getEmail(), userDto.getUserName()))
@@ -68,7 +68,7 @@ public class AuthController {
     	return new ResponseEntity<>(new Response<>(user), HttpStatus.CREATED);
     }
 
-    @PostMapping("sign-in")
+    @PostMapping("/sign-in")
     @ResponseBody
     public ResponseEntity<Response<String>> signIn(@RequestBody LoginModel loginModel, @RequestParam String[] audiences, @RequestParam String[] scopes){
         try{
@@ -112,7 +112,7 @@ public class AuthController {
                         .stream().map(ResourcePermission::toString).collect(Collectors.toSet());
     }
 
-    @DeleteMapping("delete/{uuid}")
+    @DeleteMapping("/delete/{uuid}")
     @ResponseBody
     public ResponseEntity<User> deleteUser(@PathVariable UUID uuid) {
     	Optional<User> user = userService.getById(uuid);
