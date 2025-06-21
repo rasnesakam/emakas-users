@@ -7,5 +7,5 @@ export interface Team {
     parent_team: Team;
     child_teams: Team[];
     members: User[];
-    lead: User[]
+    lead: User
 }
