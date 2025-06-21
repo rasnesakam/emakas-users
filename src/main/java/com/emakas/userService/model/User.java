@@ -1,6 +1,7 @@
 package com.emakas.userService.model;
 
 import com.emakas.userService.shared.Constants;
+import com.emakas.userService.shared.StringUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrePersist;
@@ -39,8 +40,8 @@ public class User extends BaseEntity {
 
     @PrePersist
     private void prePersist() {
-        if (Objects.isNull(this.fullName) || this.fullName.isEmpty()) {
-            this.fullName = this.name.concat(Constants.ONE_SPACE).concat(this.surname);
+        if (StringUtils.isNullOrEmpty(fullName) && !StringUtils.isNullOrEmpty(name) && !StringUtils.isNullOrEmpty(surname)) {
+            fullName = name.concat(Constants.ONE_SPACE).concat(surname);
         }
     }
 }

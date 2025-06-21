@@ -49,7 +49,7 @@ public class Team extends BaseEntity{
             members = new ArrayList<>();
             members.add(lead);
         }
-        if (Objects.isNull(uri) || uri.isEmpty()) {
+        if (StringUtils.isNullOrEmpty(uri)) {
             uri = StringUtils.normalizeString(name);
         }
     }
