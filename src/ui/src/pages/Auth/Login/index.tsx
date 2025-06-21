@@ -53,7 +53,7 @@ export function LoginPage(){
                         console.log(tokenCollection)
                         if (tokenCollection){
                             setAuth(tokenCollection);
-                            navigate("/page/home/", {replace: true});
+                            navigate("/page/", {replace: true});
                         }
                     }).catch(err => {
                         console.error(err);
