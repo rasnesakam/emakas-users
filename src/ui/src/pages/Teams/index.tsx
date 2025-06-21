@@ -33,7 +33,7 @@ export function TeamsPage() {
                                 <div className="flex flex-col justify-start items-start">
                                     <div className="w-full">
                                         <span className="font-bold mr-2">Team Lead</span>
-                                        <span>{team.lead.fullname}</span>
+                                        <span>{team.lead.full_name}</span>
                                     </div>
                                     <div className="w-full">
                                         <Table>
@@ -47,7 +47,7 @@ export function TeamsPage() {
                                             <TableBody>
                                                 {team.members.map((member, memberIndex) => <TableRow key={`member-${team.uri}-${memberIndex}`}>
                                                     <TableCell>
-                                                        {member.fullname}
+                                                        {member.full_name}
                                                     </TableCell>
                                                     <TableCell>
                                                         {member.email}
