@@ -4,4 +4,5 @@ public class Constants {
     public static final String SEPARATOR = ":";
     public static final String REFRESH_TOKEN = "REFRESH_TOKEN";
     public static final String BEARER_TOKEN = "Bearer";
+    public static final String ONE_SPACE = " ";
 }

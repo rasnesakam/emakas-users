@@ -1,9 +1,13 @@
 package com.emakas.userService.model;
 
+import com.emakas.userService.shared.Constants;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.*;
+
+import java.util.Objects;
 
 
 @Getter
@@ -24,10 +28,19 @@ public class User extends BaseEntity {
     @Column(length = 64)
     private String password;
     
-    @Column(length = 30)
+    @Column(length = 60)
     private String name;
     
     @Column(length = 30)
     private String surname;
 
+    @Column(length = 90)
+    private String fullName;
+
+    @PrePersist
+    private void prePersist() {
+        if (Objects.isNull(this.fullName) || this.fullName.isEmpty()) {
+            this.fullName = this.name.concat(Constants.ONE_SPACE).concat(this.surname);
+        }
+    }
 }
