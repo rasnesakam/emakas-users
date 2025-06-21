@@ -82,11 +82,9 @@ An example Jwt is as folows
   "sub": "usr:2dc77664-03fc-4bf9-a46f-e97dd1d8c752",
   "aud": "emakas.net",
   "scope": [
-    "all:read_write:iam.emakas.net/resources",
-    "all:read_write:iam.emakas.net/members",
-    "all:read_write:iam.emakas.net/teams",
-    "all:read_write:iam.emakas.net/applications",
-    "all:read_write:iam.emakas.net/teamMembers"
+    "global:read_write:iam.emakas.net/resources",
+    "team:read:iam.emakas.net/members",
+    "self:write:iam.emakas.net/teams"
   ],
   "iss": "emakas-user",
   "exp": 1748544968,

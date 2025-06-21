@@ -16,7 +16,7 @@ public enum PermissionScope {
     TEAM,
 
     /**
-     * <h1>PermissionScope.ALL</h1>
+     * <h1>PermissionScope.GLOBAL</h1>
      * Represents that user can acces on their own, team's and sub team's resources
      */
     GLOBAL;
