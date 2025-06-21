@@ -20,10 +20,12 @@ public interface UserDtoMapper {
     @Mapping(target = "createdTime", ignore = true)
     @Mapping(target = "updatedTime", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "fullName", expression = "java(userWriteDto.getName() + \" \" + userWriteDto.getSurname())")
     User updateUserFromUserWriteDto(UserWriteDto userWriteDto, @MappingTarget User user);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdTime", ignore = true)
     @Mapping(target = "updatedTime", ignore = true)
+    @Mapping(target = "fullName", expression = "java(userWriteDto.getName() + \" \" + userWriteDto.getSurname())")
     User UserFromUserWriteDto(UserWriteDto userWriteDto);
 }

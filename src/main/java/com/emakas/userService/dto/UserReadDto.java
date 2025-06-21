@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserReadDto {
 
-    private String username;
+    @JsonProperty("username")
+    private String userName;
 
     private String name;
 

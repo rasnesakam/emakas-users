@@ -30,7 +30,7 @@ public class Team extends BaseEntity{
     private Team parentTeam;
 
     @OneToMany(mappedBy = "parentTeam", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
-    private Collection<Team> subTeams;
+    private Collection<Team> childTeams;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "team_members", joinColumns = @JoinColumn(name = "team_id"), inverseJoinColumns = @JoinColumn(name = "member_id"))

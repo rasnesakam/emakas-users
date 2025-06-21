@@ -20,7 +20,7 @@ import java.util.Objects;
 @Table(name = "users")
 public class User extends BaseEntity {
 
-    @Column(name = "user_name", unique = true, length = 30)
+    @Column(name = "username", unique = true, length = 30)
     private String userName;
     
     @Column(unique = true, length = 30)

@@ -8,10 +8,12 @@ import java.util.stream.Collectors;
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.UserWriteDto;
+import com.emakas.userService.mappers.UserDtoMapper;
 import com.emakas.userService.model.*;
 import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.service.UserLoginService;
 import com.emakas.userService.service.TokenService;
+import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.TokenManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,9 +41,10 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final UserLoginService userLoginService;
     private final ResourcePermissionService resourcePermissionService;
+    private final UserDtoMapper userDtoMapper;
 
     @Autowired
-    public AuthController(UserService service, TokenService tokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService) {
+    public AuthController(UserService service, TokenService tokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, UserDtoMapper userDtoMapper) {
         this.userService = service;
         this.tokenService = tokenService;
         this.authenticationManager = authenticationManager;
@@ -49,6 +52,7 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
         this.userLoginService = userLoginService;
         this.resourcePermissionService = resourcePermissionService;
+        this.userDtoMapper = userDtoMapper;
     }
 
 
@@ -58,13 +62,8 @@ public class AuthController {
         if (this.userService.existsByEmailOrUserName(userDto.getEmail(), userDto.getUserName()))
             return new ResponseEntity<>(new Response<>(null, String.format("User %s (%s) already exists", userDto.getUserName(), userDto.getEmail())), HttpStatus.BAD_REQUEST);
         String hashedPassword = passwordEncoder.encode(userDto.getPassword());
-        User user = new User(
-                userDto.getUserName(),
-                userDto.getEmail(),
-                hashedPassword,
-                userDto.getName(),
-                userDto.getSurname()
-        );
+        User user = userDtoMapper.UserFromUserWriteDto(userDto);
+        user.setPassword(hashedPassword);
         userService.save(user);
     	return new ResponseEntity<>(new Response<>(user), HttpStatus.CREATED);
     }
