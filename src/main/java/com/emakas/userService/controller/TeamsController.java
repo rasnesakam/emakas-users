@@ -38,7 +38,7 @@ public class TeamsController {
         this.tokenManager = tokenManager;
     }
 
-    @PreAuthorize("hasPermission(#RSC_TEAMS,'read')")
+    @PreAuthorize("hasPermission(#RSC_TEAMS,'self:read')")
     @GetMapping("/owned")
     public ResponseEntity<Response<Collection<TeamReadDto>>> getOwnedTeams(){
         SecurityContext securityContext = SecurityContextHolder.getContext();

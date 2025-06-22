@@ -37,9 +37,9 @@ public class MembersController {
         this.userDtoMapper = userDtoMapper;
     }
 
-    @PreAuthorize("hasPermission(#RSC_TEAM_MEMBERS, 'create')")
-    @PostMapping("/invite/{team_uri}")
-    public ResponseEntity<Response<Team>> inviteMember(@RequestBody UserWriteDto userWriteDto, @PathVariable("team_uri") String teamUri) {
+    @PreAuthorize("hasPermission(#RSC_TEAM_MEMBERS, 'self:create')")
+    @PostMapping("/assign/{team_uri}")
+    public ResponseEntity<Response<Team>> assignMemberOwnTeam(@RequestBody UserWriteDto userWriteDto, @PathVariable("team_uri") String teamUri) {
         Optional<Team> intendedTeam = teamService.getByUri(teamUri);
         return intendedTeam.map(team -> {
             Optional<User> foundedUser = userService.getByUserName(userWriteDto.getUserName());
