@@ -5,6 +5,7 @@ import com.emakas.userService.repository.CoreRepository;
 import com.emakas.userService.repository.ResourcePermissionRepository;
 import com.emakas.userService.shared.data.PermissionDescriptor;
 import com.emakas.userService.shared.enums.AccessModifier;
+import com.emakas.userService.shared.enums.PermissionScope;
 import com.emakas.userService.shared.enums.PermissionTargetType;
 import org.springframework.stereotype.Service;
 
@@ -44,10 +45,9 @@ public class ResourcePermissionService extends CoreService<ResourcePermission, U
 
     public boolean hasPermissionFor(ResourcePermission resourcePermission, String targetDomainUri, PermissionDescriptor permissionDescriptor){
         boolean matchAccessModifiers = resourcePermission.getAccessModifier() == AccessModifier.READ_WRITE
-                || ( permissionDescriptor.getAccessModifier().isPresent()
-                        && resourcePermission.getAccessModifier() == permissionDescriptor.getAccessModifier().get() );
-        boolean matchPermissionScopes = permissionDescriptor.getPermissionScope().isPresent()
-                && resourcePermission.getPermissionScope() == permissionDescriptor.getPermissionScope().get();
+                || ( permissionDescriptor.getAccessModifier().isPresent() && resourcePermission.getAccessModifier() == permissionDescriptor.getAccessModifier().get() );
+        boolean matchPermissionScopes = resourcePermission.getPermissionScope() == PermissionScope.GLOBAL
+                || ( permissionDescriptor.getPermissionScope().isPresent() && resourcePermission.getPermissionScope() == permissionDescriptor.getPermissionScope().get() );
         boolean matchResource = resourcePermission.getResource().getUri().equals(targetDomainUri);
 
         return matchResource && matchPermissionScopes && matchAccessModifiers;
