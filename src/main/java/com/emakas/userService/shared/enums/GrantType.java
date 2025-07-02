@@ -1,17 +1,18 @@
 package com.emakas.userService.shared.enums;
 
-import java.util.Optional;
 
 public enum GrantType {
     AUTHORIZATION_CODE,
     CLIENT_CREDENTIALS,
-    REFRESH_TOKEN;
+    REFRESH_TOKEN,
+    UNDEFINED;
 
-    public static Optional<GrantType> getGrantType(String grantType) {
+    public static GrantType getGrantType(String grantType) {
+        if (grantType == null) return UNDEFINED;
         try {
-            return Optional.of(GrantType.valueOf(grantType.toUpperCase()));
+            return GrantType.valueOf(grantType.toUpperCase());
         }catch (IllegalArgumentException e) {
-            return Optional.empty();
+            return UNDEFINED;
         }
     }
 }

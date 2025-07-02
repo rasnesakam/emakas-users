@@ -6,8 +6,7 @@ import com.emakas.userService.dto.TokenRequestDto;
 import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
-import com.emakas.userService.service.ResourcePermissionService;
-import com.emakas.userService.service.UserLoginService;
+import com.emakas.userService.service.*;
 import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.GrantType;
@@ -23,8 +22,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import com.emakas.userService.service.UserService;
-import com.emakas.userService.service.TokenService;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -40,14 +37,16 @@ public class OAuthController {
     private final UserLoginService userLoginService;
     private final TokenPermissionEvaluator tokenPermissionEvaluator;
     private final ResourcePermissionService resourcePermissionService;
+    private final OauthFlowManager oauthFlowManager;
 
     @Autowired
-    public OAuthController(TokenService tokenService, TokenManager tokenManager, UserLoginService userLoginService, TokenPermissionEvaluator tokenPermissionEvaluator, ResourcePermissionService resourcePermissionService){
+    public OAuthController(TokenService tokenService, TokenManager tokenManager, UserLoginService userLoginService, TokenPermissionEvaluator tokenPermissionEvaluator, ResourcePermissionService resourcePermissionService, OauthFlowManager oauthFlowManager){
         this.tokenService = tokenService;
         this.tokenManager = tokenManager;
         this.userLoginService = userLoginService;
         this.tokenPermissionEvaluator = tokenPermissionEvaluator;
         this.resourcePermissionService = resourcePermissionService;
+        this.oauthFlowManager = oauthFlowManager;
     }
 
     //TODO: Use PreAuthorize annotation
@@ -79,65 +78,12 @@ public class OAuthController {
 
 
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<Response<TokenResponseDto>> getToken(@Valid @ModelAttribute TokenRequestDto tokenRequestDto){
-        Optional<GrantType> grantTypeInput = GrantType.getGrantType(tokenRequestDto.getGrantType());
-        if (grantTypeInput.isEmpty())
-            return new ResponseEntity<>(Response.of("Invalid grant type."), HttpStatus.BAD_REQUEST);
-
-        switch (grantTypeInput.get()){
-            case AUTHORIZATION_CODE -> {
-
-            }
-        }
-
-        String grant = tokenRequestDto.getCode();
-        Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
-        if (userLogin.isPresent()){
-            User loggedUser = userLogin.get().getLoggedUser();
-            Token token = tokenManager.createUserAccessToken(
-                    loggedUser,
-                    userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
-                    userLogin.get().getAuthorizedScopes().toArray(String[]::new)
-            );
-            Token refreshToken = tokenManager.createUserRefreshToken(loggedUser, userLogin.get().getAuthorizedAudiences().toArray(String[]::new));
-            tokenService.saveBatch(token, refreshToken);
-            long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
-            TokenResponseDto tokenResponseDto = new TokenResponseDto(
-                    loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
-                    loggedUser.getEmail(), token.getSerializedToken(), expiresAt, refreshToken.getSerializedToken(),
-                    Constants.BEARER_TOKEN
-            );
-            return new ResponseEntity<>(new Response<>(tokenResponseDto),HttpStatus.OK);
-        }
-        return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
-    }
-
-    @GetMapping("token/refresh")
-    @PreAuthorize("hasPermission('REFRESH_TOKEN','read_write')")
-    public ResponseEntity<Response<TokenResponseDto>> refreshToken(HttpServletRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof JwtAuthentication jwtAuthentication){
-            String origin = request.getHeader(HttpHeaders.ORIGIN);
-            if (jwtAuthentication.getUserToken().getAud().stream().anyMatch(audience -> audience.equals(origin))){
-                Optional<User> optionalUser = tokenManager.loadUserFromToken(jwtAuthentication.getUserToken());
-                if (optionalUser.isEmpty())
-                    return new ResponseEntity<>(Response.of("Invalid Token"), HttpStatus.BAD_REQUEST);
-                User user = optionalUser.get();
-                String[] audiences = jwtAuthentication.getUserToken().getAud().toArray(String[]::new);
-                String[] scopes = resourcePermissionService.getPermissionsByUser(user)
-                        .stream().map(ResourcePermission::toString).toArray(String[]::new);
-                Token newAccessToken = tokenManager.createUserAccessToken(user, audiences, scopes);
-                Token newRefreshToken = tokenManager.createUserRefreshToken(user, audiences);
-                long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(newAccessToken.getExp())).toSeconds();
-                tokenService.saveBatch(newAccessToken, newRefreshToken);
-                TokenResponseDto tokenResponseDto = new TokenResponseDto(
-                        user.getUserName(), user.getName(), user.getSurname(),
-                        user.getEmail(), newAccessToken.getSerializedToken(), expiresAt, newRefreshToken.getSerializedToken(),
-                        Constants.BEARER_TOKEN
-                );
-                return new ResponseEntity<>(Response.of(tokenResponseDto), HttpStatus.OK);
-            }
-        }
-        return new ResponseEntity<>(Response.of("Invalid Token"),HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Response<TokenResponseDto>> getToken(@Valid @ModelAttribute TokenRequestDto tokenRequestDto, HttpServletRequest request){
+        return switch (GrantType.getGrantType(tokenRequestDto.getGrantType())){
+            case AUTHORIZATION_CODE -> oauthFlowManager.handleAccessTokenFlow(tokenRequestDto.getCode(), tokenRequestDto.getClientId(), tokenRequestDto.getClientSecret());
+            case CLIENT_CREDENTIALS -> oauthFlowManager.handleClientCredentialsFlow(tokenRequestDto.getClientId(), tokenRequestDto.getClientSecret());
+            case REFRESH_TOKEN -> oauthFlowManager.handleRefreshTokenFlow(tokenRequestDto.getRefreshToken(), request);
+            default -> new ResponseEntity<>(Response.of("Invalid grant type."), HttpStatus.BAD_REQUEST);
+        };
     }
 }

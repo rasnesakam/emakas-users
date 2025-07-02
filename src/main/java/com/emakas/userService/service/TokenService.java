@@ -1,5 +1,7 @@
 package com.emakas.userService.service;
 
+import com.emakas.userService.dto.Response;
+import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.model.Token;
 import com.emakas.userService.repository.UserTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,4 +23,5 @@ public class TokenService {
     public Collection<Token> saveBatch(Token... tokens) {
         return userTokenRepository.saveAll(Arrays.stream(tokens).toList());
     }
+
 }
