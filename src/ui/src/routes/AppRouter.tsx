@@ -26,6 +26,7 @@ export function AppRouter (){
                     <Route path={"teams"} element={<TeamsPage />} />
                     <Route path={"resources"} element={<UnderConstruction />} />
                     <Route path={"permissions"} element={<UnderConstruction />} />
+                    <Route path={"applications"} element={<UnderConstruction />} />
                 </Route>
                 <Route path={"*"} element={<NotFound />}/>
             </Route>
