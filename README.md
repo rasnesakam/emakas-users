@@ -192,6 +192,12 @@ An example Jwt is as folows
 ## Endpoint Documentation
 
 ### Application
+Applications are way to consume service resources through non-user interactions.  
+You may want to use your bots, apps or websites to consume your resources such as blog posts, commercial products and so on.  
+To accomplish this securely, you need to register your apps, bots etc. to this service as **Application** and give them permissions
+and restrictions to define which services they can use
+#### Registering Applications
+
 ### Auth
 
 #### Signing In
