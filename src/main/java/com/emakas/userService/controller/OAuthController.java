@@ -2,6 +2,7 @@ package com.emakas.userService.controller;
 
 import com.emakas.userService.auth.JwtAuthentication;
 import com.emakas.userService.dto.Response;
+import com.emakas.userService.dto.TokenRequestDto;
 import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
@@ -9,10 +10,13 @@ import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.service.UserLoginService;
 import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.TokenManager;
+import com.emakas.userService.shared.enums.GrantType;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -45,7 +49,8 @@ public class OAuthController {
         this.tokenPermissionEvaluator = tokenPermissionEvaluator;
         this.resourcePermissionService = resourcePermissionService;
     }
-    
+
+    //TODO: Use PreAuthorize annotation
     @GetMapping("token/verify")
     public ResponseEntity<Response<Boolean>> authorizeToken(@RequestParam(required = false) String targetResource, @RequestParam(required = false) String requestedPermission){
         SecurityContext securityContext = SecurityContextHolder.getContext();
@@ -73,8 +78,19 @@ public class OAuthController {
     }
 
 
-    @GetMapping("token/issue")
-    public ResponseEntity<Response<TokenResponseDto>> getToken(@RequestParam String grant){
+    @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<Response<TokenResponseDto>> getToken(@Valid @ModelAttribute TokenRequestDto tokenRequestDto){
+        Optional<GrantType> grantTypeInput = GrantType.getGrantType(tokenRequestDto.getGrantType());
+        if (grantTypeInput.isEmpty())
+            return new ResponseEntity<>(Response.of("Invalid grant type."), HttpStatus.BAD_REQUEST);
+
+        switch (grantTypeInput.get()){
+            case AUTHORIZATION_CODE -> {
+
+            }
+        }
+
+        String grant = tokenRequestDto.getCode();
         Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
         if (userLogin.isPresent()){
             User loggedUser = userLogin.get().getLoggedUser();
