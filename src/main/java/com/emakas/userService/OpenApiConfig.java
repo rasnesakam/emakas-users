@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
         flows = @OAuthFlows(
                 authorizationCode = @OAuthFlow(
                         authorizationUrl = "http://localhost:8080/page/auth/login",
-                        tokenUrl = "http://localhost:8080/oauth/token"
+                        tokenUrl = "http://localhost:8080/api/oauth/token"
                         //scopes = {
                         //        @io.swagger.v3.oas.annotations.security.OAuthScope(name = "read", description = "Read access"),
                         //        @io.swagger.v3.oas.annotations.security.OAuthScope(name = "write", description = "Write access")

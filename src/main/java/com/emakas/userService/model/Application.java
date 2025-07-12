@@ -19,4 +19,6 @@ public class Application extends BaseEntity {
     private String description;
     @Column(unique = true)
     private String uri;
+    @Column(name = "redirect_uri")
+    private String redirectUri;
 }

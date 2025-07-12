@@ -1,13 +1,7 @@
 package com.emakas.userService.cmdRunner;
 
-import com.emakas.userService.model.Resource;
-import com.emakas.userService.model.ResourcePermission;
-import com.emakas.userService.model.Team;
-import com.emakas.userService.model.User;
-import com.emakas.userService.service.ResourcePermissionService;
-import com.emakas.userService.service.ResourceService;
-import com.emakas.userService.service.TeamService;
-import com.emakas.userService.service.UserService;
+import com.emakas.userService.model.*;
+import com.emakas.userService.service.*;
 import com.emakas.userService.shared.enums.AccessModifier;
 import com.emakas.userService.shared.enums.PermissionScope;
 import com.emakas.userService.shared.enums.PermissionTargetType;
@@ -34,7 +28,9 @@ public class InitializeRootVariables implements CommandLineRunner {
     private static final Logger logger = LoggerFactory.getLogger(InitializeRootVariables.class);
     private final ResourceService resourceService;
     private final String appDomainName;
+    private final String appRedirectUri;
     private final Map<String, Resource> resourceMap;
+    private final ApplicationService applicationService;
 
     @Autowired
     public InitializeRootVariables(
@@ -43,8 +39,10 @@ public class InitializeRootVariables implements CommandLineRunner {
             ResourcePermissionService resourcePermissionService,
             PasswordEncoder passwordEncoder,
             ResourceService resourceService,
-            @Value("${app.domain}") String appDomainName, Map<String, Resource> resourceMap
-    ) {
+            @Value("${app.domain}") String appDomainName,
+            @Value("${app.redirect_uri}") String appRedirectUri,
+            Map<String, Resource> resourceMap,
+            ApplicationService applicationService) {
         this.userService = userService;
         this.teamService = teamService;
         this.resourcePermissionService = resourcePermissionService;
@@ -52,6 +50,8 @@ public class InitializeRootVariables implements CommandLineRunner {
         this.resourceService = resourceService;
         this.appDomainName = appDomainName;
         this.resourceMap = resourceMap;
+        this.applicationService = applicationService;
+        this.appRedirectUri = appRedirectUri;
     }
 
     public String getRandomPasswordText(){
@@ -81,6 +81,21 @@ public class InitializeRootVariables implements CommandLineRunner {
         }
         System.out.println("Admin user already exists");
         return user.get();
+    }
+
+    public Application createFirstPartyAppIfNotExists() {
+        Optional<Application> firstPartyApp = applicationService.getByUri(this.appDomainName);
+        if (firstPartyApp.isEmpty()) {
+            Application app = new Application();
+            app.setName("First Party Application");
+            app.setUri(this.appDomainName);
+            app.setRedirectUri(this.appRedirectUri);
+            app.setDescription("First party application. Manage account settings trough this application");
+            app = applicationService.save(app);
+            logger.info("Created first party application with client id: {}", app.getId());
+            return app;
+        }
+        return firstPartyApp.get();
     }
 
     public Team createCoreTeamIfNotExists(User lead){
@@ -130,6 +145,8 @@ public class InitializeRootVariables implements CommandLineRunner {
         Team coreTeam = createCoreTeamIfNotExists(admin);
         logger.info("Creating Default Resources");
         Collection<Resource> appResources = createDefaultResources();
+        logger.info("Creating first party App");
+        Application app = createFirstPartyAppIfNotExists();
         logger.info("Assigning roles to admin user");
         assignAdminPermissions(admin,appResources);
     }

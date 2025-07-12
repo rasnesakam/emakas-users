@@ -6,12 +6,14 @@ import com.emakas.userService.mappers.ApplicationDtoMapper;
 import com.emakas.userService.model.Application;
 import com.emakas.userService.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -19,23 +21,31 @@ import java.util.stream.Collectors;
 public class ApplicationsController {
     private final ApplicationService applicationService;
     private final ApplicationDtoMapper applicationDtoMapper;
-
+    private final String appDomainName;
     @Autowired
-    public ApplicationsController(ApplicationService applicationService, ApplicationDtoMapper applicationDtoMapper) {
+    public ApplicationsController(ApplicationService applicationService, ApplicationDtoMapper applicationDtoMapper, @Value("${app.domain}") String appDomainName) {
         this.applicationService = applicationService;
         this.applicationDtoMapper = applicationDtoMapper;
+        this.appDomainName = appDomainName;
     }
 
     @PostMapping("/register")
     public ResponseEntity<Response<ApplicationDto>> createApplication(@RequestBody ApplicationDto applicationDto) {
         Application app = applicationDtoMapper.toApplication(applicationDto);
         app = applicationService.save(app);
-        return new ResponseEntity<>(Response.of(applicationDtoMapper.toApplicationDto(app)), HttpStatus.OK);
+        return ResponseEntity.ok(Response.of(applicationDtoMapper.toApplicationDto(app)));
     }
 
     @GetMapping("/")
     public ResponseEntity<Response<Collection<ApplicationDto>>> getApplications() {
         Collection<ApplicationDto> applicationDtos = applicationService.getAll().stream().map(applicationDtoMapper::toApplicationDto).collect(Collectors.toSet());
-        return new ResponseEntity<>(Response.of(applicationDtos), HttpStatus.OK);
+        return ResponseEntity.ok(Response.of(applicationDtos));
+    }
+
+    @GetMapping("/self")
+    public ResponseEntity<Response<ApplicationDto>> getSelfApplication() {
+        Optional<Application> application = applicationService.getByUri(appDomainName);
+        return application.map(value -> ResponseEntity.ok(Response.of(applicationDtoMapper.toApplicationDto(value))))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
