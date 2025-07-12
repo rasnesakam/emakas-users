@@ -1,6 +1,6 @@
-import {Authentication} from "../../models/Auth.ts";
-import {ResponseWrapper} from "../../models/ResponseWrapper.ts";
-import {Team} from "../../models/Team.ts";
+import {Authentication} from "@models/Auth.ts";
+import {ResponseWrapper} from "@models/ResponseWrapper.ts";
+import {Team} from "@models/Team.ts";
 
 export async function getUserTeams(auth: Authentication) {
     const fetchOptions: RequestInit = {

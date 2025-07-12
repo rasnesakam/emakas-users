@@ -1,6 +1,7 @@
-import {Authentication, LoginCredentials } from "../../models/Auth.ts";
+import {Authentication, LoginCredentials } from "@models/Auth.ts";
 import {getCookie} from "@utils/getToken.ts";
-import {ResponseWrapper} from "../../models/ResponseWrapper.ts";
+import {ResponseWrapper} from "@models/ResponseWrapper.ts";
+import {OAuthGrantRequestKeys} from "@utils/enums/OAuthEnums.ts";
 
 export async function login(credentials: LoginCredentials): Promise<string>{
     const csrf = getCookie("XSRF-TOKEN");
@@ -25,7 +26,12 @@ export async function login(credentials: LoginCredentials): Promise<string>{
 }
 
 export async function getToken(grant: string): Promise<Authentication | undefined>{
-    return fetch(`/api/oauth/token/issue?grant=${grant}`).then(response =>{
+    const formData = new FormData();
+
+    formData.set(OAuthGrantRequestKeys.GRANT_TYPE, "token");
+    formData.set(OAuthGrantRequestKeys.CODE, grant);
+
+    return fetch(`/api/oauth/token/`).then(response =>{
         if (response.ok)
             return response.json() as Promise<ResponseWrapper<Authentication>>;
         throw new Error(response.statusText)

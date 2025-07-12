@@ -1,36 +1,27 @@
-import {FormEvent, useState} from "react";
+import {FormEvent, useEffect, useState} from "react";
 import {useNavigate, useSearchParams} from "react-router";
 import {ExternalResourceInfo} from "@models/Resource.ts";
 import {getExternalResourceInfo} from "@services/resources";
-import {LoginCredentials} from "@models/Auth.ts";
+import {initializeOAuthRequest, LoginCredentials, OAuthRequest} from "@models/Auth.ts";
 import {getToken, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
-import {LoginMethods} from "@utils/enums/LoginMethods.ts";
 import {useAuthContext} from "@contexts/AuthContext";
 
-enum PageParameters {
-    PUBLIC_KEY = "public_key",
-    REDIRECT_URL = "redirect"
-}
+
 
 export function LoginPage(){
     const { setAuth} = useAuthContext();
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
+    const [oAuthRequest, setOAuthRequest] = useState<OAuthRequest | undefined>(undefined);
     const [resourceInfo, setResourceInfo] = useState<ExternalResourceInfo | undefined>(undefined);
-    const [loginMethod, setLoginMethod] = useState(LoginMethods.INTERNAL);
     const navigate = useNavigate();
     const [loadingState, setLoadingState] = useState<boolean>(false);
-    if (urlSearch.has(PageParameters.REDIRECT_URL) && urlSearch.has(PageParameters.PUBLIC_KEY) ) {
-        const publicKey: string = urlSearch.get(PageParameters.PUBLIC_KEY)!;
-        const redirectUri: string = urlSearch.get(PageParameters.REDIRECT_URL)!;
-        getExternalResourceInfo(publicKey, redirectUri)
-            .then(resource => setResourceInfo(resource))
-            .then(() => setLoginMethod(LoginMethods.EXTERNAL))
-    }
 
     const onFormSubmit = (e: FormEvent) => {
         e.preventDefault();
+        console.log("OAuth Request: ", oAuthRequest);
+        console.log("External App Info: ", resourceInfo);
         setLoadingState(true);
 
         const formData = new FormData(e.target as HTMLFormElement);
@@ -45,10 +36,12 @@ export function LoginPage(){
         }
         login(loginInput)
             .then(grant => {
-                if (loginMethod === LoginMethods.EXTERNAL && resourceInfo != undefined){
-                    location.replace(`${resourceInfo.redirectUri}?grant=${grant}`)
+                if (oAuthRequest && resourceInfo){
+                    const redirect = `${resourceInfo.redirectUri}?grant=${grant}`;
+                    alert(`Redirecting to: ${redirect}`)
+                    location.replace(redirect)
                 }
-                else if (loginMethod === LoginMethods.INTERNAL){
+                else{
                     getToken(grant).then(tokenCollection => {
                         console.log(tokenCollection)
                         if (tokenCollection){
@@ -73,6 +66,23 @@ export function LoginPage(){
 
     }
 
+
+    useEffect(() => {
+        try {
+            alert("check for external app")
+            const oAuthRequest = initializeOAuthRequest(urlSearch);
+            console.log("OAuth Request: ", oAuthRequest);
+            setOAuthRequest(oAuthRequest);
+            if (oAuthRequest){
+                alert("External App")
+                getExternalResourceInfo(oAuthRequest.client_id, oAuthRequest.redirect_uri)
+                    .then(setResourceInfo);
+
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }, []);
 
     return <>
         <div className="border rounded-md shadow-md px-10 pb-10 pt-2 bg-gray-50 w-2/3 text-black">
