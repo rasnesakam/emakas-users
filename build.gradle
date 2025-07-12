@@ -53,6 +53,8 @@ dependencies {
 	implementation 'org.postgresql:postgresql:42.7.2'
 	// Swagger
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+	// JBoss Logging
+	implementation 'org.jboss.logging:jboss-logging:3.5.3.Final'
 	//MapStruct
 	implementation 'org.mapstruct:mapstruct:1.6.3'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
