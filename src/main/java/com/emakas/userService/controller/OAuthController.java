@@ -51,7 +51,7 @@ public class OAuthController {
 
     //TODO: Use PreAuthorize annotation
     @GetMapping("token/verify")
-    public ResponseEntity<Response<Boolean>> authorizeToken(@RequestParam(required = false) String targetResource, @RequestParam(required = false) String requestedPermission){
+    public ResponseEntity<?> authorizeToken(@RequestParam(required = false) String targetResource, @RequestParam(required = false) String requestedPermission){
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = securityContext.getAuthentication();
         if (authentication instanceof JwtAuthentication jwtAuthentication){
@@ -59,21 +59,18 @@ public class OAuthController {
                     && requestedPermission != null && !requestedPermission.isBlank();
             if (parametersAreNotNullOrEmpty){
                 if (tokenPermissionEvaluator.hasPermission(jwtAuthentication, targetResource, requestedPermission))
-                    return new ResponseEntity<>(new Response<>(true,"Authorization succeed"), HttpStatus.OK);
+                    return ResponseEntity.ok().build();
                 else
-                    return new ResponseEntity<>(new Response<>(false, "Authorization failed"), HttpStatus.UNAUTHORIZED);
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization Failed");
             }
             if (jwtAuthentication.isAuthenticated())
-                return new ResponseEntity<>(new Response<>(true,"Authorization succeed"), HttpStatus.OK);
+                return ResponseEntity.ok().build();
             else
-                return new ResponseEntity<>(new Response<>(false, "Authorization failed"), HttpStatus.UNAUTHORIZED);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body( "Authorization failed");
 
         }
         else
-            return new ResponseEntity<>(
-                new Response<>(false, "Authentication must made by Jwt toekens"),
-                HttpStatus.UNAUTHORIZED
-        );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication must made by Jwt toekens");
     }
 
 
@@ -83,7 +80,7 @@ public class OAuthController {
             case AUTHORIZATION_CODE -> oauthFlowManager.handleAccessTokenFlow(tokenRequestDto.getCode(), tokenRequestDto.getClientId(), tokenRequestDto.getClientSecret());
             case CLIENT_CREDENTIALS -> oauthFlowManager.handleClientCredentialsFlow(tokenRequestDto.getClientId(), tokenRequestDto.getClientSecret());
             case REFRESH_TOKEN -> oauthFlowManager.handleRefreshTokenFlow(tokenRequestDto.getRefreshToken(), request);
-            default -> new ResponseEntity<>(Response.of("Invalid grant type."), HttpStatus.BAD_REQUEST);
+            default -> ResponseEntity.badRequest().body(Response.of("Invalid Grant Type"));
         };
     }
 }

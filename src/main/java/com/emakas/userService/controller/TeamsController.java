@@ -40,17 +40,17 @@ public class TeamsController {
 
     @PreAuthorize("hasPermission(#RSC_TEAMS,'self:read')")
     @GetMapping("/owned")
-    public ResponseEntity<Response<Collection<TeamReadDto>>> getOwnedTeams(){
+    public ResponseEntity<Collection<TeamReadDto>> getOwnedTeams(){
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = securityContext.getAuthentication();
         if (authentication instanceof JwtAuthentication jwtAuthentication) {
             String userPrincipal = (String) jwtAuthentication.getPrincipal();
             UUID userId = UUID.fromString(userPrincipal);
             if (jwtAuthentication.getUserToken().getTokenType() != TokenType.USR)
-                return new ResponseEntity<>(Response.of("Invalid Token Type"), HttpStatus.UNAUTHORIZED);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             Collection<Team> teams = teamService.getTeamsByOwner(userId);
-            return new ResponseEntity<>(Response.of(teams.stream().map(teamsDtoMapper::teamToTeamReadDto).toList()), HttpStatus.OK);
+            return ResponseEntity.ok(teams.stream().map(teamsDtoMapper::teamToTeamReadDto).toList());
         }
-        return new ResponseEntity<>(Response.of("Invalid Token"), HttpStatus.UNAUTHORIZED);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }

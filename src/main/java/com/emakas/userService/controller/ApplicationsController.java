@@ -37,15 +37,15 @@ public class ApplicationsController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<Response<Collection<ApplicationDto>>> getApplications() {
+    public ResponseEntity<Collection<ApplicationDto>> getApplications() {
         Collection<ApplicationDto> applicationDtos = applicationService.getAll().stream().map(applicationDtoMapper::toApplicationDto).collect(Collectors.toSet());
-        return ResponseEntity.ok(Response.of(applicationDtos));
+        return ResponseEntity.ok(applicationDtos);
     }
 
     @GetMapping("/self")
-    public ResponseEntity<Response<ApplicationDto>> getSelfApplication() {
+    public ResponseEntity<ApplicationDto> getSelfApplication() {
         Optional<Application> application = applicationService.getByUri(appDomainName);
-        return application.map(value -> ResponseEntity.ok(Response.of(applicationDtoMapper.toApplicationDto(value))))
+        return application.map(value -> ResponseEntity.ok(applicationDtoMapper.toApplicationDto(value)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

@@ -44,11 +44,11 @@ public class MembersController {
         return intendedTeam.map(team -> {
             Optional<User> foundedUser = userService.getByUserName(userWriteDto.getUserName());
             return foundedUser.map(user -> {
-                logger.info("Founded user will invite to the team {}", team.getName());
+                String returnMessage = String.format("User %s has assigned to team %s.", user.getUserName(), team.getName());
+                logger.info(returnMessage);
                 Team newTeam = teamService.addMemberToTeam(team, user);
-                return new ResponseEntity<>(Response.of(newTeam), HttpStatus.OK);
-            }).orElseGet(() ->
-                new ResponseEntity<>(Response.of("Team couldn't find"), HttpStatus.NOT_FOUND));
-        }).orElse(new ResponseEntity<>(Response.of("Team couldn't find"), HttpStatus.NOT_FOUND));
+                return ResponseEntity.ok(Response.of(newTeam, returnMessage));
+            }).orElseGet(() -> ResponseEntity.notFound().build());
+        }).orElse(ResponseEntity.notFound().build());
     }
 }
