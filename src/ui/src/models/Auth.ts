@@ -8,7 +8,14 @@ export interface LoginCredentials {
     app_redirect?: string;
 }
 
-
+export interface LoginResponse {
+    clientId: string;
+    sessionId: string;
+    redirectUri: string;
+    audience: string;
+    requestedScopes: string[];
+    state: string;
+}
 
 export interface Authentication {
     name?: string;

@@ -5,6 +5,8 @@ import com.emakas.userService.dto.Response;
 import com.emakas.userService.mappers.ApplicationDtoMapper;
 import com.emakas.userService.model.Application;
 import com.emakas.userService.service.ApplicationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,7 @@ public class ApplicationsController {
         this.appDomainName = appDomainName;
     }
 
+    @Operation(summary = "Register new application", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/register")
     public ResponseEntity<Response<ApplicationDto>> createApplication(@RequestBody ApplicationDto applicationDto) {
         Application app = applicationDtoMapper.toApplication(applicationDto);
@@ -36,12 +39,14 @@ public class ApplicationsController {
         return ResponseEntity.ok(Response.of(applicationDtoMapper.toApplicationDto(app)));
     }
 
+    @Operation(summary = "Get registered applications", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/")
     public ResponseEntity<Collection<ApplicationDto>> getApplications() {
         Collection<ApplicationDto> applicationDtos = applicationService.getAll().stream().map(applicationDtoMapper::toApplicationDto).collect(Collectors.toSet());
         return ResponseEntity.ok(applicationDtos);
     }
 
+    @Operation(summary = "Get First Party Application", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/self")
     public ResponseEntity<ApplicationDto> getSelfApplication() {
         Optional<Application> application = applicationService.getByUri(appDomainName);

@@ -16,10 +16,10 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 public class LoginSession extends BaseEntity{
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     private User intendedUser;
 
-    @OneToOne
+    @ManyToOne
     private Application requestedClient;
 
     @ElementCollection(fetch = FetchType.EAGER, targetClass = String.class)

@@ -1,21 +1,21 @@
 import {FormEvent, useEffect, useState} from "react";
-import {useNavigate, useSearchParams} from "react-router";
+import { useSearchParams} from "react-router";
 import {ExternalResourceInfo} from "@models/Resource.ts";
 import {getExternalResourceInfo} from "@services/resources";
 import {initializeOAuthRequest, LoginCredentials, OAuthRequest} from "@models/Auth.ts";
-import {getToken, login} from "@services/auth";
+import {authorize, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
-import {useAuthContext} from "@contexts/AuthContext";
+//import {useAuthContext} from "@contexts/AuthContext";
 
 
 
 export function LoginPage(){
-    const { setAuth} = useAuthContext();
+    //const { setAuth} = useAuthContext();
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
     const [oAuthRequest, setOAuthRequest] = useState<OAuthRequest | undefined>(undefined);
     const [resourceInfo, setResourceInfo] = useState<ExternalResourceInfo | undefined>(undefined);
-    const navigate = useNavigate();
+    //const navigate = useNavigate();
     const [loadingState, setLoadingState] = useState<boolean>(false);
 
     const onFormSubmit = (e: FormEvent) => {
@@ -34,7 +34,9 @@ export function LoginPage(){
             loginInput.app_audiences = resourceInfo.audiences;
             loginInput.app_scopes = resourceInfo.scopes;
         }
-        login(loginInput)
+        login(loginInput, resourceInfo!.client_id, oAuthRequest?.state)
+            .then(authorize)
+            /*
             .then(grant => {
                 if (oAuthRequest && resourceInfo){
                     const redirect = `${resourceInfo.redirectUri}?grant=${grant}`;
@@ -55,6 +57,7 @@ export function LoginPage(){
 
                 }
             })
+             */
             .catch(err => {
                 console.error(err)
             })

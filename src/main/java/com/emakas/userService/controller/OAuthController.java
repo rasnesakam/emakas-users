@@ -75,12 +75,19 @@ public class OAuthController {
 
 
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<Response<TokenResponseDto>> getToken(@Valid @ModelAttribute TokenRequestDto tokenRequestDto, HttpServletRequest request){
-        return switch (GrantType.getGrantType(tokenRequestDto.getGrantType())){
-            case AUTHORIZATION_CODE -> oauthFlowManager.handleAccessTokenFlow(tokenRequestDto.getCode(), tokenRequestDto.getClientId(), tokenRequestDto.getClientSecret());
-            case CLIENT_CREDENTIALS -> oauthFlowManager.handleClientCredentialsFlow(tokenRequestDto.getClientId(), tokenRequestDto.getClientSecret());
-            case REFRESH_TOKEN -> oauthFlowManager.handleRefreshTokenFlow(tokenRequestDto.getRefreshToken(), request);
-            default -> ResponseEntity.badRequest().body(Response.of("Invalid Grant Type"));
+    public ResponseEntity<TokenResponseDto> getToken(
+            @RequestParam("grant_type") String grantType,
+            @RequestParam(value = "code", required = false) String code,
+            @RequestParam(value = "client_id", required = false) String clientId,
+            @RequestParam("client_secret") String clientSecret,
+            @RequestParam(value = "redirect_uri", required = false) String redirectUri,
+            @RequestParam(value = "refresh_token", required = false) String refreshToken,
+            HttpServletRequest request){
+        return switch (GrantType.getGrantType(grantType)){
+            case AUTHORIZATION_CODE -> oauthFlowManager.handleAccessTokenFlow(code, clientId, clientSecret);
+            case CLIENT_CREDENTIALS -> oauthFlowManager.handleClientCredentialsFlow(clientId, clientSecret);
+            case REFRESH_TOKEN -> oauthFlowManager.handleRefreshTokenFlow(refreshToken, request);
+            default -> ResponseEntity.badRequest().build();
         };
     }
 }

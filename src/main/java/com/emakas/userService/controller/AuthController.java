@@ -16,6 +16,9 @@ import com.emakas.userService.model.*;
 import com.emakas.userService.service.*;
 import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.TokenManager;
+import com.emakas.userService.shared.enums.GrantType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +48,7 @@ public class AuthController {
     private final ApplicationService applicationService;
     private final LoginSessionService loginSessionService;
     private final LoginSessionDtoMapper loginSessionDtoMapper;
+    private final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     public AuthController(UserService service, TokenService tokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, UserDtoMapper userDtoMapper, ApplicationService applicationService, LoginSessionService loginSessionService, LoginSessionDtoMapper loginSessionDtoMapper, LoginSessionDtoMapper loginSessionDtoMapper1) {
@@ -103,11 +107,12 @@ public class AuthController {
 
         if (savedUserLogin.isEmpty())
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Error.");
-
+        logger.info("Saved user login with grant: {}", savedUserLogin.get().getAuthorizationGrant());
         UriComponentsBuilder uriBuilder = UriComponentsBuilder
                 .fromUriString(client.getRedirectUri())
                 .queryParam("code",savedUserLogin.get().getAuthorizationGrant())
                 .queryParam("state", state);
+        logger.info("Redirect address: {}", uriBuilder.toUriString());
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(uriBuilder.build().toUri())
                 .build();
@@ -115,7 +120,7 @@ public class AuthController {
 
     @PostMapping("/sign-in")
     @ResponseBody
-    public ResponseEntity<Response<LoginSessionDto>> signIn(@RequestBody LoginModel loginModel, @RequestParam UUID clientId, @RequestParam String[] audiences, @RequestParam String[] scopes){
+    public ResponseEntity<Response<LoginSessionDto>> signIn(@RequestBody LoginModel loginModel, @RequestParam(name = "client_id") UUID clientId, @RequestParam(required = false) String[] audiences, @RequestParam(required = false) String[] scopes, @RequestParam(required = false, name = "state") String state){
         try{
             Optional<Application> clientOptional = applicationService.getById(clientId);
             if (clientOptional.isEmpty())
@@ -141,6 +146,7 @@ public class AuthController {
                 loginSession.setRequestedScopes(scopeSet);
 
                 LoginSessionDto loginSessionResponse = loginSessionDtoMapper.toLoginSessionDto(loginSessionService.save(loginSession));
+                loginSessionResponse.setState(state);
 
                 Optional<UserLogin> savedUserLogin = userLoginService.saveUserLogin(userLogin);
                 return savedUserLogin.map(login -> ResponseEntity.status(HttpStatus.CREATED).body(Response.of(loginSessionResponse)))

@@ -38,7 +38,7 @@ public class OauthFlowManager {
         this.resourcePermissionService = resourcePermissionService;
     }
 
-    public ResponseEntity<Response<TokenResponseDto>> handleAccessTokenFlow(String grant, String clientId, String clientSecret) {
+    public ResponseEntity<TokenResponseDto> handleAccessTokenFlow(String grant, String clientId, String clientSecret) {
         //TODO: Implement client id and secret mechanism
         Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
         if (userLogin.isPresent()){
@@ -56,12 +56,12 @@ public class OauthFlowManager {
                     loggedUser.getEmail(), token.getSerializedToken(), expiresAt, refreshToken.getSerializedToken(),
                     Constants.BEARER_TOKEN
             );
-            return new ResponseEntity<>(new Response<>(tokenResponseDto), HttpStatus.OK);
+            return ResponseEntity.ok(tokenResponseDto);
         }
-        return new ResponseEntity<>(new Response<>(null, "Invalid grant"),HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-    public ResponseEntity<Response<TokenResponseDto>> handleRefreshTokenFlow(String refreshToken, HttpServletRequest request) {
+    public ResponseEntity<TokenResponseDto> handleRefreshTokenFlow(String refreshToken, HttpServletRequest request) {
         Optional<Token> tokenInput = tokenManager.getFromToken(refreshToken);
         if (tokenInput.isPresent())
         {
@@ -70,7 +70,7 @@ public class OauthFlowManager {
             if (token.getAud().stream().anyMatch(audience -> audience.equals(origin))){
                 Optional<User> optionalUser = tokenManager.loadUserFromToken(token);
                 if (optionalUser.isEmpty())
-                    return new ResponseEntity<>(Response.of("Invalid Token"), HttpStatus.BAD_REQUEST);
+                    return ResponseEntity.badRequest().build();
                 User user = optionalUser.get();
                 String[] audiences = token.getAud().toArray(String[]::new);
                 String[] scopes = resourcePermissionService.getPermissionsByUser(user)
@@ -84,14 +84,14 @@ public class OauthFlowManager {
                         user.getEmail(), newAccessToken.getSerializedToken(), expiresAt, newRefreshToken.getSerializedToken(),
                         Constants.BEARER_TOKEN
                 );
-                return new ResponseEntity<>(Response.of(tokenResponseDto), HttpStatus.OK);
+                return ResponseEntity.ok(tokenResponseDto);
             }
 
         }
-        return new ResponseEntity<>(Response.of("Invalid Token"),HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().build();
     }
 
-    public ResponseEntity<Response<TokenResponseDto>> handleClientCredentialsFlow(String clientId, String clientSecret){
+    public ResponseEntity<TokenResponseDto> handleClientCredentialsFlow(String clientId, String clientSecret){
         //TODO: Will be implemented
         return null;
     }

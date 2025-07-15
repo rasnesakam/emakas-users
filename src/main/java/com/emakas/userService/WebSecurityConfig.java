@@ -33,6 +33,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
@@ -42,6 +43,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
@@ -78,8 +80,11 @@ public class WebSecurityConfig {
 
         http.csrf(config -> {
 
-            AntPathRequestMatcher authMatcher = new AntPathRequestMatcher("/api/auth/**");
-            config.requireCsrfProtectionMatcher(authMatcher);
+            AntPathRequestMatcher authPostMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.POST.name());
+            AntPathRequestMatcher authPutMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.POST.name());
+            AntPathRequestMatcher authDeleteMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.POST.name());
+            AndRequestMatcher andRequestMatcher = new AndRequestMatcher(List.of(authPostMatcher, authPutMatcher, authDeleteMatcher));
+            config.requireCsrfProtectionMatcher(andRequestMatcher);
             CookieCsrfTokenRepository cookieCsrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
             cookieCsrfTokenRepository.setCookieCustomizer(customizer -> {
                 customizer.httpOnly(false);

@@ -27,11 +27,13 @@ public class UserLoginService {
     }
 
     public Optional<UserLogin> getUserLoginByGrant(String grant){
-        UserLogin userLogin = userLoginRepository.findUserLoginByAuthorizationGrant(UUID.fromString(grant));
-        Instant exprirationInstant = Instant.ofEpochSecond(userLogin.getExpirationDateInSeconds());
+        Optional<UserLogin> userLogin = userLoginRepository.findUserLoginByAuthorizationGrant(UUID.fromString(grant));
+        if (userLogin.isEmpty())
+            return Optional.empty();
+        Instant exprirationInstant = Instant.ofEpochSecond(userLogin.get().getExpirationDateInSeconds());
         Instant currentInstant = Instant.now();
         if (exprirationInstant.isBefore(currentInstant))
             return Optional.empty();
-        return Optional.of(userLogin);
+        return Optional.of(userLogin.get());
     }
 }

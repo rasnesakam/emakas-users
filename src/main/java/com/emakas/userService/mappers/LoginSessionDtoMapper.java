@@ -14,5 +14,6 @@ public interface LoginSessionDtoMapper {
 
     @Mapping(target = "sessionId", source = "id")
     @Mapping(target = "clientId", source = "requestedClient.id")
+    @Mapping(target = "audience", source = "requestedClient.uri")
     LoginSessionDto toLoginSessionDto(LoginSession session);
 }

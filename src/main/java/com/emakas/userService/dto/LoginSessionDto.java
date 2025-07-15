@@ -16,6 +16,7 @@ public class LoginSessionDto {
     private UUID clientId;
     private UUID sessionId;
     private String redirectUri;
+    private String audience;
     private Set<String> requestedScopes;
     private String state;
 }
