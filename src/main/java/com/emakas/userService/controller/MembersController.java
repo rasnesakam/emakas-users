@@ -1,7 +1,5 @@
 package com.emakas.userService.controller;
 
-import com.emakas.userService.auth.JwtAuthentication;
-import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TeamReadDto;
 import com.emakas.userService.dto.UserWriteDto;
 import com.emakas.userService.mappers.TeamsDtoMapper;
@@ -15,12 +13,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -54,7 +48,7 @@ public class MembersController {
                 String returnMessage = String.format("User %s has assigned to team %s.", user.getUserName(), team.getName());
                 logger.info(returnMessage);
                 Team newTeam = teamService.addMemberToTeam(team, user);
-                return ResponseEntity.ok(teamsDtoMapper.teamToTeamReadDto(newTeam));
+                return ResponseEntity.ok(teamsDtoMapper.toTeamDto(newTeam));
             }).orElseGet(() -> ResponseEntity.notFound().build());
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -64,7 +58,7 @@ public class MembersController {
     @GetMapping("{team_uri}")
     public ResponseEntity<TeamReadDto> getTeam(@PathVariable("team_uri") String teamUri){
         Optional<Team> requestedTeam = teamService.getByUri(teamUri);
-        return requestedTeam.map(team -> ResponseEntity.ok(teamsDtoMapper.teamToTeamReadDto(team)))
+        return requestedTeam.map(team -> ResponseEntity.ok(teamsDtoMapper.toTeamDto(team)))
                 .orElse(ResponseEntity.notFound().build());
     }
 }
