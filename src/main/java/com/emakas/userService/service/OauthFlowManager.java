@@ -22,6 +22,7 @@ import javax.swing.text.html.Option;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class OauthFlowManager {
@@ -96,8 +97,8 @@ public class OauthFlowManager {
         return null;
     }
 
-    public ResponseEntity<TokenResponseDto> handlePCKEFlow(){
-        //TODO:Implement
+    public ResponseEntity<TokenResponseDto> handlePCKEFlow(String grant , String codeVerifier, UUID clientId){
+        //TODO:Implement PKCE Flow
         return null;
     }
 }
