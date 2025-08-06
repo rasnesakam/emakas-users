@@ -10,20 +10,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class UserLoginService {
+public class UserLoginService extends CoreService<UserLogin, UUID> {
     private final UserLoginRepository userLoginRepository;
 
     @Autowired
     public UserLoginService(UserLoginRepository userLoginRepository) {
+        super(userLoginRepository);
         this.userLoginRepository = userLoginRepository;
-    }
-
-    public Optional<UserLogin> saveUserLogin(UserLogin userLogin){
-        try{
-            return Optional.of(userLoginRepository.save(userLogin));
-        }catch (Exception e){
-            return Optional.empty();
-        }
     }
 
     public Optional<UserLogin> getUserLoginByGrant(String grant){

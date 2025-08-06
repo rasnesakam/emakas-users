@@ -39,6 +39,13 @@ public class UserLogin extends BaseEntity{
     @Column
     private long expirationDateInSeconds;
 
+    @Column(name = "code_challenge")
+    private String codeChallenge;
+
+    @Column(name = "related_session")
+    @OneToOne(fetch = FetchType.EAGER)
+    private LoginSession relatedSession;
+
     /**
      * Prepersist function will be executed before object being persisted.
      * Set expirationDate 10 minutes after current date
@@ -56,5 +63,11 @@ public class UserLogin extends BaseEntity{
         this.loggedUser = loggedUser;
         this.authorizedAudiences = authorizedAudiences;
         this.authorizedScopes = authorizedScopes;
+    }
+
+    public UserLogin(LoginSession loginSession) {
+        this.relatedSession = loginSession;
+        this.loggedUser = loginSession.getIntendedUser();
+        this.authorizedScopes = loginSession.getRequestedScopes();
     }
 }

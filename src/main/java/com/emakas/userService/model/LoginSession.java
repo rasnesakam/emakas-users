@@ -29,10 +29,18 @@ public class LoginSession extends BaseEntity{
     @Column
     private String redirectUri;
 
+    @Column
     private long expireDate;
 
     @PrePersist
     protected void onCreate() {
         this.expireDate = Instant.now().plus(120, ChronoUnit.SECONDS).getEpochSecond();
+    }
+
+    public LoginSession(User intendedUser, Application requestedClient, Set<String> requestedScopes) {
+        this.intendedUser = intendedUser;
+        this.requestedClient = requestedClient;
+        this.requestedScopes = requestedScopes;
+        this.redirectUri = requestedClient.getRedirectUri();
     }
 }

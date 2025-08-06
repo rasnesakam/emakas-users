@@ -1,6 +1,7 @@
 package com.emakas.userService.controller;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -32,6 +33,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -49,9 +51,10 @@ public class AuthController {
     private final LoginSessionService loginSessionService;
     private final LoginSessionDtoMapper loginSessionDtoMapper;
     private final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    private final LoginModel loginModel;
 
     @Autowired
-    public AuthController(UserService service, TokenService tokenService, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, UserDtoMapper userDtoMapper, ApplicationService applicationService, LoginSessionService loginSessionService, LoginSessionDtoMapper loginSessionDtoMapper, LoginSessionDtoMapper loginSessionDtoMapper1) {
+    public AuthController(UserService service, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, UserDtoMapper userDtoMapper, ApplicationService applicationService, LoginSessionService loginSessionService, LoginSessionDtoMapper loginSessionDtoMapper, LoginSessionDtoMapper loginSessionDtoMapper1, LoginModel loginModel) {
         this.userService = service;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
@@ -61,104 +64,123 @@ public class AuthController {
         this.applicationService = applicationService;
         this.loginSessionService = loginSessionService;
         this.loginSessionDtoMapper = loginSessionDtoMapper1;
+        this.loginModel = loginModel;
     }
 
 
     @PostMapping("/sign-up")
     @ResponseBody
     public ResponseEntity<Response<User>> createUser(@RequestBody UserWriteDto userDto, @RequestParam(value = "invite-code") String inviteCode){
-        if (this.userService.existsByEmailOrUserName(userDto.getEmail(), userDto.getUserName()))
-            return new ResponseEntity<>(new Response<>(null, String.format("User %s (%s) already exists", userDto.getUserName(), userDto.getEmail())), HttpStatus.BAD_REQUEST);
-        String hashedPassword = passwordEncoder.encode(userDto.getPassword());
-        User user = userDtoMapper.UserFromUserWriteDto(userDto);
-        user.setPassword(hashedPassword);
-        userService.save(user);
-    	return new ResponseEntity<>(new Response<>(user), HttpStatus.CREATED);
+        //TODO: Signing up feature will design again
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }
 
+    /**
+     * <h1>Authorize</h1>
+     * <p>Redirect to third party app with approved credentials.</p>
+     * <p>
+     *     This method should not use alone
+     * </p>
+     * <p>
+     *     This method should use after invoke <code>/sign-in</code> endpoint
+     *     with <code>sessionId</code> parameter that returned from the method
+     * </p>
+     *
+     * @param clientId The id of the client app that registered
+     * @param sessionId After signing in, the sessionId will generate in order to represent that login.
+     * @param redirectUri The uri of the client app that registered. After authorize,
+     * @param grantedScopes The client may request some permissions. But client can approve some, none or all of them.
+     * @param state State is a optional parameter that confirms the OAuth flow did not intercept by any other parties. According to RFC of OAuth2.0
+     * @return For Successful process, method returns redirect response to the client callback uri
+     * @see AuthController#signIn(LoginModel, UUID, String[], String[], String)
+     */
     @GetMapping("/authorize")
     public ResponseEntity<?> authorize(
             @RequestParam(name = "client_id") UUID clientId,
             @RequestParam(name = "session_id") UUID sessionId,
             @RequestParam(name = "redirect_uri") String redirectUri,
-            @RequestParam(name = "requested_scopes") String[] requestedScopes,
-            @RequestParam(name = "state") String state
+            @RequestParam(name = "requested_scopes") String[] grantedScopes,
+            @RequestParam(name = "state") String state,
+            @RequestParam(name = "code_challenge", required = false) String codeChallenge
     ) {
-        Optional<Application> optionalClient = applicationService.getById(clientId);
-        if (optionalClient.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found");
-        Application client = optionalClient.get();
-
-        Optional<LoginSession> optionalLoginSession = loginSessionService.getById(sessionId);
-        if (optionalLoginSession.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
-
-        LoginSession loginSession = optionalLoginSession.get();
-        if (Instant.ofEpochSecond(loginSession.getExpireDate()).isBefore(Instant.now()))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Session Expired");
-
-        User user = loginSession.getIntendedUser();
-
-        Set<String> audienceSet = Set.of(client.getUri());
-        Set<String> scopeSet = Set.of(requestedScopes);
-
-        UserLogin userLogin = new UserLogin(user, audienceSet,scopeSet);
-        Optional<UserLogin> savedUserLogin = userLoginService.saveUserLogin(userLogin);
-
-        if (savedUserLogin.isEmpty())
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Error.");
-        logger.info("Saved user login with grant: {}", savedUserLogin.get().getAuthorizationGrant());
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder
-                .fromUriString(client.getRedirectUri())
-                .queryParam("code",savedUserLogin.get().getAuthorizationGrant())
-                .queryParam("state", state);
-        logger.info("Redirect address: {}", uriBuilder.toUriString());
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(uriBuilder.build().toUri())
-                .build();
+        return applicationService.getById(clientId).map(
+                client -> loginSessionService.getById(sessionId).map(loginSession -> {
+                    if (Instant.ofEpochSecond(loginSession.getExpireDate()).isBefore(Instant.now()))
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Session Expired");
+                    User user = loginSession.getIntendedUser();
+                    Set<String> scopeSet = Set.of(grantedScopes);
+                    //TODO: Compare requested scopes and authorizedScopes
+                    UserLogin userLogin = new UserLogin(loginSession);
+                    if (Objects.nonNull(codeChallenge) && !codeChallenge.isEmpty())
+                        userLogin.setCodeChallenge(codeChallenge);
+                    try {
+                        UserLogin savedUserLogin = userLoginService.save(userLogin);
+                        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                                .fromUriString(client.getRedirectUri())
+                                .queryParam("code",savedUserLogin.getAuthorizationGrant())
+                                .queryParam("state", state);
+                        return ResponseEntity.status(HttpStatus.FOUND)
+                                .location(uriBuilder.build().toUri())
+                                .build();
+                    }catch (Exception e) {
+                        logger.error(e.getLocalizedMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Error.");
+                    }
+                }).orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build())
+        ).orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * <h1>Sign-In</h1>
+     * <p>
+     *     Checks user credentials and permissions for user
+     * </p>
+     * <p>
+     *     After filling login form, this endpoint is going to be invoke.<br/>
+     *     This endpoint validates client and user credentials. After validation, requested permissions and audiences will be saved for authorizing login.<br/>
+     *     For successful case, this enpoint returns {@link LoginSessionDto} that contains sessionId
+     * </p>
+     * <p>
+     *     After signing-in, The method {@link AuthController#authorize(UUID, UUID, String, String[], String, String)} should invoke with received session id.
+     * </p>
+     * @param loginModel User credential informations that passed into body as form data
+     * @param clientId Id that represents third party app client
+     * @param audiences Indicates that wich resource should token use for
+     * @param scopes Indicates the permissions that user has capable of
+     * @param state State is a optional parameter that confirms the OAuth flow did not intercept by any other parties. According to RFC of OAuth2.0
+     * @return {@link LoginSessionDto} that contains sessionId
+     */
     @PostMapping("/sign-in")
     @ResponseBody
     public ResponseEntity<Response<LoginSessionDto>> signIn(@RequestBody LoginModel loginModel, @RequestParam(name = "client_id") UUID clientId, @RequestParam(required = false) String[] audiences, @RequestParam(required = false) String[] scopes, @RequestParam(required = false, name = "state") String state){
-        try{
-            Optional<Application> clientOptional = applicationService.getById(clientId);
-            if (clientOptional.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.of("Invalid client"));
-
-            UserDetails userDetails = this.userService.loadUserByUsername(loginModel.getUsername());
-            Application client = clientOptional.get();
-            Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    userDetails.getUsername(),
-                    loginModel.getPassword()
-            ));
-            if (auth.isAuthenticated()){
-                User user = this.userService.getByUserName(loginModel.getUsername()).get();
-                Set<String> audienceSet = Set.of(audiences);
-                Set<String> scopeSet = getDefinedOrDefaultScopes(scopes, user);
-
-                UserLogin userLogin = new UserLogin(user, audienceSet,scopeSet);
-
-                LoginSession loginSession = new LoginSession();
-                loginSession.setIntendedUser(user);
-                loginSession.setRequestedClient(client);
-                loginSession.setRedirectUri(client.getRedirectUri());
-                loginSession.setRequestedScopes(scopeSet);
-
-                LoginSessionDto loginSessionResponse = loginSessionDtoMapper.toLoginSessionDto(loginSessionService.save(loginSession));
-                loginSessionResponse.setState(state);
-
-                Optional<UserLogin> savedUserLogin = userLoginService.saveUserLogin(userLogin);
-                return savedUserLogin.map(login -> ResponseEntity.status(HttpStatus.CREATED).body(Response.of(loginSessionResponse)))
-                        .orElseGet(() -> ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response.of("sign in failed due to server error")));
+        return applicationService.getById(clientId).map(client -> {
+            UserDetails userDetails = userService.loadUserByUsername(loginModel.getUsername());
+            try{
+                Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginModel.getUsername(), loginModel.getPassword()));
+                if (!authentication.isAuthenticated())
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.<LoginSessionDto>of("Invalid credentials"));
+                return userService.getByUserName(userDetails.getUsername()).map(user -> {
+                    Set<String> audienceSet = Set.of(audiences);
+                    Set<String> scopeSet = Set.of(scopes);
+                    LoginSession loginSession = new LoginSession(user, client, scopeSet);
+                    try {
+                        LoginSession savedSession = loginSessionService.save(loginSession);
+                        LoginSessionDto savedSessionResponse = loginSessionDtoMapper.toLoginSessionDto(savedSession);
+                        savedSessionResponse.setState(state);
+                        return ResponseEntity.status(HttpStatus.OK).body(Response.of(savedSessionResponse));
+                    }catch (Exception e) {
+                        logger.error(e.getLocalizedMessage());
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response.<LoginSessionDto>of("Internal Error."));
+                    }
+                }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.of("User not found")));
             }
-            return new ResponseEntity<>(new Response<>(null,"Invalid credentials"), HttpStatus.NOT_FOUND);
-        }catch (UsernameNotFoundException | BadCredentialsException exception){
-            return new ResponseEntity<>(new Response<>(null,"Invalid credentials"), HttpStatus.NOT_FOUND);
-        }
-        catch (DisabledException exception){
-            return new ResponseEntity<>(new Response<>(null,"User is suspended"), HttpStatus.FORBIDDEN);
-        }
+            catch (UsernameNotFoundException | BadCredentialsException exception){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.<LoginSessionDto>of(null,"Invalid credentials"));
+            }
+            catch (DisabledException exception){
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Response.<LoginSessionDto>of(null,"User is suspended"));
+            }
+        }).orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Response.of("Invalid client")));
     }
 
     private Set<String> getDefinedOrDefaultScopes(String[] scopes, User user){
