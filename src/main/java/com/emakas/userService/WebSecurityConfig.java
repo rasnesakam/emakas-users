@@ -29,6 +29,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
@@ -76,15 +79,20 @@ public class WebSecurityConfig {
     }
 
     @Bean
+    public AuthFilter getAuthFilter() {
+        return new AuthFilter(tokenManager, userService, applicationService);
+    }
+
+
+    @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http.csrf(config -> {
-
             AntPathRequestMatcher authPostMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.POST.name());
-            AntPathRequestMatcher authPutMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.POST.name());
-            AntPathRequestMatcher authDeleteMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.POST.name());
-            AndRequestMatcher andRequestMatcher = new AndRequestMatcher(List.of(authPostMatcher, authPutMatcher, authDeleteMatcher));
-            config.requireCsrfProtectionMatcher(andRequestMatcher);
+            AntPathRequestMatcher authPutMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.PUT.name());
+            AntPathRequestMatcher authDeleteMatcher = new AntPathRequestMatcher("/api/auth/**", HttpMethod.DELETE.name());
+            OrRequestMatcher orRequestMatcher = new OrRequestMatcher(List.of(authPostMatcher, authPutMatcher, authDeleteMatcher));
+            config.requireCsrfProtectionMatcher(orRequestMatcher);
             CookieCsrfTokenRepository cookieCsrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
             cookieCsrfTokenRepository.setCookieCustomizer(customizer -> {
                 customizer.httpOnly(false);
@@ -96,7 +104,13 @@ public class WebSecurityConfig {
             config.csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler());
 
         }).sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
+        //TODO: Replace our auth filter with default one
+        /*
+        http.addFilterAt(getAuthFilter(), AuthorizationFilter.class)
+                .authorizeHttpRequests(auth ->
+                        auth.anyRequest().permitAll()
+                );
+         */
         return http.build();
     }
 

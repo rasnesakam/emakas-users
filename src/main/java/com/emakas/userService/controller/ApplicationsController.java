@@ -14,10 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -34,7 +34,7 @@ public class ApplicationsController {
     }
 
     @Operation(summary = "Register new application", security = @SecurityRequirement(name = "bearerAuth"))
-    @PostMapping("/register")
+    @PostMapping("register")
     @PreAuthorize("hasPermission(#RSC_APPS, 'self:write')")
     public ResponseEntity<Response<ApplicationDto>> createApplication(@RequestBody ApplicationDto applicationDto) {
         Application app = applicationDtoMapper.toApplication(applicationDto);
@@ -43,7 +43,7 @@ public class ApplicationsController {
     }
 
     @Operation(summary = "Delete existing application", security = @SecurityRequirement(name = "bearerAuth"))
-    @DeleteMapping("/delete")
+    @DeleteMapping("delete")
     @PreAuthorize("hasPermission(#RSC_APPS, 'self:delete')")
     public ResponseEntity<ApplicationDto> deleteApplication(@RequestParam(name = "id") UUID appId) {
         Optional<Application> application = applicationService.getById(appId);
@@ -59,8 +59,19 @@ public class ApplicationsController {
         return ResponseEntity.ok(applicationDtos);
     }
 
+    @GetMapping("info")
+    public ResponseEntity<ApplicationDto> getApplicationInfo(@RequestParam(name="client_id") UUID clientId, @RequestParam(name = "redirect_uri") String redirectUri) {
+        String decodedUri = URLDecoder.decode(redirectUri, StandardCharsets.UTF_8);
+        Optional<Application> applicationValue = applicationService.getById(clientId);
+        return applicationValue.map(app -> {
+            if (Objects.equals(app.getRedirectUri(), decodedUri))
+                return ResponseEntity.ok(applicationDtoMapper.toApplicationDto(app));
+            return ResponseEntity.notFound().<ApplicationDto>build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Get First Party Application", security = @SecurityRequirement(name = "X-CSRF-TOKEN"))
-    @GetMapping("/self")
+    @GetMapping("self")
     public ResponseEntity<ApplicationDto> getSelfApplication() {
         Optional<Application> application = applicationService.getByUri(appDomainName);
         return application.map(value -> ResponseEntity.ok(applicationDtoMapper.toApplicationDto(value)))

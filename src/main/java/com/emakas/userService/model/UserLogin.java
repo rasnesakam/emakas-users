@@ -42,7 +42,7 @@ public class UserLogin extends BaseEntity{
     @Column(name = "code_challenge")
     private String codeChallenge;
 
-    @Column(name = "related_session")
+    @JoinColumn(name = "related_session")
     @OneToOne(fetch = FetchType.EAGER)
     private LoginSession relatedSession;
 
