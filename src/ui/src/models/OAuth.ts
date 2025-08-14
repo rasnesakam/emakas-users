@@ -4,4 +4,5 @@ export interface OAuthRequest {
     redirect_uri: string;
     scope?: string[];
     state?: string;
+    code_challenge?: string
 }

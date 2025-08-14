@@ -3,13 +3,13 @@ import {getCookie} from "@utils/getToken.ts";
 import {ResponseWrapper} from "@models/ResponseWrapper.ts";
 import {OAuthGrantRequestKeys} from "@utils/enums/OAuthEnums.ts";
 
-export async function login(credentials: LoginCredentials, client_id: string, state: string = ""): Promise<LoginResponse>{
+export async function login(credentials: LoginCredentials, client_id: string, state: string = "", code_challenge: string = ""): Promise<LoginResponse>{
     const csrf = getCookie("XSRF-TOKEN");
     const audiences = "emakas.net";
     const scopes = "";
     if (!csrf)
         throw Error("CSRF token must be provided.")
-    return fetch(`/api/auth/sign-in?client_id=${client_id}&audiences=${audiences}&scopes${scopes}&state=${state}`, {
+    return fetch(`/api/auth/sign-in?client_id=${client_id}&audiences=${audiences}&scopes${scopes}&state=${state}&code_challenge=${code_challenge}`, {
         method: "POST",
         headers: {
             'Content-Type': 'application/json',
