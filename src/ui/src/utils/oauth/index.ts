@@ -1,6 +1,8 @@
 import {OAuthRequest} from "@models/OAuth.ts";
 import {OAuthRequestKeys} from "@utils/enums/OAuthEnums.ts";
 import {getSelfApplicationInfo} from "@services/applications";
+import {getState} from "@utils/stateHolder";
+import {getCodeChallenge} from "@utils/codeChallengeHolder";
 
 
 export function initializeOAuthRequest(searchParams: URLSearchParams): OAuthRequest {
@@ -34,6 +36,8 @@ export async function getSelfApplicationOAuthRequest(): Promise<OAuthRequest> {
         client_id,
         redirect_uri: redirectUri,
         scope: scopes,
-        response_type: "code"
+        response_type: "code",
+        state: getState(),
+        code_challenge: await getCodeChallenge()
     }
 }
