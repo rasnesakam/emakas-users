@@ -1,27 +1,27 @@
 import {FormEvent, useEffect, useState} from "react";
-import { useSearchParams} from "react-router";
-import {ExternalResourceInfo} from "@models/Resource.ts";
-import {getExternalResourceInfo} from "@services/resources";
-import {initializeOAuthRequest, LoginCredentials, OAuthRequest} from "@models/Auth.ts";
+import {useSearchParams} from "react-router";
+import {LoginCredentials} from "@models/Auth.ts";
 import {authorize, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
+import {getSelfApplicationOAuthRequest, initializeOAuthRequest} from "@utils/oauth";
+import {OAuthRequest} from "@models/OAuth.ts";
+import {getExternalApplicationInfo, getSelfApplicationInfo} from "@services/applications";
+import {Application} from "@models/Application.ts";
 //import {useAuthContext} from "@contexts/AuthContext";
-
-
 
 export function LoginPage(){
     //const { setAuth} = useAuthContext();
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
     const [oAuthRequest, setOAuthRequest] = useState<OAuthRequest | undefined>(undefined);
-    const [resourceInfo, setResourceInfo] = useState<ExternalResourceInfo | undefined>(undefined);
+    const [appInfo, setAppInfo] = useState<Application | undefined>(undefined);
     //const navigate = useNavigate();
     const [loadingState, setLoadingState] = useState<boolean>(false);
 
     const onFormSubmit = (e: FormEvent) => {
         e.preventDefault();
-        console.log("OAuth Request: ", oAuthRequest);
-        console.log("External App Info: ", resourceInfo);
+        console.log("OAuth.ts Request: ", oAuthRequest);
+        console.log("External App Info: ", appInfo);
         setLoadingState(true);
 
         const formData = new FormData(e.target as HTMLFormElement);
@@ -29,35 +29,13 @@ export function LoginPage(){
             username: formData.get("username")!.toString(),
             password: formData.get("password")!.toString(),
         }
-        if (resourceInfo) {
-            loginInput.app_redirect = resourceInfo.redirectUri;
-            loginInput.app_audiences = resourceInfo.audiences;
-            loginInput.app_scopes = resourceInfo.scopes;
+        if (appInfo) {
+            loginInput.app_redirect = appInfo.redirectUri;
+            loginInput.app_audiences = [appInfo.uri];
+            loginInput.app_scopes = appInfo.scopes;
         }
-        login(loginInput, resourceInfo!.client_id, oAuthRequest?.state)
+        login(loginInput, appInfo!.client_id, oAuthRequest?.state)
             .then(authorize)
-            /*
-            .then(grant => {
-                if (oAuthRequest && resourceInfo){
-                    const redirect = `${resourceInfo.redirectUri}?grant=${grant}`;
-                    alert(`Redirecting to: ${redirect}`)
-                    location.replace(redirect)
-                }
-                else{
-                    getToken(grant).then(tokenCollection => {
-                        console.log(tokenCollection)
-                        if (tokenCollection){
-                            setAuth(tokenCollection);
-                            navigate("/page/", {replace: true});
-                        }
-                    }).catch(err => {
-                        console.error(err);
-                    });
-                    // set token as cookie or session key
-
-                }
-            })
-             */
             .catch(err => {
                 console.error(err)
             })
@@ -73,14 +51,26 @@ export function LoginPage(){
     useEffect(() => {
         try {
             alert("check for external app")
-            const oAuthRequest = initializeOAuthRequest(urlSearch);
-            console.log("OAuth Request: ", oAuthRequest);
-            setOAuthRequest(oAuthRequest);
+            let oAuthRequest;
+            try {
+                oAuthRequest = initializeOAuthRequest(urlSearch);
+                setOAuthRequest(oAuthRequest);
+            }
+            catch (e) {
+                console.error(e);
+                getSelfApplicationOAuthRequest().then(setOAuthRequest);
+            }
             if (oAuthRequest){
                 alert("External App")
-                getExternalResourceInfo(oAuthRequest.client_id, oAuthRequest.redirect_uri)
-                    .then(setResourceInfo);
-
+                getExternalApplicationInfo(oAuthRequest.client_id, oAuthRequest.redirect_uri)
+                    .then(setAppInfo);
+            }
+            else {
+                alert("Internal App");
+                getSelfApplicationInfo().then(app => {
+                    console.log(app);
+                    setAppInfo(app);
+                });
             }
         } catch (err) {
             console.error(err);
