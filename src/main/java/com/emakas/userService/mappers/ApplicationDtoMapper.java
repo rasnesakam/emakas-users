@@ -10,6 +10,7 @@ import org.mapstruct.factory.Mappers;
 public interface ApplicationDtoMapper {
     static ApplicationDtoMapper getInstance() {return Mappers.getMapper(ApplicationDtoMapper.class);}
 
+    @Mapping(target = "clientId", source = "id")
     ApplicationDto toApplicationDto(Application application);
 
     @Mapping(target="id", ignore = true)

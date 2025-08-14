@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -16,4 +18,6 @@ public class ApplicationDto {
     private String uri;
     @JsonProperty("redirect_uri")
     private String redirectUri;
+    @JsonProperty("client_id")
+    private UUID clientId;
 }
