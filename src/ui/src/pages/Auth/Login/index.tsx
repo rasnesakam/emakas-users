@@ -7,7 +7,6 @@ import {getSelfApplicationOAuthRequest, initializeOAuthRequest} from "@utils/oau
 import {OAuthRequest} from "@models/OAuth.ts";
 import {getExternalApplicationInfo, getSelfApplicationInfo} from "@services/applications";
 import {Application} from "@models/Application.ts";
-//import {useAuthContext} from "@contexts/AuthContext";
 
 export function LoginPage(){
     //const { setAuth} = useAuthContext();
@@ -34,7 +33,7 @@ export function LoginPage(){
             loginInput.app_audiences = [appInfo.uri];
             loginInput.app_scopes = appInfo.scopes;
         }
-        login(loginInput, appInfo!.client_id, oAuthRequest?.state)
+        login(loginInput, appInfo!.client_id, oAuthRequest?.state ?? "", oAuthRequest?.code_challenge ?? "")
             .then(authorize)
             .catch(err => {
                 console.error(err)

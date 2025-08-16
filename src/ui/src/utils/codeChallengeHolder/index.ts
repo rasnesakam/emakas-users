@@ -1,4 +1,4 @@
-import {generateRandomString, hashString} from "@utils/crypto";
+import {encodeBase64Url, generateRandomString, hashString} from "@utils/crypto";
 
 const CODE_VERIFIER_KEY = "session-code-verifier"
 const CODE_CHALLENGE_KEY = "session-code-challenge"
@@ -26,6 +26,6 @@ export async function getCodeChallenge(): Promise<string> {
     const codeVerifier = getCodeVerifier();
     let challenge = sessionStorage.getItem(CODE_CHALLENGE_KEY);
     if (!challenge)
-        challenge = setSessionItem(CODE_CHALLENGE_KEY, await hashString(codeVerifier));
+        challenge = setSessionItem(CODE_CHALLENGE_KEY, encodeBase64Url(await hashString(codeVerifier)));
     return challenge;
 }

@@ -7,6 +7,7 @@ import {NotFound} from "@pages/NotFound";
 import {AccountPage} from "@pages/Account";
 import {RestrictLayout} from "@layouts/RestrictLayout.tsx";
 import {TeamsPage} from "@pages/Teams";
+import {CallbackPage} from "@pages/Callback";
 
 export function AppRouter (){
 
@@ -28,6 +29,7 @@ export function AppRouter (){
                     <Route path={"permissions"} element={<UnderConstruction />} />
                     <Route path={"applications"} element={<UnderConstruction />} />
                 </Route>
+                <Route path={"callback"} element={<CallbackPage />}/>
                 <Route path={"*"} element={<NotFound />}/>
             </Route>
         </Routes>

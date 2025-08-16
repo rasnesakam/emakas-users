@@ -2,6 +2,8 @@ import {Authentication, LoginCredentials, LoginResponse} from "@models/Auth.ts";
 import {getCookie} from "@utils/getToken.ts";
 import {ResponseWrapper} from "@models/ResponseWrapper.ts";
 import {OAuthGrantRequestKeys} from "@utils/enums/OAuthEnums.ts";
+import {GrantType} from "@utils/enums/GrantType.ts";
+import {CodeChallengeMethod} from "@utils/enums/CodeChallengeMethod.ts";
 
 export async function login(credentials: LoginCredentials, client_id: string, state: string = "", code_challenge: string = ""): Promise<LoginResponse>{
     const csrf = getCookie("XSRF-TOKEN");
@@ -26,23 +28,25 @@ export async function login(credentials: LoginCredentials, client_id: string, st
 }
 
 export async function authorize(loginResponse: LoginResponse) {
-    const uri = `/api/auth/authorize?client_id=${loginResponse.clientId}&audiences=${loginResponse.audience}&scopes${loginResponse.requestedScopes}`;
+    const uri = `/api/auth/authorize`;
     const formElement = document.createElement("form");
     const clientIdInput = document.createElement("input");
     const audienceInput = document.createElement("input");
     const scopeInput = document.createElement("input");
     const sessionIdInput = document.createElement("input");
     const stateInput = document.createElement("input");
+    const codeChallengeInput = document.createElement("input");
+    const codeChallengeMethodInput = document.createElement("input");
     const redirectUriInput = document.createElement("input");
 
     sessionIdInput.type = "hidden";
     sessionIdInput.name = "session_id";
-    sessionIdInput.value = loginResponse.sessionId
+    sessionIdInput.value = loginResponse.session_id
     formElement.appendChild(sessionIdInput);
 
     clientIdInput.type = "hidden";
     clientIdInput.name = "client_id";
-    clientIdInput.value = loginResponse.clientId;
+    clientIdInput.value = loginResponse.client_id;
     formElement.appendChild(clientIdInput);
 
     audienceInput.type = "hidden";
@@ -52,17 +56,31 @@ export async function authorize(loginResponse: LoginResponse) {
 
     scopeInput.type = "hidden";
     scopeInput.name = "requested_scopes";
-    scopeInput.value = loginResponse.requestedScopes.join(",");
+    scopeInput.value = loginResponse.requested_scopes.join(",");
     formElement.appendChild(scopeInput);
 
-    stateInput.type = "hidden";
-    stateInput.name = "state";
-    stateInput.value = loginResponse.state;
-    formElement.appendChild(stateInput);
+    if (loginResponse.state){
+        stateInput.type = "hidden";
+        stateInput.name = "state";
+        stateInput.value = loginResponse.state;
+        formElement.appendChild(stateInput);
+    }
+
+    if (loginResponse.code_challenge){
+        codeChallengeInput.type = "hidden";
+        codeChallengeInput.name = "code_challenge";
+        codeChallengeInput.value = loginResponse.code_challenge;
+        formElement.appendChild(codeChallengeInput);
+
+        codeChallengeMethodInput.type = "hidden";
+        codeChallengeMethodInput.name = "code_challenge_method";
+        codeChallengeMethodInput.value = CodeChallengeMethod.SHA_256;
+        formElement.appendChild(codeChallengeMethodInput);
+    }
 
     redirectUriInput.type = "hidden";
     redirectUriInput.name = "redirect_uri";
-    redirectUriInput.value = loginResponse.redirectUri;
+    redirectUriInput.value = loginResponse.redirect_uri;
     formElement.appendChild(redirectUriInput);
 
     formElement.action = uri;
@@ -71,13 +89,38 @@ export async function authorize(loginResponse: LoginResponse) {
     formElement.submit();
 }
 
-export async function getToken(grant: string): Promise<Authentication | undefined>{
-    const formData = new FormData();
+export interface TokenOptions {
+    clientId?: string;
+    redirectUri?: string;
+    codeVerifier?: string;
+    refreshToken?: string;
+    code?: string;
+}
 
-    formData.set(OAuthGrantRequestKeys.GRANT_TYPE, "token");
-    formData.set(OAuthGrantRequestKeys.CODE, grant);
+export async function getToken(grantType: GrantType, {clientId, redirectUri, codeVerifier, refreshToken, code} : TokenOptions): Promise<Authentication | undefined>{
+    const params = new URLSearchParams();
 
-    return fetch(`/api/oauth/token/`).then(response =>{
+    params.set(OAuthGrantRequestKeys.GRANT_TYPE, grantType);
+    if (code)
+        params.set(OAuthGrantRequestKeys.CODE, code);
+    if (clientId)
+        params.set(OAuthGrantRequestKeys.CLIENT_ID, clientId);
+    if (redirectUri)
+        params.set(OAuthGrantRequestKeys.REDIRECT_URI, redirectUri);
+    if (codeVerifier)
+        params.set(OAuthGrantRequestKeys.CODE_VERIFIER, codeVerifier);
+    if (refreshToken)
+        params.set(OAuthGrantRequestKeys.REFRESH_TOKEN, refreshToken);
+
+    const fetchOptions: RequestInit = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: params.toString()
+    }
+
+    return fetch(`/api/oauth/token`, fetchOptions).then(response =>{
         if (response.ok)
             return response.json() as Promise<ResponseWrapper<Authentication>>;
         throw new Error(response.statusText)

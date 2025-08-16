@@ -8,12 +8,13 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-    clientId: string;
-    sessionId: string;
-    redirectUri: string;
+    client_id: string;
+    session_id: string;
+    redirect_uri: string;
     audience: string;
-    requestedScopes: string[];
-    state: string;
+    requested_scopes: string[];
+    state?: string;
+    code_challenge?: string;
 }
 
 export interface Authentication {
