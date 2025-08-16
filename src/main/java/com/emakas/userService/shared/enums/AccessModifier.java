@@ -10,6 +10,6 @@ public enum AccessModifier {
 
     @Override
     public String toString() {
-        return name().toLowerCase(Locale.ROOT);
+        return name().toLowerCase(Locale.ENGLISH);
     }
 }

@@ -2,6 +2,7 @@ package com.emakas.userService;
 
 import com.emakas.userService.model.Resource;
 import com.emakas.userService.shared.converters.StringToAccessModifierConverter;
+import com.emakas.userService.shared.converters.StringToCodeChallengeMethodConverter;
 import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
 import com.emakas.userService.shared.enums.DefaultAppResourceKeys;
 import lombok.Builder;
@@ -22,6 +23,11 @@ public class WebConfig {
     @Bean
     public StringToAccessModifierConverter stringToAccessModifierConverter(){
         return new StringToAccessModifierConverter();
+    }
+
+    @Bean
+    public StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter() {
+        return new StringToCodeChallengeMethodConverter();
     }
 
     @Bean

@@ -1,26 +1,21 @@
 package com.emakas.userService.service;
 
-import com.emakas.userService.auth.JwtAuthentication;
-import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TokenResponseDto;
-import com.emakas.userService.model.ResourcePermission;
-import com.emakas.userService.model.Token;
-import com.emakas.userService.model.User;
-import com.emakas.userService.model.UserLogin;
+import com.emakas.userService.model.*;
 import com.emakas.userService.shared.Constants;
+import com.emakas.userService.shared.PkceOperationsManager;
 import com.emakas.userService.shared.TokenManager;
+import com.emakas.userService.shared.enums.CodeChallengeMethod;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,34 +25,46 @@ public class OauthFlowManager {
     private final TokenManager tokenManager;
     private final TokenService tokenService;
     private final ResourcePermissionService resourcePermissionService;
+    private final ApplicationService applicationService;
 
     @Autowired
-    public OauthFlowManager(UserLoginService userLoginService, TokenManager tokenManager, TokenService tokenService, ResourcePermissionService resourcePermissionService) {
+    public OauthFlowManager(UserLoginService userLoginService, TokenManager tokenManager, TokenService tokenService, ResourcePermissionService resourcePermissionService, ApplicationService applicationService) {
         this.userLoginService = userLoginService;
         this.tokenManager = tokenManager;
         this.tokenService = tokenService;
         this.resourcePermissionService = resourcePermissionService;
+        this.applicationService = applicationService;
     }
 
-    public ResponseEntity<TokenResponseDto> handleAccessTokenFlow(String grant, String clientId, String clientSecret) {
+    private TokenResponseDto getTokenResponseFromUserLogin(UserLogin userLogin) {
+        User loggedUser = userLogin.getLoggedUser();
+        Token token = tokenManager.createUserAccessToken(
+                loggedUser,
+                userLogin.getAuthorizedAudiences().toArray(String[]::new),
+                userLogin.getAuthorizedScopes().toArray(String[]::new)
+        );
+        Token refreshToken = tokenManager.createUserRefreshToken(loggedUser, userLogin.getAuthorizedAudiences().toArray(String[]::new));
+        tokenService.saveBatch(token, refreshToken);
+        long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
+        return new TokenResponseDto(
+                loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
+                loggedUser.getEmail(), token.getSerializedToken(), expiresAt, refreshToken.getSerializedToken(),
+                Constants.BEARER_TOKEN
+        );
+    }
+
+    public ResponseEntity<TokenResponseDto> handleAuthorizationFlow(String grant, UUID clientId, String clientSecret, String codeVerifier, String redirectUri) {
         //TODO: Implement client id and secret mechanism
-        Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
-        if (userLogin.isPresent()){
-            User loggedUser = userLogin.get().getLoggedUser();
-            Token token = tokenManager.createUserAccessToken(
-                    loggedUser,
-                    userLogin.get().getAuthorizedAudiences().toArray(String[]::new),
-                    userLogin.get().getAuthorizedScopes().toArray(String[]::new)
-            );
-            Token refreshToken = tokenManager.createUserRefreshToken(loggedUser, userLogin.get().getAuthorizedAudiences().toArray(String[]::new));
-            tokenService.saveBatch(token, refreshToken);
-            long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
-            TokenResponseDto tokenResponseDto = new TokenResponseDto(
-                    loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
-                    loggedUser.getEmail(), token.getSerializedToken(), expiresAt, refreshToken.getSerializedToken(),
-                    Constants.BEARER_TOKEN
-            );
-            return ResponseEntity.ok(tokenResponseDto);
+        if (Objects.isNull(clientSecret) && Objects.nonNull(codeVerifier))
+            return handlePCKEFlow(grant, codeVerifier, clientId);
+        Optional<Application> applicationValue = applicationService.getById(clientId);
+        if (applicationValue.isPresent() && applicationValue.get().getRedirectUri().equals(redirectUri)) {
+            Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
+            if (userLogin.isPresent()){
+                TokenResponseDto tokenResponseDto = getTokenResponseFromUserLogin(userLogin.get());
+                return ResponseEntity.ok(tokenResponseDto);
+            }
+            return ResponseEntity.notFound().build();
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
@@ -92,13 +99,28 @@ public class OauthFlowManager {
         return ResponseEntity.badRequest().build();
     }
 
-    public ResponseEntity<TokenResponseDto> handleClientCredentialsFlow(String clientId, String clientSecret){
+    public ResponseEntity<TokenResponseDto> handleClientCredentialsFlow(UUID clientId, String clientSecret, String[] requestedScopes){
         //TODO: Will be implemented
         return null;
     }
 
     public ResponseEntity<TokenResponseDto> handlePCKEFlow(String grant , String codeVerifier, UUID clientId){
         //TODO:Implement PKCE Flow
-        return null;
+        Optional<UserLogin> userLoginValue = userLoginService.getUserLoginByGrant(grant);
+        if (userLoginValue.isPresent()){
+            UserLogin userlogin = userLoginValue.get();
+            Optional<Application> applicationValue = applicationService.getById(clientId);
+            if (applicationValue.isPresent()){
+                String codeChallenge = userlogin.getCodeChallenge();
+                CodeChallengeMethod challengeMethod = userlogin.getCodeChallengeMethod();
+                if (PkceOperationsManager.checkCodeChallenge(codeChallenge, codeVerifier, challengeMethod)){
+                    TokenResponseDto tokenResponseDto = getTokenResponseFromUserLogin(userlogin);
+                    return ResponseEntity.ok(tokenResponseDto);
+                }
+                return ResponseEntity.badRequest().build();
+            }
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

@@ -40,5 +40,6 @@ public abstract class LoginSessionDtoMapper {
     @Mapping(target = "clientId", source = "requestedClient.id")
     @Mapping(target = "audience", source = "requestedClient.uri")
     @Mapping(target = "state", ignore = true)
+    @Mapping(target = "codeChallenge", ignore = true)
     public abstract LoginSessionDto toLoginSessionDto(LoginSession session);
 }

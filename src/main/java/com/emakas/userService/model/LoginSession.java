@@ -26,6 +26,10 @@ public class LoginSession extends BaseEntity{
     @CollectionTable(name = "login_session_requested_scopes", joinColumns = @JoinColumn(name = "login_session_id"))
     private Set<String> requestedScopes;
 
+    @ElementCollection(fetch = FetchType.EAGER, targetClass = String.class)
+    @CollectionTable(name = "login_session_intended_audiences", joinColumns = @JoinColumn(name = "login_session_id"))
+    private Set<String> intendedAudiences;
+
     @Column
     private String redirectUri;
 
@@ -37,10 +41,11 @@ public class LoginSession extends BaseEntity{
         this.expireDate = Instant.now().plus(120, ChronoUnit.SECONDS).getEpochSecond();
     }
 
-    public LoginSession(User intendedUser, Application requestedClient, Set<String> requestedScopes) {
+    public LoginSession(User intendedUser, Application requestedClient, Set<String> requestedScopes, Set<String> intendedAudiences) {
         this.intendedUser = intendedUser;
         this.requestedClient = requestedClient;
         this.requestedScopes = requestedScopes;
         this.redirectUri = requestedClient.getRedirectUri();
+        this.intendedAudiences = intendedAudiences;
     }
 }

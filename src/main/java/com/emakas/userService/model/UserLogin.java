@@ -1,5 +1,6 @@
 package com.emakas.userService.model;
 
+import com.emakas.userService.shared.enums.CodeChallengeMethod;
 import com.emakas.userService.shared.enums.Scope;
 import jakarta.persistence.*;
 import lombok.*;
@@ -45,6 +46,10 @@ public class UserLogin extends BaseEntity{
     @JoinColumn(name = "related_session")
     @OneToOne(fetch = FetchType.EAGER)
     private LoginSession relatedSession;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private CodeChallengeMethod codeChallengeMethod;
 
     /**
      * Prepersist function will be executed before object being persisted.

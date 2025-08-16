@@ -1,5 +1,6 @@
 package com.emakas.userService.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,10 +14,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginSessionDto {
+    @JsonProperty("client_id")
     private UUID clientId;
+
+    @JsonProperty("session_id")
     private UUID sessionId;
+
+    @JsonProperty("redirect_uri")
     private String redirectUri;
-    private String audience;
+
+    @JsonProperty("requested_scopes")
     private Set<String> requestedScopes;
+
+    @JsonProperty("code_challenge")
+    private String codeChallenge;
+
     private String state;
+
+    private String audience;
 }

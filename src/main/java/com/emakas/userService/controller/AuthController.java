@@ -15,9 +15,9 @@ import com.emakas.userService.mappers.LoginSessionDtoMapper;
 import com.emakas.userService.mappers.UserDtoMapper;
 import com.emakas.userService.model.*;
 import com.emakas.userService.service.*;
-import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.TokenManager;
-import com.emakas.userService.shared.enums.GrantType;
+import com.emakas.userService.shared.converters.StringToCodeChallengeMethodConverter;
+import com.emakas.userService.shared.enums.CodeChallengeMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +33,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
@@ -52,9 +50,10 @@ public class AuthController {
     private final LoginSessionDtoMapper loginSessionDtoMapper;
     private final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final LoginModel loginModel;
+    private final StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter;
 
     @Autowired
-    public AuthController(UserService service, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, UserDtoMapper userDtoMapper, ApplicationService applicationService, LoginSessionService loginSessionService, LoginSessionDtoMapper loginSessionDtoMapper, LoginSessionDtoMapper loginSessionDtoMapper1, LoginModel loginModel) {
+    public AuthController(UserService service, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, UserDtoMapper userDtoMapper, ApplicationService applicationService, LoginSessionService loginSessionService, LoginSessionDtoMapper loginSessionDtoMapper, LoginSessionDtoMapper loginSessionDtoMapper1, LoginModel loginModel, StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter) {
         this.userService = service;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
@@ -65,6 +64,7 @@ public class AuthController {
         this.loginSessionService = loginSessionService;
         this.loginSessionDtoMapper = loginSessionDtoMapper1;
         this.loginModel = loginModel;
+        this.stringToCodeChallengeMethodConverter = stringToCodeChallengeMethodConverter;
     }
 
 
@@ -92,7 +92,7 @@ public class AuthController {
      * @param grantedScopes The client may request some permissions. But client can approve some, none or all of them.
      * @param state State is a optional parameter that confirms the OAuth flow did not intercept by any other parties. According to RFC of OAuth2.0
      * @return For Successful process, method returns redirect response to the client callback uri
-     * @see AuthController#signIn(LoginModel, UUID, String[], String[], String)
+     * @see AuthController#signIn(LoginModel, UUID, String[], String, String) 
      */
     @GetMapping("/authorize")
     public ResponseEntity<?> authorize(
@@ -101,8 +101,9 @@ public class AuthController {
             @RequestParam(name = "redirect_uri") String redirectUri,
             @RequestParam(name = "requested_scopes") String[] grantedScopes,
             @RequestParam(name = "state") String state,
-            @RequestParam(name = "code_challenge", required = false) String codeChallenge
-    ) {
+            @RequestParam(name = "code_challenge", required = false) String codeChallenge,
+            @RequestParam(name = "code_challenge_method", required = false) String codeChallengeMethodString
+            ) {
         return applicationService.getById(clientId).map(
                 client -> loginSessionService.getById(sessionId).map(loginSession -> {
                     if (Instant.ofEpochSecond(loginSession.getExpireDate()).isBefore(Instant.now()))
@@ -111,8 +112,10 @@ public class AuthController {
                     Set<String> scopeSet = Set.of(grantedScopes);
                     //TODO: Compare requested scopes and authorizedScopes
                     UserLogin userLogin = new UserLogin(loginSession);
-                    if (Objects.nonNull(codeChallenge) && !codeChallenge.isEmpty())
+                    if (Objects.nonNull(codeChallenge) && !codeChallenge.isEmpty()){
                         userLogin.setCodeChallenge(codeChallenge);
+                        userLogin.setCodeChallengeMethod(stringToCodeChallengeMethodConverter.convert(codeChallengeMethodString));
+                    }
                     try {
                         UserLogin savedUserLogin = userLoginService.save(userLogin);
                         UriComponentsBuilder uriBuilder = UriComponentsBuilder
@@ -141,18 +144,17 @@ public class AuthController {
      *     For successful case, this enpoint returns {@link LoginSessionDto} that contains sessionId
      * </p>
      * <p>
-     *     After signing-in, The method {@link AuthController#authorize(UUID, UUID, String, String[], String, String)} should invoke with received session id.
+     *     After signing-in, The method {@link AuthController#authorize(UUID, UUID, String, String[], String, String, String)} should invoke with received session id.
      * </p>
      * @param loginModel User credential informations that passed into body as form data
      * @param clientId Id that represents third party app client
-     * @param audiences Indicates that wich resource should token use for
      * @param scopes Indicates the permissions that user has capable of
      * @param state State is a optional parameter that confirms the OAuth flow did not intercept by any other parties. According to RFC of OAuth2.0
      * @return {@link LoginSessionDto} that contains sessionId
      */
     @PostMapping("/sign-in")
     @ResponseBody
-    public ResponseEntity<Response<LoginSessionDto>> signIn(@RequestBody LoginModel loginModel, @RequestParam(name = "client_id") UUID clientId, @RequestParam(required = false) String[] audiences, @RequestParam(required = false) String[] scopes, @RequestParam(required = false, name = "state") String state){
+    public ResponseEntity<Response<LoginSessionDto>> signIn(@RequestBody LoginModel loginModel, @RequestParam(name = "client_id") UUID clientId, @RequestParam(required = false) String[] scopes, @RequestParam(name = "state", required = false) String state, @RequestParam(name = "code_challenge", required = false) String codeChallenge){
         return applicationService.getById(clientId).map(client -> {
             UserDetails userDetails = userService.loadUserByUsername(loginModel.getUsername());
             try{
@@ -160,12 +162,13 @@ public class AuthController {
                 if (!authentication.isAuthenticated())
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.<LoginSessionDto>of("Invalid credentials"));
                 return userService.getByUserName(userDetails.getUsername()).map(user -> {
-                    Set<String> audienceSet = Set.of(audiences);
-                    Set<String> scopeSet = Set.of(scopes);
-                    LoginSession loginSession = new LoginSession(user, client, scopeSet);
+                    Set<String> audienceSet = Set.of(client.getUri());
+                    Set<String> scopeSet = getDefinedOrDefaultScopesForApp(scopes, user);
+                    LoginSession loginSession = new LoginSession(user, client, scopeSet, audienceSet);
                     try {
                         LoginSession savedSession = loginSessionService.save(loginSession);
                         LoginSessionDto savedSessionResponse = loginSessionDtoMapper.toLoginSessionDto(savedSession);
+                        savedSessionResponse.setCodeChallenge(codeChallenge);
                         savedSessionResponse.setState(state);
                         return ResponseEntity.status(HttpStatus.OK).body(Response.of(savedSessionResponse));
                     }catch (Exception e) {
@@ -183,7 +186,7 @@ public class AuthController {
         }).orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Response.of("Invalid client")));
     }
 
-    private Set<String> getDefinedOrDefaultScopes(String[] scopes, User user){
+    private Set<String> getDefinedOrDefaultScopesForApp(String[] scopes, User user){
         return scopes.length > 0 ? Set.of(scopes) :
                 resourcePermissionService.getPermissionsByUser(user)
                         .stream().map(ResourcePermission::toString).collect(Collectors.toSet());
