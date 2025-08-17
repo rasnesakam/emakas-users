@@ -32,7 +32,6 @@ export async function authorize(loginResponse: LoginResponse) {
     const formElement = document.createElement("form");
     const clientIdInput = document.createElement("input");
     const audienceInput = document.createElement("input");
-    const scopeInput = document.createElement("input");
     const sessionIdInput = document.createElement("input");
     const stateInput = document.createElement("input");
     const codeChallengeInput = document.createElement("input");
