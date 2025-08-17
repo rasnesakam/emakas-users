@@ -99,12 +99,11 @@ public class OauthFlowManager {
     }
 
     public ResponseEntity<TokenResponseDto> handleClientCredentialsFlow(UUID clientId, String clientSecret, String[] requestedScopes){
-        //TODO: Will be implemented
+        //TODO: Implement Client Credentials Flow
         return null;
     }
 
     public ResponseEntity<TokenResponseDto> handlePCKEFlow(String grant , String codeVerifier, UUID clientId){
-        //TODO:Implement PKCE Flow
         Optional<UserLogin> userLoginValue = userLoginService.getUserLoginByGrant(grant);
         if (userLoginValue.isPresent()){
             UserLogin userlogin = userLoginValue.get();
