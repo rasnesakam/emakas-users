@@ -14,7 +14,7 @@ const URL_SEARCH_STATE = "state";
 
 export function CallbackPage() {
     const [urlSearch] = useSearchParams();
-    const navigete = useNavigate();
+    const navigate = useNavigate();
     const {setAuth} = useAuthContext();
 
     useEffect(() => {
@@ -32,12 +32,15 @@ export function CallbackPage() {
                         redirectUri: appInfo.redirectUri,
                         codeVerifier: codeVerifier
                     }
-                    const auth = await getToken(GrantType.AUTHORIZATION_CODE, tokenOptions);
-                    if (auth)
-                    {
-                        setAuth(auth);
-                        navigete("/page/home");
-                    }
+                    getToken(GrantType.AUTHORIZATION_CODE, tokenOptions).then(auth => {
+                        console.log(auth);
+                        if (auth)
+                        {
+                            setAuth(auth);
+                            alert("Navigating to home page");
+                            navigate("/page/");
+                        }
+                    }).catch(err => console.error(err));
                 }
             }
         }
