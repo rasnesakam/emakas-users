@@ -20,7 +20,7 @@ export function TeamsPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const {auth} = useAuthContext();
     useEffect(() => {
-        getUserTeams(auth!).then(fetchedTeams => setTeams(fetchedTeams))
+        getUserTeams(auth!).then(setTeams)
     }, []);
     return <>
         <div className="max-w-[1920px] mx-auto p-10">
