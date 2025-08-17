@@ -54,10 +54,15 @@ export async function authorize(loginResponse: LoginResponse) {
     audienceInput.value = loginResponse.audience;
     formElement.appendChild(audienceInput);
 
-    scopeInput.type = "hidden";
-    scopeInput.name = "requested_scopes";
-    scopeInput.value = loginResponse.requested_scopes.join(",");
-    formElement.appendChild(scopeInput);
+    if (loginResponse.requested_scopes && loginResponse.requested_scopes.length > 0){
+        for (const scope of loginResponse.requested_scopes) {
+            const scopeInput = document.createElement("input");
+            scopeInput.type = "hidden";
+            scopeInput.name = "granted_scopes";
+            scopeInput.value = scope;
+            formElement.appendChild(scopeInput);
+        }
+    }
 
     if (loginResponse.state){
         stateInput.type = "hidden";
