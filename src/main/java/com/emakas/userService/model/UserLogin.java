@@ -74,5 +74,6 @@ public class UserLogin extends BaseEntity{
         this.relatedSession = loginSession;
         this.loggedUser = loginSession.getIntendedUser();
         this.authorizedScopes = loginSession.getRequestedScopes();
+        this.authorizedAudiences = loginSession.getIntendedAudiences();
     }
 }
