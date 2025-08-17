@@ -99,14 +99,14 @@ public class AuthController {
             @RequestParam(name = "client_id") UUID clientId,
             @RequestParam(name = "session_id") UUID sessionId,
             @RequestParam(name = "redirect_uri") String redirectUri,
-            @RequestParam(name = "requested_scopes") String[] grantedScopes,
+            @RequestParam(name = "granted_scopes") String[] grantedScopes,
             @RequestParam(name = "state") String state,
             @RequestParam(name = "code_challenge", required = false) String codeChallenge,
             @RequestParam(name = "code_challenge_method", required = false) String codeChallengeMethodString
             ) {
         return applicationService.getById(clientId).map(
                 client -> loginSessionService.getById(sessionId).map(loginSession -> {
-                    if (Instant.ofEpochSecond(loginSession.getExpireDate()).isBefore(Instant.now()))
+                    if (Instant.now().isAfter(Instant.ofEpochSecond(loginSession.getExpireDate())))
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Session Expired");
                     User user = loginSession.getIntendedUser();
                     Set<String> scopeSet = Set.of(grantedScopes);
