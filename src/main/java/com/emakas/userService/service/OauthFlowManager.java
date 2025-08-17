@@ -36,7 +36,9 @@ public class OauthFlowManager {
         this.applicationService = applicationService;
     }
 
-    private TokenResponseDto getTokenResponseFromUserLogin(UserLogin userLogin) {
+    private ResponseEntity<TokenResponseDto> getTokenResponseFromUserLogin(UserLogin userLogin) {
+        if (Instant.now().isAfter(Instant.ofEpochSecond(userLogin.getExpirationDateInSeconds())))
+            return ResponseEntity.badRequest().build();
         User loggedUser = userLogin.getLoggedUser();
         Token token = tokenManager.createUserAccessToken(
                 loggedUser,
@@ -46,11 +48,12 @@ public class OauthFlowManager {
         Token refreshToken = tokenManager.createUserRefreshToken(loggedUser, userLogin.getAuthorizedAudiences().toArray(String[]::new));
         tokenService.saveBatch(token, refreshToken);
         long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
-        return new TokenResponseDto(
+        TokenResponseDto dto =  new TokenResponseDto(
                 loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
                 loggedUser.getEmail(), token.getSerializedToken(), expiresAt, refreshToken.getSerializedToken(),
                 Constants.BEARER_TOKEN
         );
+        return ResponseEntity.ok(dto);
     }
 
     public ResponseEntity<TokenResponseDto> handleAuthorizationFlow(String grant, UUID clientId, String clientSecret, String codeVerifier, String redirectUri) {
@@ -60,11 +63,7 @@ public class OauthFlowManager {
         Optional<Application> applicationValue = applicationService.getById(clientId);
         if (applicationValue.isPresent() && applicationValue.get().getRedirectUri().equals(redirectUri)) {
             Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
-            if (userLogin.isPresent()){
-                TokenResponseDto tokenResponseDto = getTokenResponseFromUserLogin(userLogin.get());
-                return ResponseEntity.ok(tokenResponseDto);
-            }
-            return ResponseEntity.notFound().build();
+            return userLogin.map(this::getTokenResponseFromUserLogin).orElseGet(() -> ResponseEntity.notFound().build());
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
@@ -114,8 +113,7 @@ public class OauthFlowManager {
                 String codeChallenge = userlogin.getCodeChallenge();
                 CodeChallengeMethod challengeMethod = userlogin.getCodeChallengeMethod();
                 if (PkceOperationsManager.checkCodeChallenge(codeChallenge, codeVerifier, challengeMethod)){
-                    TokenResponseDto tokenResponseDto = getTokenResponseFromUserLogin(userlogin);
-                    return ResponseEntity.ok(tokenResponseDto);
+                    return getTokenResponseFromUserLogin(userlogin);
                 }
                 return ResponseEntity.badRequest().build();
             }
