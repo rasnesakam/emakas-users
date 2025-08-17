@@ -102,7 +102,7 @@ export interface TokenOptions {
     code?: string;
 }
 
-export async function getToken(grantType: GrantType, {clientId, redirectUri, codeVerifier, refreshToken, code} : TokenOptions): Promise<Authentication | undefined>{
+export async function getToken(grantType: GrantType, {clientId, redirectUri, codeVerifier, refreshToken, code} : TokenOptions): Promise<Authentication>{
     const params = new URLSearchParams();
 
     params.set(OAuthGrantRequestKeys.GRANT_TYPE, grantType);
@@ -125,15 +125,12 @@ export async function getToken(grantType: GrantType, {clientId, redirectUri, cod
         body: params.toString()
     }
 
-    return fetch(`/api/oauth/token`, fetchOptions).then(response =>{
-        if (response.ok)
-            return response.json() as Promise<ResponseWrapper<Authentication>>;
-        throw new Error(response.statusText)
-    }).then(data => data.content as Authentication)
-        .catch(err => {
-            console.error(err);
-            return undefined;
-        })
+    const fetchResponse = await fetch(`/api/oauth/token`, fetchOptions);
+
+    if (fetchResponse.ok){
+        return await fetchResponse.json();
+    }
+    throw new Error(`${fetchResponse.status} - ${fetchResponse.statusText}`);
 }
 
 export async function validateToken(token: string): Promise<boolean> {
