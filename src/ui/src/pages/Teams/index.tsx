@@ -6,15 +6,7 @@ import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@com
 import {Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@components/shadcn/ui/card"
 import {Button} from "@components/shadcn/ui/button";
 import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@components/shadcn/ui/table"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger
-} from "@components/shadcn/ui/dialog.tsx";
-import {UserQuickForm} from "@components/forms/User";
+import {InviteNewUserFormDialog} from "@components/formDialogs/InviteNewUserFormDialog";
 
 export function TeamsPage() {
     const [teams, setTeams] = useState<Team[]>([]);
@@ -73,18 +65,7 @@ export function TeamsPage() {
                 <CardFooter>
                     <div className="w-full flex flex-col justify-between">
                         <p>There are {teams.length} teams found</p>
-                        <Dialog>
-                            <DialogTrigger>
-                                <Button>Invite New Member</Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-[720px] p-5">
-                                <DialogHeader>
-                                    <DialogTitle>Invite User</DialogTitle>
-                                    <DialogDescription>Invite new user for the team</DialogDescription>
-                                </DialogHeader>
-                                <UserQuickForm />
-                            </DialogContent>
-                        </Dialog>
+                        <InviteNewUserFormDialog />
                     </div>
                 </CardFooter>
             </Card>

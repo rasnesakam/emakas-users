@@ -30,7 +30,7 @@ export function UserQuickForm({beforeSubmit ,afterSubmit}: FormComponentParams<U
     }
     return <>
         <form onSubmit={onFormSubmit}>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
                 <Input name="name" placeholder="Name"/>
                 <Input name="surname" placeholder="Surname"/>
                 <Input name="email" placeholder="Email" className="col-span-2" />
