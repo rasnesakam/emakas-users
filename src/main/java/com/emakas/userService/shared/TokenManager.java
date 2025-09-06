@@ -67,12 +67,20 @@ public class TokenManager implements Serializable {
     }
 
     public Optional<User> loadUserFromToken(Token token){
+        UUID userId = null;
         String tokenSubject = token.getSub();
         Pattern tokenSubjectPattern = Pattern.compile(String.format("^%s:(.*)$",TokenType.USR));
         Matcher tokenSubjectMatcher = tokenSubjectPattern.matcher(tokenSubject);
-        if (!tokenSubjectMatcher.find())
-            return Optional.empty();
-        UUID userId = UUID.fromString(tokenSubjectMatcher.group(1));
+        if (tokenSubjectMatcher.find())
+            userId = UUID.fromString(tokenSubjectMatcher.group(1));
+        else{
+            try {
+                userId = UUID.fromString(token.getSub());
+            }
+            catch (Exception e) {
+                return Optional.empty();
+            }
+        }
         return userService.getById(userId);
     }
 
