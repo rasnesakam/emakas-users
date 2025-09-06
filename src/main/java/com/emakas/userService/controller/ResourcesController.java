@@ -2,7 +2,7 @@ package com.emakas.userService.controller;
 
 import com.emakas.userService.dto.ResourceDto;
 import com.emakas.userService.dto.Response;
-import com.emakas.userService.mappers.ResourceMapper;
+import com.emakas.userService.mappers.ResourceDtoMapper;
 import com.emakas.userService.model.Resource;
 import com.emakas.userService.model.User;
 import com.emakas.userService.service.ResourcePermissionService;
@@ -23,13 +23,13 @@ public class ResourcesController {
     private final SecurityContextManager securityContextManager;
     private final ResourceService resourceService;
     private final ResourcePermissionService resourcePermissionService;
-    private final ResourceMapper resourceMapper;
+    private final ResourceDtoMapper resourceDtoMapper;
 
-    public ResourcesController(SecurityContextManager securityContextManager, ResourceService resourceService, ResourcePermissionService resourcePermissionService, ResourceMapper resourceMapper) {
+    public ResourcesController(SecurityContextManager securityContextManager, ResourceService resourceService, ResourcePermissionService resourcePermissionService, ResourceDtoMapper resourceDtoMapper) {
         this.securityContextManager = securityContextManager;
         this.resourceService = resourceService;
         this.resourcePermissionService = resourcePermissionService;
-        this.resourceMapper = resourceMapper;
+        this.resourceDtoMapper = resourceDtoMapper;
     }
 
     @GetMapping("available")
@@ -39,7 +39,7 @@ public class ResourcesController {
         return userValue.map(user -> {
             Set<ResourceDto> resources = resourcePermissionService.getPermissionsByUser(user)
                     .stream()
-                    .map(resourcePermission -> resourceMapper.toResourceDto(resourcePermission.getResource())).collect(Collectors.toSet());
+                    .map(resourcePermission -> resourceDtoMapper.toResourceDto(resourcePermission.getResource())).collect(Collectors.toSet());
             return ResponseEntity.<Collection<ResourceDto>>ok(resources);
         }).orElse(ResponseEntity.badRequest().build());
     }
@@ -47,8 +47,8 @@ public class ResourcesController {
     @PostMapping("save")
     @PreAuthorize("hasPermission(#RSC_RESOURCES, 'self:write')")
     public ResponseEntity<Response<ResourceDto>> save(@RequestBody ResourceDto resourceDto) {
-        Resource resource = resourceMapper.toResource(resourceDto);
+        Resource resource = resourceDtoMapper.toResource(resourceDto);
         Resource savedResource = resourceService.save(resource);
-        return ResponseEntity.ok(Response.of(resourceMapper.toResourceDto(savedResource)));
+        return ResponseEntity.ok(Response.of(resourceDtoMapper.toResourceDto(savedResource)));
     }
 }

@@ -15,6 +15,7 @@ public abstract class LoginSessionDtoMapper {
     @Mapping(target = "id", source = "sessionId")
     @Mapping(target = "requestedClient", ignore = true)
     @Mapping(target = "intendedUser", ignore = true)
+    @Mapping(target = "intendedAudiences", ignore = true)
     @Mapping(target = "createdTime", ignore = true)
     @Mapping(target = "updatedTime", ignore = true)
     @Mapping(target = "expireDate", ignore = true)
@@ -31,6 +32,7 @@ public abstract class LoginSessionDtoMapper {
             session.setRedirectUri(loginSession.getRedirectUri());
             session.setRequestedClient(loginSession.getRequestedClient());
             session.setIntendedUser(loginSession.getIntendedUser());
+            session.setIntendedAudiences(loginSession.getIntendedAudiences());
             session.setExpireDate(loginSession.getExpireDate());
             session.setId(loginSession.getId());
         }

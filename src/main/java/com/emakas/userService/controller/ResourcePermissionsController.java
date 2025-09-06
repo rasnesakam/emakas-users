@@ -3,7 +3,7 @@ package com.emakas.userService.controller;
 import com.emakas.userService.cmdRunner.InitializeRootVariables;
 import com.emakas.userService.dto.ResourcePermissionDto;
 import com.emakas.userService.dto.Response;
-import com.emakas.userService.mappers.ResourcePermissionMapper;
+import com.emakas.userService.mappers.ResourcePermissionDtoMapper;
 import com.emakas.userService.model.ResourcePermission;
 import com.emakas.userService.service.ResourcePermissionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/resource-permissions")
@@ -28,9 +27,9 @@ public class ResourcePermissionsController {
     private final Logger logger = LoggerFactory.getLogger(InitializeRootVariables .class);
 
     private final ResourcePermissionService resourcePermissionService;
-    private final ResourcePermissionMapper mapper;
+    private final ResourcePermissionDtoMapper mapper;
 
-    public ResourcePermissionsController(ResourcePermissionService resourcePermissionService, ResourcePermissionMapper mapper){
+    public ResourcePermissionsController(ResourcePermissionService resourcePermissionService, ResourcePermissionDtoMapper mapper){
         this.resourcePermissionService = resourcePermissionService;
         this.mapper = mapper;
     }

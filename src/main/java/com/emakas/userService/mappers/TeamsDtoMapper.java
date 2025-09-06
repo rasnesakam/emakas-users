@@ -13,18 +13,25 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {UserDtoMapper.class})
 public abstract class TeamsDtoMapper {
     static TeamsDtoMapper getInstance() { return Mappers.getMapper(TeamsDtoMapper.class); }
 
     public abstract TeamReadDto toTeamDto(Team team);
-    public abstract Team toTeam(TeamReadDto teamReadDto);
+
+    @Mapping(target="id", ignore = true)
+    @Mapping(target="createdTime", ignore = true)
+    @Mapping(target="updatedTime", ignore = true)
+    public abstract Team teamFromReadDto(TeamReadDto teamReadDto);
 
     @Mapping(target="parentTeam", ignore = true)
     @Mapping(target="childTeams", ignore = true)
     @Mapping(target="members", ignore = true)
     @Mapping(target="lead", ignore = true)
-    public abstract Team toTeam(TeamWriteDto teamWriteDto, @Context UserService userService, @Context TeamService teamService, @Context User user);
+    @Mapping(target="id", ignore = true)
+    @Mapping(target="createdTime", ignore = true)
+    @Mapping(target="updatedTime", ignore = true)
+    public abstract Team temFromWriteDto(TeamWriteDto teamWriteDto, @Context UserService userService, @Context TeamService teamService, @Context User user);
 
     @AfterMapping
     protected void afterMapping(@MappingTarget Team team, TeamWriteDto teamWriteDto, @Context UserService userService, @Context TeamService teamService, @Context User user){

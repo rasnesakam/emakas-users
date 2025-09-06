@@ -56,7 +56,7 @@ public class TeamsController {
         if (authentication instanceof JwtAuthentication jwtAuthentication){
             Optional<User> leadUserValue = tokenManager.loadUserFromToken(jwtAuthentication.getUserToken());
             if (leadUserValue.isPresent()){
-                Team team = teamsDtoMapper.toTeam(teamWriteDto, userService, teamService, leadUserValue.get());
+                Team team = teamsDtoMapper.temFromWriteDto(teamWriteDto, userService, teamService, leadUserValue.get());
                 try {
                     Team newTeam = teamService.save(team);
                     URI teamUri = ServletUriComponentsBuilder.fromCurrentRequestUri()

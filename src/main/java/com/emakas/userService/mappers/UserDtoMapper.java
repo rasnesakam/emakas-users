@@ -13,7 +13,6 @@ public interface UserDtoMapper {
         return Mappers.getMapper(UserDtoMapper.class);
     }
 
-
     UserReadDto userToUserReadDto(User user);
 
     @Mapping(target = "id", ignore = true)
@@ -26,6 +25,15 @@ public interface UserDtoMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdTime", ignore = true)
     @Mapping(target = "updatedTime", ignore = true)
+    @Mapping(target = "password", ignore = true)
     @Mapping(target = "fullName", expression = "java(userWriteDto.getName() + \" \" + userWriteDto.getSurname())")
-    User UserFromUserWriteDto(UserWriteDto userWriteDto);
+    User userFromUserWriteDto(UserWriteDto userWriteDto);
+
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdTime", ignore = true)
+    @Mapping(target = "updatedTime", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "fullName", expression = "java(userReadDto.getName() + \" \" + userReadDto.getSurname())")
+    User userFromUserReadDto(UserReadDto userReadDto);
 }
