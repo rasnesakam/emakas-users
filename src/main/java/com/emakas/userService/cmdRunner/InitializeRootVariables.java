@@ -72,7 +72,8 @@ public class InitializeRootVariables implements CommandLineRunner {
         if (user.isEmpty()) {
             User adminUser = new User();
             adminUser.setUserName("admin");
-            String password = getRandomPasswordText();
+            // String password = getRandomPasswordText();
+            String password = "1234";
             adminUser.setPassword(passwordEncoder.encode(password));
             adminUser = userService.save(adminUser);
             logger.info("Created admin user with username: {}", adminUser.getUserName());
