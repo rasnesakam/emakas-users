@@ -29,8 +29,10 @@ ext {
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
+
+	developmentOnly
+	runtimeClasspath {
+		extendsFrom developmentOnly
 	}
 }
 
@@ -42,6 +44,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.1.2'
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security:3.3.4'
+	// Spring dev-tools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	// Jwt implementation
 	implementation 'com.auth0:java-jwt:4.3.0'
 	// Kafka
