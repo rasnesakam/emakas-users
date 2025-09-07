@@ -44,6 +44,12 @@ public class ResourcesController {
         }).orElse(ResponseEntity.badRequest().build());
     }
 
+    @GetMapping("all")
+    @PreAuthorize("hasPermission(#RSC_RESOURCES, 'global:read')")
+    public ResponseEntity<Collection<ResourceDto>> getAllResources(){
+        return ResponseEntity.ok(resourceService.getAll().parallelStream().map(resourceDtoMapper::toResourceDto).collect(Collectors.toList()));
+    }
+
     @PostMapping("save")
     @PreAuthorize("hasPermission(#RSC_RESOURCES, 'self:write')")
     public ResponseEntity<Response<ResourceDto>> save(@RequestBody ResourceDto resourceDto) {

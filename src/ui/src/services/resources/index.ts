@@ -18,6 +18,17 @@ export async function getAvailableResources(auth: Authentication): Promise<Resou
     return await invokeRestRequest<Resource[]>({uri, method: "GET", extraOptions})
 }
 
+export async function getAllResources(auth: Authentication): Promise<Resource[]> {
+
+    const uri = "/api/resources/all"
+    const extraOptions: RequestInit = {
+        headers: {
+            "Authorization": `Bearer ${auth.access_token}`
+        }
+    }
+    return await invokeRestRequest<Resource[]>({uri, method: "GET", extraOptions})
+}
+
 export async function saveNewResource(resource: Resource, auth: Authentication): Promise<Resource> {
     const uri = "/api/resources/save";
     const extraOptions: RequestInit = {
