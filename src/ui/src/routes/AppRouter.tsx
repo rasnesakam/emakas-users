@@ -9,6 +9,7 @@ import {RestrictLayout} from "@layouts/RestrictLayout.tsx";
 import {TeamsPage} from "@pages/Teams";
 import {CallbackPage} from "@pages/Callback";
 import {ResourcesPage} from "@pages/Resources";
+import {PermissionsPage} from "@pages/Permissions";
 
 export function AppRouter (){
 
@@ -27,7 +28,7 @@ export function AppRouter (){
                     <Route path={"account"} element={<AccountPage />} />
                     <Route path={"teams"} element={<TeamsPage />} />
                     <Route path={"resources"} element={<ResourcesPage />} />
-                    <Route path={"permissions"} element={<UnderConstruction />} />
+                    <Route path={"permissions"} element={<PermissionsPage />} />
                     <Route path={"applications"} element={<UnderConstruction />} />
                 </Route>
                 <Route path={"callback"} element={<CallbackPage />}/>
