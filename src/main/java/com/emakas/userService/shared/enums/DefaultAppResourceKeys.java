@@ -5,5 +5,6 @@ public enum DefaultAppResourceKeys {
     RSC_TEAM_MEMBERS,
     RSC_MEMBERS,
     RSC_APPS,
-    RSC_RESOURCES;
+    RSC_RESOURCES,
+    RSC_PERMISSIONS;
 }

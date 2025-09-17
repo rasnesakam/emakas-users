@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Collection;
 
 @RestController
 @RequestMapping("/api/resource-permissions")
@@ -36,6 +36,7 @@ public class ResourcePermissionsController {
 
     @Operation(summary = "Assign New Resource Permission", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("assign")
+    @PreAuthorize("hasPermission(#RSC_PERMISSIONS, 'global:write')")
     public ResponseEntity<Response<ResourcePermissionDto>> registerPermission(@RequestBody ResourcePermissionDto resourcePermissionDto) {
         ResourcePermission resourcePermission = mapper.toResourcePermission(resourcePermissionDto);
         try {
@@ -55,5 +56,12 @@ public class ResourcePermissionsController {
             logger.error(optimisticLockingFailureException.getLocalizedMessage());
             return ResponseEntity.internalServerError().body(Response.of(optimisticLockingFailureException.getMessage()));
         }
+    }
+
+    @Operation(summary = "Get All resource permissions", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("all")
+    @PreAuthorize("hasPermission(#RSC_PERMISSIONS, 'global:read')")
+    public ResponseEntity<Collection<ResourcePermissionDto>> getAllPermissions() {
+        return ResponseEntity.ok(resourcePermissionService.getAll().parallelStream().map(mapper::toResourcePermissionDto).toList());
     }
 }

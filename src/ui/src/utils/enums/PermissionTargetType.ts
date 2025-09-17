@@ -1,5 +1,5 @@
 export enum PermissionTargetType {
-    USER,
-    APP,
-    TEAM
+    USER = "USER",
+    APP = "APP",
+    TEAM = "TEAM"
 }

@@ -25,3 +25,25 @@ export async function invokeRestRequest<O>({uri, method, body, queryParams, extr
         throw new Error(`${fetchResult.status} - ${fetchResult.statusText}`)
     return await fetchResult.json() as unknown as O;
 }
+
+async function invokeRequest<O>(uri: string, method: "GET" | "POST" | "PUT" | "DELETE", queryParams: unknown | undefined = undefined, jwtToken: string | undefined = undefined) {
+    const invokeOptions: RestRequestType = {
+        uri,
+        method,
+        queryParams,
+        extraOptions: {}
+    }
+    if (jwtToken)
+        invokeOptions.extraOptions = {
+            ...invokeOptions.extraOptions,
+            headers: {
+                ...invokeOptions.extraOptions?.headers,
+                "Authorization": `Bearer ${jwtToken}`
+            }
+        }
+    return invokeRestRequest<O>(invokeOptions)
+}
+
+export async function invokeGetRequest<O>(uri: string, queryParams: unknown | undefined = undefined, jwtToken: string | undefined = undefined) {
+    return invokeRequest<O>(uri, "GET", queryParams, jwtToken);
+}

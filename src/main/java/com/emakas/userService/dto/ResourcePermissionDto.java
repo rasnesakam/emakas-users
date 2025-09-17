@@ -8,11 +8,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResourcePermissionDto {
+    private UUID id;
     private ResourceDto resource;
     private UserReadDto user;
     private TeamReadDto team;

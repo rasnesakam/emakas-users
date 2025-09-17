@@ -15,3 +15,5 @@ export async function getUserTeams(auth: Authentication): Promise<Team[]> {
         throw new Error(`${fetchResponse.status} - ${fetchResponse.statusText}`)
     return fetchResponse.json();
 }
+
+export async function getTeamMembers() {}

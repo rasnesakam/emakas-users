@@ -44,7 +44,8 @@ public class WebConfig {
                 new Resource("Applications", "The applications that uses resources of system.", String.format("%s/applications",appDomainName)));
         resourceMap.put(DefaultAppResourceKeys.RSC_RESOURCES.toString(),
                 new Resource("Resource", "Consumables by the users or applications.", String.format("%s/resources",appDomainName)));
-
+        resourceMap.put(DefaultAppResourceKeys.RSC_PERMISSIONS.toString(),
+                new Resource("Permissions", "Permissions that will evaluate by app", String.format("%s/permissions",appDomainName)));
         return resourceMap;
     }
 }

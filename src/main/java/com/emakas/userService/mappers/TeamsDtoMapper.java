@@ -19,7 +19,6 @@ public abstract class TeamsDtoMapper {
 
     public abstract TeamReadDto toTeamDto(Team team);
 
-    @Mapping(target="id", ignore = true)
     @Mapping(target="createdTime", ignore = true)
     @Mapping(target="updatedTime", ignore = true)
     public abstract Team teamFromReadDto(TeamReadDto teamReadDto);
