@@ -23,14 +23,8 @@ public class AuthFilter extends OncePerRequestFilter {
 
     private final TokenManager tokenManager;
 
-    private final UserService userService;
-
-    private final ApplicationService applicationService;
-
-    public AuthFilter(TokenManager tokenManager, UserService userService, ApplicationService applicationService) {
+    public AuthFilter(TokenManager tokenManager) {
         this.tokenManager = tokenManager;
-        this.userService = userService;
-        this.applicationService = applicationService;
     }
 
     //TODO: code again according to AntMatcher

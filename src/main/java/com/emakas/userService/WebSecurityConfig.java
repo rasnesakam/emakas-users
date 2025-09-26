@@ -55,15 +55,13 @@ public class WebSecurityConfig {
     private final UnauthorizedHandler handler;
     private final UserService userService;
     private final TokenManager tokenManager;
-    private final ApplicationService applicationService;
 
 
     @Autowired
-    public WebSecurityConfig(UnauthorizedHandler handler, UserService userService, TokenManager tokenManager, ApplicationService applicationService) {
+    public WebSecurityConfig(UnauthorizedHandler handler, UserService userService, TokenManager tokenManager) {
         this.handler = handler;
         this.userService = userService;
         this.tokenManager = tokenManager;
-        this.applicationService = applicationService;
     }
 
     @Bean
@@ -80,7 +78,7 @@ public class WebSecurityConfig {
 
     @Bean
     public AuthFilter getAuthFilter() {
-        return new AuthFilter(tokenManager, userService, applicationService);
+        return new AuthFilter(tokenManager);
     }
 
 
