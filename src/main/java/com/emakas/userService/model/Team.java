@@ -40,15 +40,18 @@ public class Team extends BaseEntity{
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private User lead;
 
+    public void setLead(User lead) {
+        this.lead = lead;
+        if (lead != null) {
+            if (members == null) members = new ArrayList<>();
+            if (!members.contains(lead)) {
+                members.add(lead);
+            }
+        }
+    }
+
     @PrePersist
     public void prePersist(){
-        if (lead != null && members != null && !members.contains(lead)) {
-            members.add(lead);
-        }
-        if (Objects.isNull(members) || members.isEmpty()) {
-            members = new ArrayList<>();
-            members.add(lead);
-        }
         if (StringUtils.isNullOrEmpty(uri)) {
             uri = StringUtils.normalizeString(name);
         }
