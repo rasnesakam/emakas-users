@@ -32,7 +32,8 @@ export async function assignPermission(resourcePermission: DeepPartial<ResourceP
         method: 'POST',
         extraOptions: {
             headers: {
-                "Authorization": `Bearer ${auth.access_token}`
+                "Authorization": `Bearer ${auth.access_token}`,
+                "Content-Type": "application/json"
             }
         }
     })
