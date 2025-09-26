@@ -2,6 +2,7 @@ package com.emakas.userService.cmdRunner;
 
 import com.emakas.userService.model.*;
 import com.emakas.userService.service.*;
+import com.emakas.userService.shared.StringUtils;
 import com.emakas.userService.shared.enums.AccessModifier;
 import com.emakas.userService.shared.enums.PermissionScope;
 import com.emakas.userService.shared.enums.PermissionTargetType;
@@ -54,25 +55,12 @@ public class InitializeRootVariables implements CommandLineRunner {
         this.appRedirectUri = appRedirectUri;
     }
 
-    public String getRandomPasswordText(){
-        String alphabet = "abcdefghijklmnoprsqtuvwxyz";
-        String numbers = "0123456789";
-        String upperCase = alphabet.toUpperCase();
-        String specialChars = "!^+%&()=?*";
-        String stringPool = alphabet + numbers + upperCase + specialChars;
-        StringBuilder password = new StringBuilder();
-        for (int i = 0; i < 16; i++){
-            password.append(stringPool.charAt((int) (Math.random() * stringPool.length())));
-        }
-        return password.toString();
-    }
-
     public User createAdminUserIfNotExists(){
         Optional<User> user = userService.getByUserName("admin");
         if (user.isEmpty()) {
             User adminUser = new User();
             adminUser.setUserName("admin");
-            // String password = getRandomPasswordText();
+            // String password = StringUtils.getRandomString(16);
             String password = "1234";
             adminUser.setPassword(passwordEncoder.encode(password));
             adminUser = userService.save(adminUser);
