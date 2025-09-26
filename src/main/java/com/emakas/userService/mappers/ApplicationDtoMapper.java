@@ -16,5 +16,6 @@ public interface ApplicationDtoMapper {
     @Mapping(target="id", ignore = true)
     @Mapping(target="createdTime", ignore = true)
     @Mapping(target="updatedTime", ignore = true)
+    @Mapping(target="clientSecret", ignore = true)
     Application toApplication(ApplicationDto applicationDto);
 }

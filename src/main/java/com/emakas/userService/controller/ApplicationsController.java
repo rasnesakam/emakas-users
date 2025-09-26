@@ -42,6 +42,17 @@ public class ApplicationsController {
         return ResponseEntity.ok(Response.of(applicationDtoMapper.toApplicationDto(app)));
     }
 
+    @Operation(summary = "Generate secret key for app", security = @SecurityRequirement(name = "bearerAuth"))
+    @GetMapping("generate-secret")
+    @PreAuthorize("hasPermission(#RSC_APPS, 'global:write')")
+    public ResponseEntity<Response<String>> generateSecretKey(@RequestParam(name = "client_id") UUID clientId){
+        Optional<Application> appValue = applicationService.getById(clientId);
+        return appValue.map(application -> {
+            String clientSecret = applicationService.generateClientSecret(application);
+            return ResponseEntity.ok(Response.of(clientSecret, "Client secret generated. Please store it somewhere safe"));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.of("Applicaion not found.")));
+    }
+
     @Operation(summary = "Delete existing application", security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping("delete")
     @PreAuthorize("hasPermission(#RSC_APPS, 'self:delete')")
