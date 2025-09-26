@@ -60,6 +60,7 @@ export function ResourcePermissionSliderForm({title}: {title: string}) {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
         const resourcePermission = getFromFormData(formData);
+        console.log(resourcePermission);
         assignPermission(resourcePermission, auth!).then(() => {});
     }
 
@@ -112,7 +113,7 @@ export function ResourcePermissionSliderForm({title}: {title: string}) {
                                     <span className="w-1/4">
                                         Permission
                                     </span>
-                                    <Select name="permission">
+                                    <Select name="access-modifier">
                                         <SelectTrigger className="w-3/4">
                                             <SelectValue placeholder={"Select Permission"}/>
                                         </SelectTrigger>
@@ -133,7 +134,7 @@ export function ResourcePermissionSliderForm({title}: {title: string}) {
                                     <span className="w-1/4">
                                         Permission Scope
                                     </span>
-                                    <Select name="permission-target">
+                                    <Select name="permission-scope">
                                         <SelectTrigger className="w-3/4">
                                             <SelectValue placeholder={"Select Permission Scope"}/>
                                         </SelectTrigger>
