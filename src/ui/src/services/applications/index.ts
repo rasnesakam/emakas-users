@@ -1,6 +1,7 @@
 import {Application} from "@models/Application.ts";
 import {Authentication} from "@models/Auth.ts";
 import {invokeGetRequest} from "@services/core";
+import {ResponseWrapper} from "@models/ResponseWrapper.ts";
 
 export async function getExternalApplicationInfo(client_id: string, redirectUri: string): Promise<Application | undefined> {
     const fetchUrl = `${window.location.origin}/api/apps/info?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirectUri)}`;
@@ -25,4 +26,8 @@ export async function getSelfApplicationInfo(): Promise<Application>{
     if (fetchResponse.ok)
         return await fetchResponse.json() as unknown as Application
     throw new Error(fetchResponse.statusText)
+}
+
+export async function generateClientSecretKey(auth: Authentication, clientId: string): Promise<ResponseWrapper<string>> {
+    return invokeGetRequest("/api/apps/generate-secret", {client_id: clientId}, auth.access_token);
 }

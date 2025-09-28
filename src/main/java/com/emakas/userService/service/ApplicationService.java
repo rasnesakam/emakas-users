@@ -31,7 +31,7 @@ public class ApplicationService extends CoreService<Application, UUID> {
 
     public String generateClientSecret(Application application) {
         String randomString = StringUtils.getRandomString(64);
-        String encodedRandomString = ""; // passwordEncoder.encode(randomString);
+        String encodedRandomString = passwordEncoder.encode(randomString);
         application.setClientSecret(encodedRandomString);
         applicationRepository.save(application);
         return encodedRandomString;

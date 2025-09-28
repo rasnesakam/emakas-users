@@ -1,5 +1,3 @@
-import {encodeBase64Url} from "@utils/crypto";
-
 export interface RestRequestType {
     uri: string;
     method: "GET" | "POST" | "PUT" | "DELETE";
@@ -17,7 +15,7 @@ export async function invokeRestRequest<O>({uri, method, body, queryParams, extr
     if (body)
         fetchOptions.body = JSON.stringify(body);
     if (queryParams){
-        uri = uri.concat('?').concat(Object.entries(queryParams).map(([k, v]) => `${k}=${encodeBase64Url(v.toString())}`).join('&'));
+        uri = uri.concat('?').concat(Object.entries(queryParams).map(([k, v]) => `${k}=${encodeURIComponent(v.toString())}`).join('&'));
     }
     console.log("fetching with options: ", fetchOptions)
     const fetchResult = await fetch(uri, fetchOptions);

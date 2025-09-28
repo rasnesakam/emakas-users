@@ -15,7 +15,7 @@ export function AppLayout({children}: {children?: JSX.Element}) {
                 <div className="flex flex-row flex-start w-full">
                     <AppSideBar/>
                     <Toaster />
-                    <main className=" min-h-screen  w-11/12">
+                    <main className="p-10 w-11/12">
                         {children || <Outlet/>}
                     </main>
                 </div>
