@@ -60,6 +60,8 @@ public class InitializeRootVariables implements CommandLineRunner {
         if (user.isEmpty()) {
             User adminUser = new User();
             adminUser.setUserName("admin");
+            adminUser.setName("Admin");
+            adminUser.setSurname("User");
             // String password = StringUtils.getRandomString(16);
             String password = "1234";
             adminUser.setPassword(passwordEncoder.encode(password));
