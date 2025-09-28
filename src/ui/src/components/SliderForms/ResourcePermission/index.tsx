@@ -31,6 +31,12 @@ import {Application} from "@models/Application.ts";
 import {getApplications} from "@services/applications";
 import {AccessModifier} from "@utils/enums/AccessModifier.ts";
 import {PermissionScope} from "@utils/enums/PermissionScope.ts";
+import {
+    AlertDialog, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogTitle
+} from "@components/shadcn/ui/alert-dialog.tsx";
 
 const PERMISSION_TYPES: {label: string, value: PermissionTargetType}[] = [
     {
@@ -50,6 +56,8 @@ const PERMISSION_TYPES: {label: string, value: PermissionTargetType}[] = [
 export function ResourcePermissionSliderForm({title}: {title: string}) {
     const {auth} = useAuthContext();
     const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+    const [isAlertDialogOpen, setIsAlertDialogOpen] = useState<boolean>(false);
+    const [resultMessage, setResultMessage] = useState<{title: string, description: string}>({title: "", description: ""});
     const [permissionTarget, setPermissionTarget] = useState<PermissionTargetType | undefined>(undefined);
 
     const [resources, setResources] = useState<Resource[]>([])
@@ -61,7 +69,21 @@ export function ResourcePermissionSliderForm({title}: {title: string}) {
         const formData = new FormData(e.target as HTMLFormElement);
         const resourcePermission = getFromFormData(formData);
         console.log(resourcePermission);
-        assignPermission(resourcePermission, auth!).then(() => {});
+        assignPermission(resourcePermission, auth!).then(() => {
+            setResultMessage({
+                title: "Success",
+                description: "Permission registered successfully"
+            })
+            setIsAlertDialogOpen(true);
+            setIsFormOpen(false);
+        }).catch(err => {
+            console.error(err);
+            setResultMessage({
+                title: "Failure",
+                description: "Permission could not registered"
+            })
+            setIsAlertDialogOpen(true);
+        });
     }
 
     useEffect(() => {
@@ -70,191 +92,202 @@ export function ResourcePermissionSliderForm({title}: {title: string}) {
         getApplications(auth!).then(setApps);
     }, []);
 
-    return <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <SheetTrigger>
-            <Button>{title}</Button>
-        </SheetTrigger>
-        <SheetContent>
-            <form onSubmit={onFormSubmit} className="h-full">
-                <div className="flex flex-col justify-between h-full">
-                    <div className="h-full">
-                        <SheetHeader>
-                            <SheetTitle>
-                                Create New Resource Permission
-                            </SheetTitle>
-                            <SheetDescription>
-                                Description
-                            </SheetDescription>
-                        </SheetHeader>
+    return <>
+        <AlertDialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogTitle>{resultMessage.title}</AlertDialogTitle>
+                <AlertDialogDescription>{resultMessage.description}</AlertDialogDescription>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Close</AlertDialogCancel>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <SheetTrigger>
+                <Button>{title}</Button>
+            </SheetTrigger>
+            <SheetContent>
+                <form onSubmit={onFormSubmit} className="h-full">
+                    <div className="flex flex-col justify-between h-full">
+                        <div className="h-full">
+                            <SheetHeader>
+                                <SheetTitle>
+                                    Create New Resource Permission
+                                </SheetTitle>
+                                <SheetDescription>
+                                    Description
+                                </SheetDescription>
+                            </SheetHeader>
 
-                        <div className="p-4">
-                            <div className="my-4">
-                                <Label>
+                            <div className="p-4">
+                                <div className="my-4">
+                                    <Label>
                                     <span className="w-1/4">
                                         Resource
                                     </span>
-                                    <Select name="resource">
-                                        <SelectTrigger className="w-3/4">
-                                            <SelectValue placeholder={"Select Resource"}/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                <SelectLabel>Resources</SelectLabel>
-                                                {resources.map((resource, index) => (<SelectItem value={resource.uri}
-                                                                                                 key={`resource-select-${index}`}>{resource.name}</SelectItem>))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </Label>
-                            </div>
+                                        <Select name="resource">
+                                            <SelectTrigger className="w-3/4">
+                                                <SelectValue placeholder={"Select Resource"}/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Resources</SelectLabel>
+                                                    {resources.map((resource, index) => (<SelectItem value={resource.id!}
+                                                                                                     key={`resource-select-${index}`}>{resource.name}</SelectItem>))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </Label>
+                                </div>
 
-                            <div className="my-4">
-                                <Label>
+                                <div className="my-4">
+                                    <Label>
                                     <span className="w-1/4">
                                         Permission
                                     </span>
-                                    <Select name="access-modifier">
-                                        <SelectTrigger className="w-3/4">
-                                            <SelectValue placeholder={"Select Permission"}/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                <SelectLabel>Permissions</SelectLabel>
-                                                {Object.keys(AccessModifier).map((access_modifier, index) => (
-                                                    <SelectItem value={access_modifier}
-                                                                key={`resource-select-${index}`}>{access_modifier}</SelectItem>))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </Label>
-                            </div>
+                                        <Select name="access-modifier">
+                                            <SelectTrigger className="w-3/4">
+                                                <SelectValue placeholder={"Select Permission"}/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Permissions</SelectLabel>
+                                                    {Object.keys(AccessModifier).map((access_modifier, index) => (
+                                                        <SelectItem value={access_modifier}
+                                                                    key={`resource-select-${index}`}>{access_modifier}</SelectItem>))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </Label>
+                                </div>
 
-                            <div className="my-4">
-                                <Label>
+                                <div className="my-4">
+                                    <Label>
                                     <span className="w-1/4">
                                         Permission Scope
                                     </span>
-                                    <Select name="permission-scope">
-                                        <SelectTrigger className="w-3/4">
-                                            <SelectValue placeholder={"Select Permission Scope"}/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                <SelectLabel>Permission Targets</SelectLabel>
-                                                {Object.keys(PermissionScope).map((permissionScope, index) => (
-                                                    <SelectItem value={permissionScope}
-                                                                key={`permission-scope-select-${index}`}>{permissionScope}</SelectItem>))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </Label>
-                            </div>
+                                        <Select name="permission-scope">
+                                            <SelectTrigger className="w-3/4">
+                                                <SelectValue placeholder={"Select Permission Scope"}/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Permission Targets</SelectLabel>
+                                                    {Object.keys(PermissionScope).map((permissionScope, index) => (
+                                                        <SelectItem value={permissionScope}
+                                                                    key={`permission-scope-select-${index}`}>{permissionScope}</SelectItem>))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </Label>
+                                </div>
 
-                            <div className="my-4">
-                                <Label>
+                                <div className="my-4">
+                                    <Label>
                                     <span className="w-1/4">
                                         Subject Type
                                     </span>
-                                    <Select name="permission-target"
-                                            onValueChange={value => setPermissionTarget(value as PermissionTargetType)}>
-                                        <SelectTrigger className="w-3/4">
-                                            <SelectValue placeholder={"Select Subject Type"}/>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                <SelectLabel>Permission Targets</SelectLabel>
-                                                {PERMISSION_TYPES.map((type, index) => (<SelectItem value={type.value}
-                                                                                                    key={`subject-select-${index}`}>{type.label}</SelectItem>))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </Label>
-                            </div>
+                                        <Select name="permission-target"
+                                                onValueChange={value => setPermissionTarget(value as PermissionTargetType)}>
+                                            <SelectTrigger className="w-3/4">
+                                                <SelectValue placeholder={"Select Subject Type"}/>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectLabel>Permission Targets</SelectLabel>
+                                                    {PERMISSION_TYPES.map((type, index) => (<SelectItem value={type.value}
+                                                                                                        key={`subject-select-${index}`}>{type.label}</SelectItem>))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </Label>
+                                </div>
 
 
-                            {permissionTarget === PermissionTargetType.USER && (
-                                <div className="my-4">
-                                    <Label>
+                                {permissionTarget === PermissionTargetType.USER && (
+                                    <div className="my-4">
+                                        <Label>
                                     <span className="w-1/4">
                                         User
                                     </span>
-                                        <Select name="user">
-                                            <SelectTrigger className="w-3/4">
-                                                <SelectValue placeholder={"Select User"}/>
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectLabel>Users</SelectLabel>
-                                                    {teams.flatMap(t => t.members).map((user, index) => (
-                                                        <SelectItem value={user.id!}
-                                                                    key={`resource-select-${index}`}>{user.username}</SelectItem>))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </Label>
-                                </div>
-                            )}
+                                            <Select name="user">
+                                                <SelectTrigger className="w-3/4">
+                                                    <SelectValue placeholder={"Select User"}/>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        <SelectLabel>Users</SelectLabel>
+                                                        {teams.flatMap(t => t.members).map((user, index) => (
+                                                            <SelectItem value={user.id!}
+                                                                        key={`resource-select-${index}`}>{user.username}</SelectItem>))}
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+                                        </Label>
+                                    </div>
+                                )}
 
-                            {permissionTarget === PermissionTargetType.APP && (
-                                <div className="my-4">
-                                    <Label>
-                                        <span className="w-1/4">Application</span>
-                                        <Select name="application">
-                                            <SelectTrigger className="w-3/4">
-                                                <SelectValue placeholder={"Select Application"}/>
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectLabel>Applications</SelectLabel>
-                                                    {apps.map((app, index) => (
-                                                        <SelectItem value={app.client_id} key={`apps-select-${index}`}>
-                                                            {app.name}
-                                                        </SelectItem>))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </Label>
-                                </div>
-                            )}
+                                {permissionTarget === PermissionTargetType.APP && (
+                                    <div className="my-4">
+                                        <Label>
+                                            <span className="w-1/4">Application</span>
+                                            <Select name="application">
+                                                <SelectTrigger className="w-3/4">
+                                                    <SelectValue placeholder={"Select Application"}/>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        <SelectLabel>Applications</SelectLabel>
+                                                        {apps.map((app, index) => (
+                                                            <SelectItem value={app.client_id} key={`apps-select-${index}`}>
+                                                                {app.name}
+                                                            </SelectItem>))}
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+                                        </Label>
+                                    </div>
+                                )}
 
-                            {permissionTarget === PermissionTargetType.TEAM && (
-                                <div className="my-4">
-                                    <Label>
+                                {permissionTarget === PermissionTargetType.TEAM && (
+                                    <div className="my-4">
+                                        <Label>
                                         <span className="w-1/4">
                                             Team
                                         </span>
-                                        <Select name="team">
-                                            <SelectTrigger className="w-3/4">
-                                                <SelectValue placeholder={"Select Team"}/>
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectLabel>Teams</SelectLabel>
-                                                    {teams.map((team, index) => (
-                                                        <SelectItem value={team.id!} key={`teams-select-${index}`}>
-                                                            {team.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </Label>
-                                </div>
-                            )}
+                                            <Select name="team">
+                                                <SelectTrigger className="w-3/4">
+                                                    <SelectValue placeholder={"Select Team"}/>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectGroup>
+                                                        <SelectLabel>Teams</SelectLabel>
+                                                        {teams.map((team, index) => (
+                                                            <SelectItem value={team.id!} key={`teams-select-${index}`}>
+                                                                {team.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectGroup>
+                                                </SelectContent>
+                                            </Select>
+                                        </Label>
+                                    </div>
+                                )}
+
+                            </div>
 
                         </div>
-
+                        <SheetFooter>
+                            <div className="flex flex-row gap-4">
+                                <Button type={"submit"}>Save</Button>
+                                <SheetClose asChild>
+                                    <Button variant={"outline"}>Close</Button>
+                                </SheetClose>
+                            </div>
+                        </SheetFooter>
                     </div>
-                    <SheetFooter>
-                        <div className="flex flex-row gap-4">
-                            <Button type={"submit"}>Save</Button>
-                            <SheetClose asChild>
-                                <Button variant={"outline"}>Close</Button>
-                            </SheetClose>
-                        </div>
-                    </SheetFooter>
-                </div>
-            </form>
-        </SheetContent>
-    </Sheet>
+                </form>
+            </SheetContent>
+        </Sheet>
+    </>
 }
