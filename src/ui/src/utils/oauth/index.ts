@@ -30,7 +30,7 @@ export function initializeOAuthRequest(searchParams: URLSearchParams): OAuthRequ
 
 
 export async function getSelfApplicationOAuthRequest(): Promise<OAuthRequest> {
-    const {client_id, redirectUri} = await getSelfApplicationInfo()
+    const {client_id, redirect_uri} = await getSelfApplicationInfo()
     const requestingScopes = [
         "global:read_write:iam.emakas.net/resources",
         "global:read_write:iam.emakas.net/teamMembers",
@@ -40,7 +40,7 @@ export async function getSelfApplicationOAuthRequest(): Promise<OAuthRequest> {
     ]
     return {
         client_id,
-        redirect_uri: redirectUri,
+        redirect_uri: redirect_uri,
         scope: requestingScopes,
         response_type: "code",
         state: getState(),

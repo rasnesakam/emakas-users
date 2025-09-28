@@ -29,7 +29,7 @@ export function CallbackPage() {
                     const tokenOptions: TokenOptions = {
                         code: grantCode,
                         clientId: appInfo.client_id,
-                        redirectUri: appInfo.redirectUri,
+                        redirectUri: appInfo.redirect_uri,
                         codeVerifier: codeVerifier
                     }
                     getToken(GrantType.AUTHORIZATION_CODE, tokenOptions).then(auth => {

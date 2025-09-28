@@ -10,6 +10,7 @@ import {TeamsPage} from "@pages/Teams";
 import {CallbackPage} from "@pages/Callback";
 import {ResourcesPage} from "@pages/Resources";
 import {PermissionsPage} from "@pages/Permissions";
+import {ApplicationPage} from "@pages/Application";
 
 export function AppRouter (){
 
@@ -19,8 +20,8 @@ export function AppRouter (){
                 <Route path={"auth"}>
                     <Route element={<AuthLayout/>}>
                         <Route path={"login"} element={<LoginPage/>}/>
-                        <Route path={"logout"} element={<LoginPage/>}/>
-                        <Route path={"sign-up"} element={<LoginPage/>}/>
+                        <Route path={"logout"} element={<UnderConstruction/>}/>
+                        <Route path={"sign-up"} element={<UnderConstruction/>}/>
                     </Route>
                 </Route>
                 <Route element={<RestrictLayout/>}>
@@ -29,7 +30,7 @@ export function AppRouter (){
                     <Route path={"teams"} element={<TeamsPage />} />
                     <Route path={"resources"} element={<ResourcesPage />} />
                     <Route path={"permissions"} element={<PermissionsPage />} />
-                    <Route path={"applications"} element={<UnderConstruction />} />
+                    <Route path={"applications"} element={<ApplicationPage />} />
                 </Route>
                 <Route path={"callback"} element={<CallbackPage />}/>
                 <Route path={"*"} element={<NotFound />}/>

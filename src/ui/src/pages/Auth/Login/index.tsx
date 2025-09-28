@@ -29,7 +29,7 @@ export function LoginPage(){
             password: formData.get("password")!.toString(),
         }
         if (appInfo) {
-            loginInput.app_redirect = appInfo.redirectUri;
+            loginInput.app_redirect = appInfo.redirect_uri;
             loginInput.app_audiences = [appInfo.uri];
             loginInput.app_scopes = appInfo.scopes;
         }

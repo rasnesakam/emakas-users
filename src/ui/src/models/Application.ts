@@ -1,6 +1,6 @@
 export interface Application {
     client_id: string;
-    redirectUri: string;
+    redirect_uri: string;
     name: string;
     description: string;
     uri: string;

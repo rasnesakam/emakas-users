@@ -72,13 +72,15 @@ export function ResourcesPage() {
                 <TableHeader>
                     <TableRow>
                         <TableHead className="text-left font-semibold">Resource Name</TableHead>
-                        <TableHead className="text-right font-semibold">Resource Description</TableHead>
+                        <TableHead className="text-left font-semibold">Resource Uri</TableHead>
+                        <TableHead className="text-left font-semibold">Resource Description</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {resources.map((item, index) => (<TableRow key={`resource-${index}`}>
                         <TableCell className="text-left">{item.name}</TableCell>
-                        <TableCell className="text-right">{item.description}</TableCell>
+                        <TableCell className="text-left">{item.uri}</TableCell>
+                        <TableCell className="text-left">{item.description}</TableCell>
                     </TableRow>))}
                 </TableBody>
             </Table>
