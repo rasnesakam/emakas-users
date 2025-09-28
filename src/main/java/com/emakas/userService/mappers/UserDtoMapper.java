@@ -30,7 +30,6 @@ public interface UserDtoMapper {
     User userFromUserWriteDto(UserWriteDto userWriteDto);
 
 
-    @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdTime", ignore = true)
     @Mapping(target = "updatedTime", ignore = true)
     @Mapping(target = "password", ignore = true)

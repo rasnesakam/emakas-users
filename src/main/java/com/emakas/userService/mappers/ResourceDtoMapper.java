@@ -12,7 +12,6 @@ public interface ResourceDtoMapper {
         return Mappers.getMapper(ResourceDtoMapper.class);
     }
 
-    @Mapping(target="id", ignore = true)
     @Mapping(target="createdTime", ignore = true)
     @Mapping(target="updatedTime", ignore = true)
     Resource toResource(ResourceDto resourceDto);
