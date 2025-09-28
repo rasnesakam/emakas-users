@@ -22,7 +22,7 @@ public class CoreService<ENTITY extends BaseEntity,ID extends Serializable> {
     }
 
     public Optional<ENTITY> getById(ID id){
-        return Optional.ofNullable(coreRepository.findById(id).orElse(null));
+        return coreRepository.findById(id);
     }
 
     public ENTITY save(ENTITY entity){
