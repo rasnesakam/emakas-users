@@ -4,7 +4,7 @@ import {PermissionScope} from "@utils/enums/PermissionScope.ts";
 import {PermissionTargetType} from "@utils/enums/PermissionTargetType.ts";
 import {DeepPartial} from "@utils/utlis.ts";
 import {Authentication} from "@models/Auth.ts";
-import {invokeRestRequest} from "@services/core";
+import {invokeGetRequest, invokePostRequest} from "@services/core";
 
 export function getFromFormData(formData: FormData): DeepPartial<ResourcePermission> {
     const accessModifier = formData.get("access-modifier")!.toString();
@@ -26,15 +26,9 @@ export function getFromFormData(formData: FormData): DeepPartial<ResourcePermiss
 }
 
 export async function assignPermission(resourcePermission: DeepPartial<ResourcePermission>, auth: Authentication) {
-    return invokeRestRequest({
-        uri: "/api/resource-permissions/assign",
-        body: resourcePermission,
-        method: 'POST',
-        extraOptions: {
-            headers: {
-                "Authorization": `Bearer ${auth.access_token}`,
-                "Content-Type": "application/json"
-            }
-        }
-    })
+    return invokePostRequest("/api/resource-permissions/assign",undefined, resourcePermission, auth.access_token);
+}
+
+export async function getGrantedPermissions(auth: Authentication): Promise<ResourcePermission[]> {
+    return invokeGetRequest("/api/resource-permissions/all", undefined, auth.access_token);
 }
