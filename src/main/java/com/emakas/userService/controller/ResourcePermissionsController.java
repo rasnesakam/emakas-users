@@ -19,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/resource-permissions")
@@ -40,7 +41,9 @@ public class ResourcePermissionsController {
     public ResponseEntity<Response<ResourcePermissionDto>> registerPermission(@RequestBody ResourcePermissionDto resourcePermissionDto) {
         ResourcePermission resourcePermission = mapper.toResourcePermission(resourcePermissionDto);
         try {
-            resourcePermission = resourcePermissionService.save(resourcePermission);
+            Optional<ResourcePermission> newResourcePermission = resourcePermissionService.registerResourcePermission(resourcePermission);
+            if (newResourcePermission.isEmpty())
+                return ResponseEntity.badRequest().body(Response.of("Could not create permission."));
             URI resourceUri = ServletUriComponentsBuilder
                     .fromCurrentRequest()
                     .path("/{id}")

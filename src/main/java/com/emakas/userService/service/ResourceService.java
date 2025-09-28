@@ -5,6 +5,7 @@ import com.emakas.userService.repository.ResourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -18,7 +19,7 @@ public class ResourceService extends CoreService<Resource, UUID>{
         this.resourceRepository = repository;
     }
 
-    public Resource getByUri(String resourceUri) {
+    public Optional<Resource> getByUri(String resourceUri) {
         return resourceRepository.findByUri(resourceUri);
     }
 }

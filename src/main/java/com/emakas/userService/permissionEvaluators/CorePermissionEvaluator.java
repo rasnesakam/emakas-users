@@ -41,7 +41,10 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
             String userId = authentication.getName();
             Token token = (Token) authentication.getCredentials();
             String resourceUri = targetDomainObject.toString();
-            Resource resource = resourceService.getByUri(resourceUri);
+            Optional<Resource> resourceValue = resourceService.getByUri(resourceUri);
+            if (resourceValue.isEmpty())
+                return false;
+            Resource resource = resourceValue.get();
             PermissionDescriptor permissionDescriptor = stringToPermissionDescriptorConverter.convert(permission.toString());
             if (token.getTokenType() == TokenType.USR) {
                 Optional<User> user = userService.getById(UUID.fromString(userId));
