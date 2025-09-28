@@ -3,6 +3,7 @@ import {Outlet} from "react-router";
 import {JSX} from "react/jsx-runtime";
 import {SidebarProvider } from "@components/shadcn/ui/sidebar.tsx";
 import {AppSideBar} from "@components/AppSideBar";
+import {Toaster} from "@components/shadcn/ui/sonner.tsx";
 
 
 export function AppLayout({children}: {children?: JSX.Element}) {
@@ -13,6 +14,7 @@ export function AppLayout({children}: {children?: JSX.Element}) {
             <SidebarProvider>
                 <div className="flex flex-row flex-start w-full">
                     <AppSideBar/>
+                    <Toaster />
                     <main className=" min-h-screen  w-11/12">
                         {children || <Outlet/>}
                     </main>

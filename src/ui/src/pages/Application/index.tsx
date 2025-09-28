@@ -19,6 +19,9 @@ import {
 } from "@components/shadcn/ui/dropdown-menu.tsx";
 import {EllipsisVertical} from "lucide-react";
 import {Button} from "@components/shadcn/ui/button.tsx";
+import {copyToClipboard} from "@utils/utlis.ts";
+import {toast} from "sonner";
+
 
 export function ApplicationPage() {
     const [applications, setApplications] = useState<Application[]>([]);
@@ -27,6 +30,19 @@ export function ApplicationPage() {
     useEffect(() => {
         getApplications(auth!).then(setApplications);
     }, [auth]);
+
+    function copyClientId(clientId: string) {
+        copyToClipboard(clientId).then(() => {
+            toast("Client if coppied to clipboard", {
+                description: "You can use it for your application now",
+                action: {
+                    label: "Ok",
+                    onClick: () => console.log("Toast closed")
+                }
+            });
+            console.log("toasted")
+        });
+    }
 
     return <>
 
@@ -67,7 +83,7 @@ export function ApplicationPage() {
                                     <DropdownMenuLabel>Application Options</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuGroup>
-                                        <DropdownMenuItem>Copy Client Id</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => copyClientId(item.client_id)}>Copy Client Id</DropdownMenuItem>
                                         <DropdownMenuItem>Generate New Client Secret</DropdownMenuItem>
                                         <DropdownMenuItem variant={"destructive"}>Remove Application</DropdownMenuItem>
                                     </DropdownMenuGroup>
