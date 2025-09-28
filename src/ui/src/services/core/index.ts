@@ -39,7 +39,8 @@ async function invokeRequest<O>(uri: string, method: "GET" | "POST" | "PUT" | "D
             ...invokeOptions.extraOptions,
             headers: {
                 ...invokeOptions.extraOptions?.headers,
-                "Authorization": `Bearer ${jwtToken}`
+                "Authorization": `Bearer ${jwtToken}`,
+                "Content-Type": "application/json"
             }
         }
     return invokeRestRequest<O>(invokeOptions)
