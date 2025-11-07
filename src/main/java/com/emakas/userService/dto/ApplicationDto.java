@@ -20,4 +20,5 @@ public class ApplicationDto {
     private String redirectUri;
     @JsonProperty("client_id")
     private UUID clientId;
+    private TenantDto tenant;
 }

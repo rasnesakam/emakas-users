@@ -1,8 +1,6 @@
 package com.emakas.userService.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.UUID;
@@ -15,8 +13,12 @@ import java.util.UUID;
 @Entity
 @Table(name = "tenants")
 public class Tenant extends BaseEntity{
-    @Column()
+    @Column
     private String name;
-    @Column()
+    @Column
     private String description;
+    @Column
+    private String slug;
+    @Column(name = "owner_id")
+    private UUID ownerId;
 }

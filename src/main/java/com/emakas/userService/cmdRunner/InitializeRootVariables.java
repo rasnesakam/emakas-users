@@ -32,6 +32,7 @@ public class InitializeRootVariables implements CommandLineRunner {
     private final String appRedirectUri;
     private final Map<String, Resource> resourceMap;
     private final ApplicationService applicationService;
+    private final TenantsService tenantsService;
 
     @Autowired
     public InitializeRootVariables(
@@ -43,7 +44,7 @@ public class InitializeRootVariables implements CommandLineRunner {
             @Value("${app.domain}") String appDomainName,
             @Value("${app.redirect_uri}") String appRedirectUri,
             Map<String, Resource> resourceMap,
-            ApplicationService applicationService) {
+            ApplicationService applicationService, TenantsService tenantsService) {
         this.userService = userService;
         this.teamService = teamService;
         this.resourcePermissionService = resourcePermissionService;
@@ -53,9 +54,22 @@ public class InitializeRootVariables implements CommandLineRunner {
         this.resourceMap = resourceMap;
         this.applicationService = applicationService;
         this.appRedirectUri = appRedirectUri;
+        this.tenantsService = tenantsService;
     }
 
-    public User createAdminUserIfNotExists(){
+    public Tenant createBaseTenant() {
+        Tenant tenant = new Tenant();
+        tenant.setName("Core Tenant");
+        tenant.setDescription("Default Tenant");
+        return tenantsService.save(tenant);
+    }
+
+    public void assignAdminToTenant(User user, Tenant tenant) {
+        tenant.setOwnerId(user.getId());
+        tenantsService.save(tenant);
+    }
+
+    public User createAdminUserIfNotExists(Tenant tenant){
         Optional<User> user = userService.getByUserName("admin");
         if (user.isEmpty()) {
             User adminUser = new User();
@@ -65,6 +79,7 @@ public class InitializeRootVariables implements CommandLineRunner {
             // String password = StringUtils.getRandomString(16);
             String password = "1234";
             adminUser.setPassword(passwordEncoder.encode(password));
+            adminUser.setTenant(tenant);
             adminUser = userService.save(adminUser);
             logger.info("Created admin user with username: {}", adminUser.getUserName());
             logger.info("Created admin user with password: {}", password);
@@ -74,7 +89,7 @@ public class InitializeRootVariables implements CommandLineRunner {
         return user.get();
     }
 
-    public Application createFirstPartyAppIfNotExists() {
+    public Application createFirstPartyAppIfNotExists(Tenant tenant) {
         Optional<Application> firstPartyApp = applicationService.getByUri(this.appDomainName);
         if (firstPartyApp.isEmpty()) {
             Application app = new Application();
@@ -82,6 +97,7 @@ public class InitializeRootVariables implements CommandLineRunner {
             app.setUri(this.appDomainName);
             app.setRedirectUri(this.appRedirectUri);
             app.setDescription("First party application. Manage account settings trough this application");
+            app.setTenant(tenant);
             app = applicationService.save(app);
             logger.info("Created first party application with client id: {}", app.getId());
             return app;
@@ -89,18 +105,19 @@ public class InitializeRootVariables implements CommandLineRunner {
         return firstPartyApp.get();
     }
 
-    public Team createCoreTeamIfNotExists(User lead){
+    public Team createCoreTeamIfNotExists(User lead, Tenant tenant){
         Optional<Team> coreTeam = teamService.getByName("Core Team");
         if (coreTeam.isEmpty()){
             Team team = new Team();
             team.setName("Core Team");
             team.setLead(lead);
+            team.setTenant(tenant);
             return teamService.save(team);
         }
         return coreTeam.get();
     }
-    public Collection<Resource> createDefaultResources(){
-        Stream<Resource> resources = resourceMap.values().stream();
+    public Collection<Resource> createDefaultResources(Tenant tenant){
+        Stream<Resource> resources = resourceMap.values().stream().peek(res -> res.setTenant(tenant));
         resources = resources.map(resourceService::save);
         return resources.collect(Collectors.toSet());
     }
@@ -130,15 +147,19 @@ public class InitializeRootVariables implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        logger.info("Creating default tenant");
+        Tenant tenant = createBaseTenant();
         logger.info("Creating Admin User");
-        User admin = createAdminUserIfNotExists();
+        User admin = createAdminUserIfNotExists(tenant);
         logger.info("Creating Core Team");
-        Team coreTeam = createCoreTeamIfNotExists(admin);
+        Team coreTeam = createCoreTeamIfNotExists(admin, tenant);
         logger.info("Creating Default Resources");
-        Collection<Resource> appResources = createDefaultResources();
+        Collection<Resource> appResources = createDefaultResources(tenant);
         logger.info("Creating first party App");
-        Application app = createFirstPartyAppIfNotExists();
+        Application app = createFirstPartyAppIfNotExists(tenant);
         logger.info("Assigning roles to admin user");
         assignAdminPermissions(admin,appResources);
+        logger.info("Assigning admin as owner of the tenant: ".concat(tenant.getName()));
+        assignAdminToTenant(admin, tenant);
     }
 }

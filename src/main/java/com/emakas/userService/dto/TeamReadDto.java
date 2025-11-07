@@ -31,4 +31,6 @@ public class TeamReadDto {
     private Collection<UserReadDto> members;
 
     private UserReadDto lead;
+
+    private TenantDto tenant;
 }

@@ -25,4 +25,6 @@ public class UserReadDto {
 
     @JsonProperty("full_name")
     private String fullName;
+
+    private TenantDto tenant;
 }
