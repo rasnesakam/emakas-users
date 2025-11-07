@@ -40,6 +40,10 @@ public class Team extends BaseEntity{
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private User lead;
 
+    @JoinColumn(name = "tenant_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Tenant tenant;
+
     public void setLead(User lead) {
         this.lead = lead;
         if (lead != null) {

@@ -1,8 +1,6 @@
 package com.emakas.userService.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
@@ -19,4 +17,7 @@ public class Resource extends BaseEntity {
     private String description;
     @Column(unique = true)
     private String uri;
+    @JoinColumn(name = "tenant_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Tenant tenant;
 }

@@ -2,10 +2,7 @@ package com.emakas.userService.model;
 
 import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.StringUtils;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Objects;
@@ -37,6 +34,10 @@ public class User extends BaseEntity {
 
     @Column(length = 90)
     private String fullName;
+
+    @JoinColumn(name = "tenant_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Tenant tenant;
 
     @PrePersist
     private void prePersist() {

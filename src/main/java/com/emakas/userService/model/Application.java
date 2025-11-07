@@ -1,8 +1,6 @@
 package com.emakas.userService.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @NoArgsConstructor
@@ -23,4 +21,7 @@ public class Application extends BaseEntity {
     private String redirectUri;
     @Column(name = "client_secret")
     private String clientSecret;
+    @JoinColumn(name = "tenant_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Tenant tenant;
 }
