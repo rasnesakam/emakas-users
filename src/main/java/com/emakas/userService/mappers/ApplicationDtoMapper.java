@@ -13,9 +13,10 @@ public interface ApplicationDtoMapper {
     @Mapping(target = "clientId", source = "id")
     ApplicationDto toApplicationDto(Application application);
 
-    @Mapping(target="id", ignore = true)
-    @Mapping(target="createdTime", ignore = true)
-    @Mapping(target="updatedTime", ignore = true)
-    @Mapping(target="clientSecret", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdTime", ignore = true)
+    @Mapping(target = "updatedTime", ignore = true)
+    @Mapping(target = "clientSecret", ignore = true)
+    @Mapping(target = "tenant", ignore = true)
     Application toApplication(ApplicationDto applicationDto);
 }

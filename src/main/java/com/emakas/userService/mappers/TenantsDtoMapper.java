@@ -12,6 +12,7 @@ public interface TenantsDtoMapper {
 
     @Mapping(target = "createdTime", ignore = true)
     @Mapping(target = "updatedTime", ignore = true)
+    @Mapping(target = "ownerId", ignore = true)
     Tenant toTenant(TenantDto dto);
 
     TenantDto toTenantDto(Tenant tenant);

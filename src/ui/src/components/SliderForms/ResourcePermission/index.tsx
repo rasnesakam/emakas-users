@@ -115,7 +115,8 @@ export function ResourcePermissionSliderForm({title}: {title: string}) {
                                     Create New Resource Permission
                                 </SheetTitle>
                                 <SheetDescription>
-                                    Description
+                                    Resource Permissions are the permissions that granted to users, teams or applications to restrict
+                                    how they consume the resources
                                 </SheetDescription>
                             </SheetHeader>
 

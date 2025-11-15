@@ -7,7 +7,7 @@ import {
     TableHeader,
     TableRow
 } from "@components/shadcn/ui/table.tsx";
-import {useEffect, useState} from "react";
+import {Dispatch, SetStateAction, useEffect, useState} from "react";
 import {Application} from "@models/Application.ts";
 import {useAuthContext} from "@contexts/AuthContext";
 import {generateClientSecretKey, getApplications} from "@services/applications";
@@ -17,7 +17,7 @@ import {
     DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@components/shadcn/ui/dropdown-menu.tsx";
-import {Clipboard, EllipsisVertical} from "lucide-react";
+import {Check, Copy, EllipsisVertical} from "lucide-react";
 import {Button} from "@components/shadcn/ui/button.tsx";
 import {copyToClipboard} from "@utils/utlis.ts";
 import {toast} from "sonner";
@@ -29,7 +29,8 @@ import {
     DialogHeader,
     DialogTitle
 } from "@components/shadcn/ui/dialog.tsx";
-import {Input} from "@components/shadcn/ui/input.tsx";
+import {ApplicationSliderForm} from "@components/SliderForms/Application";
+import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@components/shadcn/ui/input-group.tsx";
 
 
 export function ApplicationPage() {
@@ -37,21 +38,43 @@ export function ApplicationPage() {
     const {auth} = useAuthContext();
     const [isDialogOpen, setDialogOpen] = useState(false);
     const [secretKey, setSecretKey] = useState("");
+    const [secretKeyCopied, setSecretKeyCopied] = useState<boolean>(false);
     useEffect(() => {
         getApplications(auth!).then(setApplications);
     }, [auth]);
 
-    function copyClientId(clientId: string) {
-        copyToClipboard(clientId).then(() => {
-            toast("Client if coppied to clipboard", {
-                description: "You can use it for your application now",
-                action: {
-                    label: "Ok",
-                    onClick: () => console.log("Toast closed")
+    function copyItemToClipboard(item: string, {title, description, dispatcher}:{title?: string, description?: string, dispatcher?: Dispatch<SetStateAction<boolean>>}) {
+        copyToClipboard(item)
+            .then(() => {
+                if (dispatcher){
+                    dispatcher(true);
+                    setTimeout(() => dispatcher(false), 5000);
                 }
-            });
-            console.log("toasted")
+            })
+            .then(() => {
+                toast(title, {
+                    description: description,
+                    action: {
+                        label: "Ok",
+                        onClick: () => {}
+                    }
+                });
+            })
+    }
+
+    function copyClientId(clientId: string) {
+        copyItemToClipboard(clientId, {
+            title: "Client if coppied to clipboard",
+            description: "You can use it for your application now"
         });
+    }
+
+    function copyClientSecret(clientSecret: string) {
+        copyItemToClipboard(clientSecret, {
+            title: "Secret Key Copied!",
+            description: "Please store it somewhere so you won't lose it!",
+            dispatcher: setSecretKeyCopied
+        })
     }
 
     function generateClientSecret(clientId: string) {
@@ -80,10 +103,13 @@ export function ApplicationPage() {
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-row justify-center">
-                    <Input type="text" value={secretKey} readOnly />
-                    <Button variant="ghost" onClick={() => copyToClipboard(secretKey).then(() => toast("Secret Key Coppied!"))}>
-                        <Clipboard />
-                    </Button>
+                    <InputGroup>
+                        <InputGroupInput type="text" value={secretKey} readOnly={true}/>
+                        <InputGroupAddon align="inline-end"/>
+                        <InputGroupButton onClick={() => copyClientSecret(secretKey)}>
+                            {secretKeyCopied ? <Check/> : <Copy/>}
+                        </InputGroupButton>
+                    </InputGroup>
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
@@ -98,7 +124,7 @@ export function ApplicationPage() {
                     Registered Applications
                 </div>
                 <div className="flex flex-row justify-end">
-
+                    <ApplicationSliderForm title={"Add new Application"}/>
                 </div>
             </div>
             <Table>

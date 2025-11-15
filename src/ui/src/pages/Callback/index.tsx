@@ -37,7 +37,6 @@ export function CallbackPage() {
                         if (auth)
                         {
                             setAuth(auth);
-                            alert("Navigating to home page");
                             navigate("/page/");
                         }
                     }).catch(err => console.error(err));

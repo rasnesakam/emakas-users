@@ -1,6 +1,7 @@
 package com.emakas.userService.service;
 
 import com.emakas.userService.model.Application;
+import com.emakas.userService.model.Tenant;
 import com.emakas.userService.repository.ApplicationRepository;
 import com.emakas.userService.repository.CoreRepository;
 import com.emakas.userService.shared.StringUtils;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +24,10 @@ public class ApplicationService extends CoreService<Application, UUID> {
         this.passwordEncoder = passwordEncoder;
     }
 
+    public Collection<Application> getAllByTenant(Tenant tenant) {
+        return applicationRepository.findAllByTenantId(tenant.getId());
+    }
+
     public Optional<Application> getByUri(String applicationUri) {
         return applicationRepository.findByUri(applicationUri);
     }
@@ -34,6 +40,6 @@ public class ApplicationService extends CoreService<Application, UUID> {
         String encodedRandomString = passwordEncoder.encode(randomString);
         application.setClientSecret(encodedRandomString);
         applicationRepository.save(application);
-        return encodedRandomString;
+        return randomString;
     }
 }

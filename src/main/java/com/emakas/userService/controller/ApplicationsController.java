@@ -4,12 +4,17 @@ import com.emakas.userService.dto.ApplicationDto;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.mappers.ApplicationDtoMapper;
 import com.emakas.userService.model.Application;
+import com.emakas.userService.model.Tenant;
+import com.emakas.userService.model.User;
 import com.emakas.userService.service.ApplicationService;
+import com.emakas.userService.shared.SecurityContextManager;
+import com.emakas.userService.shared.TokenManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,18 +31,26 @@ public class ApplicationsController {
     private final ApplicationService applicationService;
     private final ApplicationDtoMapper applicationDtoMapper;
     private final String appDomainName;
+    private final TokenManager tokenManager;
+
     @Autowired
-    public ApplicationsController(ApplicationService applicationService, ApplicationDtoMapper applicationDtoMapper, @Value("${app.domain}") String appDomainName) {
+    public ApplicationsController(ApplicationService applicationService, ApplicationDtoMapper applicationDtoMapper, @Value("${app.domain}") String appDomainName, TokenManager tokenManager) {
         this.applicationService = applicationService;
         this.applicationDtoMapper = applicationDtoMapper;
         this.appDomainName = appDomainName;
+        this.tokenManager = tokenManager;
     }
 
     @Operation(summary = "Register new application", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("register")
     @PreAuthorize("hasPermission(#RSC_APPS, 'self:write')")
     public ResponseEntity<Response<ApplicationDto>> createApplication(@RequestBody ApplicationDto applicationDto) {
+        SecurityContextManager securityContextManager = new SecurityContextManager(tokenManager);
+        Optional<Tenant> usersTenant = securityContextManager.getCurrentTenant();
+        if (usersTenant.isEmpty())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Response.of("Unauthorized action. Please provide valid token"));
         Application app = applicationDtoMapper.toApplication(applicationDto);
+        app.setTenant(usersTenant.get());
         app = applicationService.save(app);
         return ResponseEntity.ok(Response.of(applicationDtoMapper.toApplicationDto(app)));
     }
@@ -66,7 +79,11 @@ public class ApplicationsController {
     @GetMapping("/")
     @PreAuthorize("hasPermission(#RSC_APPS, 'self:read')")
     public ResponseEntity<Collection<ApplicationDto>> getApplications() {
-        Collection<ApplicationDto> applicationDtos = applicationService.getAll().stream().map(applicationDtoMapper::toApplicationDto).collect(Collectors.toSet());
+        SecurityContextManager securityContextManager = new SecurityContextManager(tokenManager);
+        Optional<Tenant> tenant = securityContextManager.getCurrentTenant();
+        if (tenant.isEmpty())
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ArrayList<>());
+        Collection<ApplicationDto> applicationDtos = applicationService.getAllByTenant(tenant.get()).stream().map(applicationDtoMapper::toApplicationDto).collect(Collectors.toSet());
         return ResponseEntity.ok(applicationDtos);
     }
 

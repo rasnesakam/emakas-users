@@ -7,14 +7,17 @@ import {getSelfApplicationOAuthRequest, initializeOAuthRequest} from "@utils/oau
 import {OAuthRequest} from "@models/OAuth.ts";
 import {getExternalApplicationInfo, getSelfApplicationInfo} from "@services/applications";
 import {Application} from "@models/Application.ts";
+import {Input} from "@components/shadcn/ui/input.tsx";
+import {Button} from "@components/shadcn/ui/button.tsx";
+import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@components/shadcn/ui/input-group.tsx";
+import {Eye, EyeOff} from "lucide-react";
 
 export function LoginPage(){
-    //const { setAuth} = useAuthContext();
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
     const [oAuthRequest, setOAuthRequest] = useState<OAuthRequest | undefined>(undefined);
     const [appInfo, setAppInfo] = useState<Application | undefined>(undefined);
-    //const navigate = useNavigate();
+    const [shouldPasswordVisible, setShouldPasswordVisible] = useState<boolean>(false);
     const [loadingState, setLoadingState] = useState<boolean>(false);
 
     const onFormSubmit = (e: FormEvent) => {
@@ -49,7 +52,6 @@ export function LoginPage(){
 
     useEffect(() => {
         try {
-            alert("check for external app")
             let oAuthRequest;
             try {
                 oAuthRequest = initializeOAuthRequest(urlSearch);
@@ -60,12 +62,10 @@ export function LoginPage(){
                 getSelfApplicationOAuthRequest().then(setOAuthRequest);
             }
             if (oAuthRequest){
-                alert("External App")
                 getExternalApplicationInfo(oAuthRequest.client_id, oAuthRequest.redirect_uri)
                     .then(setAppInfo);
             }
             else {
-                alert("Internal App");
                 getSelfApplicationInfo().then(app => {
                     console.log(app);
                     setAppInfo(app);
@@ -77,7 +77,7 @@ export function LoginPage(){
     }, []);
 
     return <>
-        <div className="border rounded-md shadow-md px-10 pb-10 pt-2 bg-gray-50 w-2/3 text-black">
+        <div className="border rounded-md shadow-md px-10 pb-10 pt-2 bg-gray-50 w-2/3 xl:w-1/2 text-black">
             <LoadingComponent active={loadingState} />
             <div className="flex flex-row justify-start items-center pb-4">
                 <img src="/vectors/icons8-e-100.svg" className="w-10 h-10" alt={"Logo E for Ensar"}/>
@@ -91,16 +91,21 @@ export function LoginPage(){
                 <div>
                     <form onSubmit={onFormSubmit} className="flex flex-col space-between">
                         <div className="w-full my-2 border-b text-black">
-                            <input type={"text"} name={"username"} placeholder={"Kullanıcı Adı"}
-                                   className="w-full focus-visible:outline-none"/>
+                            <Input type={"text"} name={"username"} placeholder={"Kullanıcı Adı"}/>
                         </div>
                         <div className="w-full my-2 border-b text-black">
-                            <input type={"password"} name={"password"} placeholder={"Şifre"}
-                                   className="w-full focus-visible:outline-none"/>
+                            <InputGroup>
+                                <InputGroupInput type={!shouldPasswordVisible ? "password" : "text"} name={"password"} placeholder={"Şifre"}/>
+                                <InputGroupAddon align={"inline-end"}>
+                                    <InputGroupButton onClick={() => setShouldPasswordVisible(!shouldPasswordVisible)}>
+                                        {!shouldPasswordVisible ? <Eye/> : <EyeOff/>}
+                                    </InputGroupButton>
+                                </InputGroupAddon>
+                            </InputGroup>
                         </div>
                         <div className="w-full flex flex-row justify-end gap-2">
-                            <button type={"button"} className="p-2  hover:bg-secondary hover:rounded-lg  hover:text-white">Şifremi Unuttum</button>
-                            <button type={"submit"} className="bg-primary p-2 rounded-lg  text-white">Giriş Yap</button>
+                            <Button type={"button"} variant={"ghost"}>Şifremi Unuttum</Button>
+                            <Button type={"submit"}>Giriş Yap</Button>
                         </div>
                     </form>
                 </div>

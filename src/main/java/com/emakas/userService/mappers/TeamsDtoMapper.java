@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = {UserDtoMapper.class})
+@Mapper(componentModel = "spring", uses = {UserDtoMapper.class, TenantsDtoMapper.class})
 public abstract class TeamsDtoMapper {
     static TeamsDtoMapper getInstance() { return Mappers.getMapper(TeamsDtoMapper.class); }
 
@@ -30,6 +30,7 @@ public abstract class TeamsDtoMapper {
     @Mapping(target="id", ignore = true)
     @Mapping(target="createdTime", ignore = true)
     @Mapping(target="updatedTime", ignore = true)
+    @Mapping(target="tenant", ignore = true)
     public abstract Team temFromWriteDto(TeamWriteDto teamWriteDto, @Context UserService userService, @Context TeamService teamService, @Context User user);
 
     @AfterMapping
