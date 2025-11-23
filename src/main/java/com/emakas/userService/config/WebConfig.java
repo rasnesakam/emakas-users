@@ -1,11 +1,10 @@
-package com.emakas.userService;
+package com.emakas.userService.config;
 
 import com.emakas.userService.model.Resource;
 import com.emakas.userService.shared.converters.StringToAccessModifierConverter;
 import com.emakas.userService.shared.converters.StringToCodeChallengeMethodConverter;
 import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
 import com.emakas.userService.shared.enums.DefaultAppResourceKeys;
-import lombok.Builder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.emakas.userService;
+package com.emakas.userService.config;
 
 import com.emakas.userService.shared.converters.StringToScopeArrayConverter;
 import org.springframework.beans.factory.annotation.Autowired;

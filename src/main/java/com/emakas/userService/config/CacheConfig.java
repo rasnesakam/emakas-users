@@ -1,4 +1,4 @@
-package com.emakas.userService;
+package com.emakas.userService.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
