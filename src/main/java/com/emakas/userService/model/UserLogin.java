@@ -28,6 +28,9 @@ public class UserLogin extends BaseEntity{
     @Column
     private Set<String> authorizedAudiences;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "requested_client")
+    private Application requestedClient;
 
     @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "authorized_scopes", joinColumns = @JoinColumn(name = "user_login_id"))
@@ -75,5 +78,6 @@ public class UserLogin extends BaseEntity{
         this.loggedUser = loginSession.getIntendedUser();
         this.authorizedScopes = loginSession.getRequestedScopes();
         this.authorizedAudiences = loginSession.getIntendedAudiences();
+        this.requestedClient = loginSession.getRequestedClient();
     }
 }

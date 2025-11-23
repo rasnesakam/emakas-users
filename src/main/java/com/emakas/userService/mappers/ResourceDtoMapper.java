@@ -15,6 +15,7 @@ public interface ResourceDtoMapper {
     @Mapping(target="createdTime", ignore = true)
     @Mapping(target="updatedTime", ignore = true)
     @Mapping(target = "tenant", ignore = true)
+    @Mapping(target = "resourceSecret", ignore = true)
     Resource toResource(ResourceDto resourceDto);
 
     ResourceDto toResourceDto(Resource resource);

@@ -53,7 +53,7 @@ public class TokenManager implements Serializable {
         this.userService = userService;
     }
 
-    private Token createToken(UUID subjectId, TokenTargetType tokenTargetType, long expireDateSecond, @Nullable String[] audience, @Nullable String[] scopes) {
+    private Token createToken(UUID subjectId, TokenTargetType tokenTargetType, long expireDateSecond, @Nullable String[] audience, @Nullable String[] scopes, TokenType tokenType, UUID clientId) {
         Token token = new Token();
         token.setIss(issuer);
         if (audience != null && audience.length > 0)
@@ -62,7 +62,10 @@ public class TokenManager implements Serializable {
             token.setScope(Set.of(scopes));
         token.setSub(tokenTargetType.toString().concat(Constants.SEPARATOR).concat(subjectId.toString()));
         token.setIat(Instant.now().getEpochSecond());
+        token.setJti(UUID.randomUUID());
         token.setExp(expireDateSecond);
+        token.setTokenType(tokenType);
+        token.setClientId(clientId);
         token.setSerializedToken(generateJwtToken(token));
         return token;
     }
@@ -85,19 +88,21 @@ public class TokenManager implements Serializable {
         return userService.getById(userId);
     }
 
-    public Token createUserAccessToken(User user, @Nullable String[] audiences, @Nullable String[] scopes){
+    public Token createUserAccessToken(User user, @Nullable String[] audiences, @Nullable String[] scopes, UUID clientId){
 
-        return createToken(user.getId(), TokenTargetType.USR, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes);
+        return createToken(user.getId(), TokenTargetType.USR, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes, TokenType.ACCESS_TOKEN, clientId);
     }
 
     //TODO: Find a suitable place for REFRESH_TOKEN string
-    public Token createUserRefreshToken(User user, String... audiences){
+    public Token createUserRefreshToken(User user, UUID clientId, String... audiences){
         String refreshScope = REFRESH_TOKEN.concat(SEPARATOR).concat(AccessModifier.WRITE.toString());
         return createToken(
                 user.getId(), TokenTargetType.USR,
                 Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
                 audiences,
-                new String[]{refreshScope}
+                new String[]{refreshScope},
+                TokenType.REFRESH_TOKEN,
+                clientId
         );
     }
 
@@ -113,6 +118,7 @@ public class TokenManager implements Serializable {
                 .withClaim("scope", token.getScope().stream().toList())
                 .withExpiresAt(Instant.ofEpochSecond(token.getExp()))
                 .withIssuedAt(Instant.ofEpochSecond(token.getIat()))
+                .withJWTId(token.getJti().toString())
                 .sign(ALGORITHM);
     }
 

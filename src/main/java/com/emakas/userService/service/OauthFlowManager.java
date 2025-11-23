@@ -43,9 +43,14 @@ public class OauthFlowManager {
         Token token = tokenManager.createUserAccessToken(
                 loggedUser,
                 userLogin.getAuthorizedAudiences().toArray(String[]::new),
-                userLogin.getAuthorizedScopes().toArray(String[]::new)
+                userLogin.getAuthorizedScopes().toArray(String[]::new),
+                userLogin.getRequestedClient().getId()
         );
-        Token refreshToken = tokenManager.createUserRefreshToken(loggedUser, userLogin.getAuthorizedAudiences().toArray(String[]::new));
+        Token refreshToken = tokenManager.createUserRefreshToken(
+                loggedUser,
+                userLogin.getRequestedClient().getId(),
+                userLogin.getAuthorizedAudiences().toArray(String[]::new)
+        );
         tokenService.saveBatch(token, refreshToken);
         long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
         TokenResponseDto dto =  new TokenResponseDto(
@@ -82,8 +87,8 @@ public class OauthFlowManager {
                 String[] audiences = token.getAud().toArray(String[]::new);
                 String[] scopes = resourcePermissionService.getPermissionsByUser(user)
                         .stream().map(ResourcePermission::toString).toArray(String[]::new);
-                Token newAccessToken = tokenManager.createUserAccessToken(user, audiences, scopes);
-                Token newRefreshToken = tokenManager.createUserRefreshToken(user, audiences);
+                Token newAccessToken = tokenManager.createUserAccessToken(user, audiences, scopes, token.getClientId());
+                Token newRefreshToken = tokenManager.createUserRefreshToken(user, token.getClientId(),audiences);
                 long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(newAccessToken.getExp())).toSeconds();
                 tokenService.saveBatch(newAccessToken, newRefreshToken);
                 TokenResponseDto tokenResponseDto = new TokenResponseDto(

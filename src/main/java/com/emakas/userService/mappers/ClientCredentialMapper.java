@@ -14,12 +14,12 @@ public interface ClientCredentialMapper {
     @Mapping(target = "clientName", source = "name")
     @Mapping(target = "clientId", source = "id")
     @Mapping(target = "clientSecret", source = "clientSecret")
-    @Mapping(target = "clientType", expression = "java(ClientType.APPLICATION)")
+    @Mapping(target = "clientType", expression = "java(com.emakas.userService.domain.auth.ClientType.APPLICATION)")
     ClientCredential fromApplication(Application application);
 
     @Mapping(target = "clientName", source = "name")
     @Mapping(target = "clientId", source = "id")
-    @Mapping(target = "clientSecret", source = "clientSecret")
-    @Mapping(target = "clientType", expression = "java(ClientType.RESOURCE)")
+    @Mapping(target = "clientSecret", source = "resourceSecret")
+    @Mapping(target = "clientType", expression = "java(com.emakas.userService.domain.auth.ClientType.RESOURCE)")
     ClientCredential fromResource(Resource resource);
 }

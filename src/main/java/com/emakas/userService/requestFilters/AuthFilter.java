@@ -48,7 +48,8 @@ public class AuthFilter extends OncePerRequestFilter {
                 new AntPathRequestMatcher("/page/**"),
                 new AntPathRequestMatcher("/api/auth/**"),
                 new AntPathRequestMatcher("/api/oauth/token"),
-                new AntPathRequestMatcher("/api/apps/self")
+                new AntPathRequestMatcher("/api/apps/self"),
+                new AntPathRequestMatcher("/api/apps/info")
         );
 
         OrRequestMatcher blackListedRequestMatcher = new OrRequestMatcher(blackListedPaths);
