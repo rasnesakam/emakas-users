@@ -33,6 +33,8 @@ public class AuthFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(@NotNull HttpServletRequest request) throws ServletException {
         List<RequestMatcher> blackListedPaths = List.of(
                 new AntPathRequestMatcher("/*"),
+                new AntPathRequestMatcher("/swagger-ui/**"),
+                new AntPathRequestMatcher("/v3/api-docs/**"),
                 new AntPathRequestMatcher("/assets/**"),
                 new AntPathRequestMatcher("/vectors/**"),
                 new AntPathRequestMatcher("/page/**"),

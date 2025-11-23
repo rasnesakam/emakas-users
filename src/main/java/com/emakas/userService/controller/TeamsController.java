@@ -10,7 +10,7 @@ import com.emakas.userService.model.User;
 import com.emakas.userService.service.TeamService;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.shared.TokenManager;
-import com.emakas.userService.shared.enums.TokenType;
+import com.emakas.userService.shared.enums.TokenTargetType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.slf4j.Logger;
@@ -88,7 +88,7 @@ public class TeamsController {
         if (authentication instanceof JwtAuthentication jwtAuthentication) {
             String userPrincipal = (String) jwtAuthentication.getPrincipal();
             UUID userId = UUID.fromString(userPrincipal);
-            if (jwtAuthentication.getUserToken().getTokenType() != TokenType.USR)
+            if (jwtAuthentication.getUserToken().getTokenTargetType() != TokenTargetType.USR)
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             Collection<Team> teams = teamService.getTeamsByOwner(userId);
             return ResponseEntity.ok(teams.stream().map(teamsDtoMapper::toTeamDto).toList());

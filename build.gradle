@@ -48,6 +48,10 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	// Jwt implementation
 	implementation 'com.auth0:java-jwt:4.3.0'
+	// Cache Management
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	// Caffeine In Memory Cache
+	implementation 'com.github.ben-manes.caffeine:caffeine'
 	// Kafka
 	implementation 'org.springframework.kafka:spring-kafka'
 	// Lombok

@@ -5,8 +5,7 @@ import com.emakas.userService.model.*;
 import com.emakas.userService.service.*;
 import com.emakas.userService.shared.converters.StringToPermissionDescriptorConverter;
 import com.emakas.userService.shared.data.PermissionDescriptor;
-import com.emakas.userService.shared.enums.AccessModifier;
-import com.emakas.userService.shared.enums.TokenType;
+import com.emakas.userService.shared.enums.TokenTargetType;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 
@@ -46,7 +45,7 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
                 return false;
             Resource resource = resourceValue.get();
             PermissionDescriptor permissionDescriptor = stringToPermissionDescriptorConverter.convert(permission.toString());
-            if (token.getTokenType() == TokenType.USR) {
+            if (token.getTokenTargetType() == TokenTargetType.USR) {
                 Optional<User> user = userService.getById(UUID.fromString(userId));
                 if (user.isEmpty())
                     return false;
@@ -60,7 +59,7 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
                         );
                 return hasUserPermission || hasTeamPermission;
             }
-            else if (token.getTokenType() == TokenType.APP) {
+            else if (token.getTokenTargetType() == TokenTargetType.APP) {
                 Optional<Application> app = applicationService.getById(UUID.fromString(userId));
                 return app.isPresent() && resourcePermissionService.getApplicationPermissionsByResource(app.get(), resource).stream()
                         .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, permissionDescriptor, app.get()));

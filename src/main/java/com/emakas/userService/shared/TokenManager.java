@@ -10,6 +10,7 @@ import com.emakas.userService.model.User;
 import com.emakas.userService.model.Token;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.shared.enums.AccessModifier;
+import com.emakas.userService.shared.enums.TokenTargetType;
 import com.emakas.userService.shared.enums.TokenType;
 import com.emakas.userService.shared.enums.TokenVerificationStatus;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,14 +53,14 @@ public class TokenManager implements Serializable {
         this.userService = userService;
     }
 
-    private Token createToken(UUID subjectId, TokenType tokenType, long expireDateSecond, @Nullable String[] audience, @Nullable String[] scopes) {
+    private Token createToken(UUID subjectId, TokenTargetType tokenTargetType, long expireDateSecond, @Nullable String[] audience, @Nullable String[] scopes) {
         Token token = new Token();
         token.setIss(issuer);
         if (audience != null && audience.length > 0)
             token.setAud(Set.of(audience));
         if (scopes != null && scopes.length > 0)
             token.setScope(Set.of(scopes));
-        token.setSub(tokenType.toString().concat(Constants.SEPARATOR).concat(subjectId.toString()));
+        token.setSub(tokenTargetType.toString().concat(Constants.SEPARATOR).concat(subjectId.toString()));
         token.setIat(Instant.now().getEpochSecond());
         token.setExp(expireDateSecond);
         token.setSerializedToken(generateJwtToken(token));
@@ -69,7 +70,7 @@ public class TokenManager implements Serializable {
     public Optional<User> loadUserFromToken(Token token){
         UUID userId = null;
         String tokenSubject = token.getSub();
-        Pattern tokenSubjectPattern = Pattern.compile(String.format("^%s:(.*)$",TokenType.USR));
+        Pattern tokenSubjectPattern = Pattern.compile(String.format("^%s:(.*)$", TokenTargetType.USR));
         Matcher tokenSubjectMatcher = tokenSubjectPattern.matcher(tokenSubject);
         if (tokenSubjectMatcher.find())
             userId = UUID.fromString(tokenSubjectMatcher.group(1));
@@ -86,14 +87,14 @@ public class TokenManager implements Serializable {
 
     public Token createUserAccessToken(User user, @Nullable String[] audiences, @Nullable String[] scopes){
 
-        return createToken(user.getId(), TokenType.USR, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes);
+        return createToken(user.getId(), TokenTargetType.USR, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes);
     }
 
     //TODO: Find a suitable place for REFRESH_TOKEN string
     public Token createUserRefreshToken(User user, String... audiences){
         String refreshScope = REFRESH_TOKEN.concat(SEPARATOR).concat(AccessModifier.WRITE.toString());
         return createToken(
-                user.getId(), TokenType.USR,
+                user.getId(), TokenTargetType.USR,
                 Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
                 audiences,
                 new String[]{refreshScope}
@@ -119,21 +120,18 @@ public class TokenManager implements Serializable {
         try {
             DecodedJWT decodedJWT = JWT.decode(token);
             String sub = decodedJWT.getSubject();
-            TokenType tokenType = TokenType.fromString(sub);
-            if (tokenType == TokenType.UNDEFINED)
+            TokenTargetType tokenTargetType = TokenTargetType.fromString(sub);
+            if (tokenTargetType == TokenTargetType.UNDEFINED)
                 throw new JWTDecodeException("Undefined token type");
-            sub = getCleanSubject(tokenType, sub).orElseThrow(() -> new RuntimeException("Unknown token."));
-            return Optional.of(new Token(
-                decodedJWT.getId(),
-                decodedJWT.getIssuer(),
-                new HashSet<>(decodedJWT.getAudience()),
-                new HashSet<>(decodedJWT.getClaim("scope").asList(String.class)),
-                sub,
-                decodedJWT.getExpiresAt().getTime(),
-                decodedJWT.getIssuedAt().getTime(),
-                tokenType,
-                token
-            ));
+            sub = getCleanSubject(tokenTargetType, sub).orElseThrow(() -> new RuntimeException("Unknown token."));
+            Token generatedToken = new Token();
+            generatedToken.setSub(sub);
+            generatedToken.setJti(UUID.fromString(decodedJWT.getId()));
+            generatedToken.setIat(decodedJWT.getIssuedAt().getTime());
+            generatedToken.setExp(decodedJWT.getExpiresAt().getTime());
+            generatedToken.setAud(new HashSet<>(decodedJWT.getAudience()));
+            generatedToken.setScope(new HashSet<>(decodedJWT.getClaim("scope").asList(String.class)));
+            return Optional.of(generatedToken);
         }
         catch (JWTDecodeException exception){
             return Optional.empty();
@@ -177,8 +175,8 @@ public class TokenManager implements Serializable {
         }
     }
 
-    public Optional<String> getCleanSubject(@NonNull TokenType tokenType, String tokenSubject) {
-        Pattern tokenPattern = Pattern.compile(String.format("^%s%s(.*)$",tokenType, SEPARATOR));
+    public Optional<String> getCleanSubject(@NonNull TokenTargetType tokenTargetType, String tokenSubject) {
+        Pattern tokenPattern = Pattern.compile(String.format("^%s%s(.*)$", tokenTargetType, SEPARATOR));
         Matcher matcher = tokenPattern.matcher(tokenSubject);
         if (matcher.matches()) {
             return Optional.of(matcher.group(1));
@@ -189,7 +187,6 @@ public class TokenManager implements Serializable {
     public Token generateUserToken(User user, String... audiences) {
         Token token = new Token();
         token.setIss(issuer);
-        token.setJti(UUID.randomUUID().toString());
         token.setSub(user.getId().toString());
         if (audiences != null)
             token.setAud(Set.of(audiences));

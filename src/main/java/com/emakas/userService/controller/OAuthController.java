@@ -1,11 +1,16 @@
 package com.emakas.userService.controller;
 
 import com.emakas.userService.auth.JwtAuthentication;
+import com.emakas.userService.dto.TokenIntrospectionDto;
 import com.emakas.userService.dto.TokenResponseDto;
+import com.emakas.userService.model.Token;
+import com.emakas.userService.model.User;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
 import com.emakas.userService.service.*;
 import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.GrantType;
+import com.emakas.userService.shared.enums.TokenTargetType;
+import com.emakas.userService.shared.enums.TokenVerificationStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,27 +21,27 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "/api/oauth")
 public class OAuthController {
 
-    private final TokenManager tokenManager;
-    private final TokenService tokenService;
-    private final UserLoginService userLoginService;
     private final TokenPermissionEvaluator tokenPermissionEvaluator;
-    private final ResourcePermissionService resourcePermissionService;
     private final OauthFlowManager oauthFlowManager;
+    private final TokenService tokenService;
 
     @Autowired
-    public OAuthController(TokenService tokenService, TokenManager tokenManager, UserLoginService userLoginService, TokenPermissionEvaluator tokenPermissionEvaluator, ResourcePermissionService resourcePermissionService, OauthFlowManager oauthFlowManager){
-        this.tokenService = tokenService;
-        this.tokenManager = tokenManager;
-        this.userLoginService = userLoginService;
+    public OAuthController(TokenPermissionEvaluator tokenPermissionEvaluator, OauthFlowManager oauthFlowManager, TokenService tokenService) {
         this.tokenPermissionEvaluator = tokenPermissionEvaluator;
-        this.resourcePermissionService = resourcePermissionService;
         this.oauthFlowManager = oauthFlowManager;
+        this.tokenService = tokenService;
+    }
+
+    @PostMapping(value = "introspection", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<TokenIntrospectionDto> introspection(@RequestParam("token") String token, @RequestParam(name = "token_type_hint", required = false) String tokenHint) {
+        return tokenService.introspect(token).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     //TODO: Use PreAuthorize annotation
