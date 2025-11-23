@@ -13,11 +13,17 @@ import lombok.*;
 public class Resource extends BaseEntity {
     @Column
     private String name;
+
     @Column
     private String description;
+
     @Column(unique = true)
     private String uri;
+
     @JoinColumn(name = "tenant_id")
     @ManyToOne(fetch = FetchType.EAGER)
     private Tenant tenant;
+
+    @Column(name = "resource_secret")
+    private String resourceSecret;
 }

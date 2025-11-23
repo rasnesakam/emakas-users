@@ -3,6 +3,7 @@ package com.emakas.userService.config;
 import com.emakas.userService.csrfTokenHandlers.SpaCsrfTokenRequestHandler;
 import com.emakas.userService.handlers.UnauthorizedHandler;
 import com.emakas.userService.requestFilters.AuthFilter;
+import com.emakas.userService.service.ClientCredentialsService;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.shared.TokenManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,8 +55,8 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public AuthFilter getAuthFilter() {
-        return new AuthFilter(tokenManager);
+    public AuthFilter getAuthFilter(ClientCredentialsService clientCredentialsService) {
+        return new AuthFilter(tokenManager, clientCredentialsService);
     }
 
 
