@@ -26,4 +26,11 @@ public class Resource extends BaseEntity {
 
     @Column(name = "resource_secret")
     private String resourceSecret;
+
+    public Resource(String name, String description, String uri, Tenant tenant) {
+        this.name = name;
+        this.description = description;
+        this.uri = uri;
+        this.tenant = tenant;
+    }
 }
