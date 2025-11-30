@@ -86,6 +86,7 @@ public class AuthFilter extends OncePerRequestFilter {
                     yield tokenManager.getFromToken(tokenString).map(JwtAuthentication::new);
                 }
                 case BASIC -> {
+                    Optional<Authentication> result;
                     try {
                         final String credentials64 = authorization[1].trim();
                         byte[] credentialsByte = Base64.getDecoder().decode(credentials64);
@@ -93,13 +94,13 @@ public class AuthFilter extends OncePerRequestFilter {
                         if (credentials.length != 2)
                             yield Optional.empty();
                         UUID clientId = UUID.fromString(credentials[0]);
-                        yield clientCredentialsService.validateClient(clientId, credentials[1]).map(principal -> {
-                            return new UsernamePasswordAuthenticationToken(principal, null, List.of());
-                        });
+                        result = clientCredentialsService.validateClient(clientId, credentials[1])
+                                .map(principal -> new UsernamePasswordAuthenticationToken(principal, null, List.of()));
                     } catch (IllegalArgumentException illegalArgumentException) {
                         logger.error(illegalArgumentException.getLocalizedMessage());
-                        yield Optional.empty();
+                        result = Optional.empty();
                     }
+                    yield result;
                 }
             };
 

@@ -4,22 +4,22 @@ import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TokenIntrospectionDto;
 import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.mappers.TokenIntrospectionMapper;
+import com.emakas.userService.model.Application;
 import com.emakas.userService.model.Token;
 import com.emakas.userService.model.User;
 import com.emakas.userService.repository.UserTokenRepository;
 import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.TokenTargetType;
 import com.emakas.userService.shared.enums.TokenVerificationStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class TokenService {
@@ -27,6 +27,8 @@ public class TokenService {
     private final TokenManager tokenManager;
     private final UserService userService;
     private final TokenIntrospectionMapper tokenIntrospectionMapper;
+    private final Logger logger = LoggerFactory.getLogger(TokenService.class);
+
 
     @Autowired
     public TokenService(UserTokenRepository repository, TokenManager tokenManager, UserService userService, TokenIntrospectionMapper tokenIntrospectionMapper) {
@@ -51,14 +53,36 @@ public class TokenService {
         return tokenOptional.map(parsedToken -> {
             TokenVerificationStatus verificationStatus = tokenManager.verifyJwtToken(parsedToken.getSerializedToken());
             if (verificationStatus == TokenVerificationStatus.SUCCESS) {
-                userTokenRepository.findById(parsedToken.getJti()).map(persistedToken -> {
-                    TokenIntrospectionDto introspectionDto = tokenIntrospectionMapper.toIntrospection(persistedToken);
-                    introspectionDto.setActive(true);
-                    return Optional.of(introspectionDto);
-                });
+                 Optional<TokenIntrospectionDto> introspection = userTokenRepository.findById(parsedToken.getJti()).map(persistedToken -> {
+                    TokenIntrospectionDto introspectionDtoValue = tokenIntrospectionMapper.toIntrospection(persistedToken);
+                    introspectionDtoValue.setActive(true);
+                    return introspectionDtoValue;
+                 });
+                 if (introspection.isEmpty())
+                     logger.error(String.format(Locale.ENGLISH, "Token with jti '%s' coult not found", parsedToken.getJti()));
+                 return introspection;
             }
             return Optional.<TokenIntrospectionDto>empty();
         }).orElse(Optional.empty());
     }
-
+    public Token createUserAccessToken(User user, String[] audiences, String[] scopes, UUID requestedClientId) {
+        Token token = tokenManager.createUserAccessToken(user, audiences, scopes, requestedClientId);
+        return userTokenRepository.save(token);
+    }
+    public Token createUserRefreshToken(User user, String[] audiences, UUID requestedClientId) {
+        Token token = tokenManager.createUserRefreshToken(user, requestedClientId, audiences);
+        return userTokenRepository.save(token);
+    }
+    public Token createUserAccessToken(User user, String[] audiences, String[] scopes, Application requestedClient) {
+        return createUserAccessToken(user, audiences, scopes, requestedClient.getId());
+    }
+    public Token createUserRefreshToken(User user, String[] audiences, Application requestedClient) {
+        return createUserRefreshToken(user, audiences, requestedClient.getId());
+    }
+    public Optional<Token> getFromSerializedToken(String token){
+        return tokenManager.getFromToken(token);
+    }
+    public Optional<User> loadUserFromToken(Token token){
+        return tokenManager.loadUserFromToken(token);
+    }
 }

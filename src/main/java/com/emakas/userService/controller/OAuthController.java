@@ -2,15 +2,16 @@ package com.emakas.userService.controller;
 
 import com.emakas.userService.auth.JwtAuthentication;
 import com.emakas.userService.dto.TokenIntrospectionDto;
+import com.emakas.userService.dto.TokenIntrospectionRequestDto;
 import com.emakas.userService.dto.TokenResponseDto;
-import com.emakas.userService.model.Token;
-import com.emakas.userService.model.User;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
 import com.emakas.userService.service.*;
-import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.GrantType;
-import com.emakas.userService.shared.enums.TokenTargetType;
-import com.emakas.userService.shared.enums.TokenVerificationStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.StringToClassMapItem;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,8 +21,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -39,9 +38,13 @@ public class OAuthController {
         this.tokenService = tokenService;
     }
 
+    @Operation(
+            summary = "Get details of token",
+            security = @SecurityRequirement(name = "basicAuth")
+    )
     @PostMapping(value = "introspection", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<TokenIntrospectionDto> introspection(@RequestParam("token") String token, @RequestParam(name = "token_type_hint", required = false) String tokenHint) {
-        return tokenService.introspect(token).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    public ResponseEntity<TokenIntrospectionDto> introspection(@ModelAttribute TokenIntrospectionRequestDto tokenIntrospectionRequestDto) {
+        return tokenService.introspect(tokenIntrospectionRequestDto.getToken()).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     //TODO: Use PreAuthorize annotation

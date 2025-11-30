@@ -8,7 +8,7 @@ import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface TokenIntrospectionMapper {
-    static TokenIntrospectionDto getInstance() { return Mappers.getMapper(TokenIntrospectionDto.class); }
+    static TokenIntrospectionMapper getInstance() { return Mappers.getMapper(TokenIntrospectionMapper.class); }
 
     @Mapping(target = "active", ignore = true) // şimdilik ignore
     @Mapping(target = "username", ignore = true) // şimdilik ignore

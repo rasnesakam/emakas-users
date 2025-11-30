@@ -24,5 +24,11 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
                 )
         )
 )
+@SecurityScheme(
+        name = "basicAuth",
+        type = SecuritySchemeType.HTTP,
+        in = SecuritySchemeIn.HEADER,
+        scheme = "basic"
+)
 public class OpenApiConfig {
 }

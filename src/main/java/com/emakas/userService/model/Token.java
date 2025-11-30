@@ -21,7 +21,6 @@ public class Token {
      * Represents <b>jti</b> claim for the JWT
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID jti;
 
     /**
@@ -80,4 +79,11 @@ public class Token {
 
     @Column(name = "client_id")
     private UUID clientId;
+
+    @PrePersist
+    public void prePersist() {
+        if (jti == null) {
+            jti = UUID.randomUUID();
+        }
+    }
 }

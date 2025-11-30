@@ -5,7 +5,11 @@ import {ResponseWrapper} from "@models/ResponseWrapper.ts";
 
 export async function getExternalApplicationInfo(client_id: string, redirectUri: string): Promise<Application | undefined> {
     const fetchUrl = `${window.location.origin}/api/apps/info?client_id=${client_id}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-    const fetchOptions: RequestInit = {}
+    const fetchOptions: RequestInit = {
+        headers: {
+            "Authorization": `Basic `
+        }
+    }
     const fetchResponse = await fetch(fetchUrl, fetchOptions)
 
     if (fetchResponse.ok)

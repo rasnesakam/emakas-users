@@ -137,6 +137,7 @@ public class TokenManager implements Serializable {
             generatedToken.setExp(decodedJWT.getExpiresAt().getTime());
             generatedToken.setAud(new HashSet<>(decodedJWT.getAudience()));
             generatedToken.setScope(new HashSet<>(decodedJWT.getClaim("scope").asList(String.class)));
+            generatedToken.setSerializedToken(decodedJWT.getToken());
             return Optional.of(generatedToken);
         }
         catch (JWTDecodeException exception){
