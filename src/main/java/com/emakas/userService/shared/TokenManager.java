@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.*;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.emakas.userService.model.Application;
 import com.emakas.userService.model.User;
 import com.emakas.userService.model.Token;
 import com.emakas.userService.service.UserService;
@@ -13,9 +14,9 @@ import com.emakas.userService.shared.enums.AccessModifier;
 import com.emakas.userService.shared.enums.TokenTargetType;
 import com.emakas.userService.shared.enums.TokenType;
 import com.emakas.userService.shared.enums.TokenVerificationStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import java.io.Serializable;
 import java.time.Instant;
@@ -31,9 +32,8 @@ import static com.emakas.userService.shared.Constants.SEPARATOR;
 public class TokenManager implements Serializable {
 
     private final long secondsToExpire;
-
+    private final int daysToExpire;
     private final String issuer;
-
     private final Algorithm ALGORITHM;
     private final String appDomainName;
     private final UserService userService;
@@ -43,11 +43,12 @@ public class TokenManager implements Serializable {
             @Value("${java-jwt.issuer}") String issuer,
             @Value("${java-jwt.secret}") String jwtSecret,
             @Value("${java-jwt.expiration}") long secondsToExpire,
+            @Value("${java-jwt.refresh_expiration}") int daysToExpire,
             @Value("${app.domain}") String appDomainName,
             UserService userService) {
         this.issuer = issuer;
         this.secondsToExpire = secondsToExpire;
-
+        this.daysToExpire = daysToExpire;
         ALGORITHM = Algorithm.HMAC256(jwtSecret);
         this.appDomainName = appDomainName;
         this.userService = userService;
@@ -94,11 +95,27 @@ public class TokenManager implements Serializable {
     }
 
     //TODO: Find a suitable place for REFRESH_TOKEN string
-    public Token createUserRefreshToken(User user, UUID clientId, String... audiences){
+    public Token createUserRefreshToken(User user, UUID clientId, String[] audiences){
         String refreshScope = REFRESH_TOKEN.concat(SEPARATOR).concat(AccessModifier.WRITE.toString());
         return createToken(
                 user.getId(), TokenTargetType.USR,
-                Instant.now().plus(25, ChronoUnit.MINUTES).getEpochSecond(),
+                Instant.now().plus(daysToExpire, ChronoUnit.DAYS).getEpochSecond(),
+                audiences,
+                new String[]{refreshScope},
+                TokenType.REFRESH_TOKEN,
+                clientId
+        );
+    }
+
+    public Token createApplicationAccessToken(Application application, @Nullable String[] audiences, @Nullable String[] scopes, UUID clientId){
+        return createToken(application.getId(), TokenTargetType.APP, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes, TokenType.ACCESS_TOKEN, clientId);
+    }
+
+    public Token createApplicationRefreshToken(Application application, UUID clientId, String[] audiences){
+        String refreshScope = REFRESH_TOKEN.concat(SEPARATOR).concat(AccessModifier.WRITE.toString());
+        return createToken(
+                application.getId(), TokenTargetType.APP,
+                Instant.now().plus(daysToExpire, ChronoUnit.DAYS).getEpochSecond(),
                 audiences,
                 new String[]{refreshScope},
                 TokenType.REFRESH_TOKEN,
@@ -122,7 +139,7 @@ public class TokenManager implements Serializable {
                 .sign(ALGORITHM);
     }
 
-    public Optional<Token> getFromToken(@NonNull String token){
+    public Optional<Token> getFromToken(@NotNull String token){
         try {
             DecodedJWT decodedJWT = JWT.decode(token);
             String sub = decodedJWT.getSubject();
@@ -138,13 +155,14 @@ public class TokenManager implements Serializable {
             generatedToken.setAud(new HashSet<>(decodedJWT.getAudience()));
             generatedToken.setScope(new HashSet<>(decodedJWT.getClaim("scope").asList(String.class)));
             generatedToken.setSerializedToken(decodedJWT.getToken());
+            generatedToken.setTokenTargetType(tokenTargetType);
             return Optional.of(generatedToken);
         }
         catch (JWTDecodeException exception){
             return Optional.empty();
         }
     }
-    public Map<String, Claim> getTokenClaims(@NonNull String token) {
+    public Map<String, Claim> getTokenClaims(@NotNull String token) {
         try{
             DecodedJWT decodedJWT = JWT.decode(token);
             return decodedJWT.getClaims();
@@ -182,7 +200,7 @@ public class TokenManager implements Serializable {
         }
     }
 
-    public Optional<String> getCleanSubject(@NonNull TokenTargetType tokenTargetType, String tokenSubject) {
+    public Optional<String> getCleanSubject(@NotNull TokenTargetType tokenTargetType, String tokenSubject) {
         Pattern tokenPattern = Pattern.compile(String.format("^%s%s(.*)$", tokenTargetType, SEPARATOR));
         Matcher matcher = tokenPattern.matcher(tokenSubject);
         if (matcher.matches()) {

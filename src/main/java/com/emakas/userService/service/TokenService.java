@@ -14,6 +14,7 @@ import com.emakas.userService.shared.enums.TokenVerificationStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class TokenService {
+public class TokenService{
     private final UserTokenRepository userTokenRepository;
     private final TokenManager tokenManager;
     private final UserService userService;
@@ -37,23 +38,34 @@ public class TokenService {
         this.userService = userService;
         this.tokenIntrospectionMapper = tokenIntrospectionMapper;
     }
+
+    @CachePut(value = "tokens", key = "#result.jti")
     public Token save(Token token) {
         return userTokenRepository.save(token);
     }
-    public Collection<Token> saveBatch(Token... tokens) {
-        return userTokenRepository.saveAll(Arrays.stream(tokens).toList());
+
+    @Cacheable(value = "tokens", key = "#jti", unless = "#result.isEmpty()")
+    public Optional<Token> getByJti(UUID jti) {
+        return userTokenRepository.findById(jti);
     }
-    @Cacheable(
-            value = "introspection",
-            key = "#token",
-            unless = "#result == null || #result.active == false"
-    )
+
+    @CachePut(value = "token_blacklist", key = "#token.jti")
+    public boolean invalidateToken(Token token) {
+        return true;
+    }
+
+    @Cacheable(value = "token_blacklist", key = "#token.jti")
+    public boolean isTokenInBlacklist(Token token) {
+        return false;
+    }
+
+    @Cacheable(value = "introspection", key = "#token", unless = "#result == null || #result.active == false")
     public Optional<TokenIntrospectionDto> introspect(String token) {
         Optional<Token> tokenOptional = tokenManager.getFromToken(token);
         return tokenOptional.map(parsedToken -> {
             TokenVerificationStatus verificationStatus = tokenManager.verifyJwtToken(parsedToken.getSerializedToken());
             if (verificationStatus == TokenVerificationStatus.SUCCESS) {
-                 Optional<TokenIntrospectionDto> introspection = userTokenRepository.findById(parsedToken.getJti()).map(persistedToken -> {
+                 Optional<TokenIntrospectionDto> introspection = this.getByJti(parsedToken.getJti()).map(persistedToken -> {
                     TokenIntrospectionDto introspectionDtoValue = tokenIntrospectionMapper.toIntrospection(persistedToken);
                     introspectionDtoValue.setActive(true);
                     return introspectionDtoValue;
@@ -79,6 +91,13 @@ public class TokenService {
     public Token createUserRefreshToken(User user, String[] audiences, Application requestedClient) {
         return createUserRefreshToken(user, audiences, requestedClient.getId());
     }
+    public Token createApplicationAccessToken(Application application, String[] scopes) {
+        return tokenManager.createApplicationAccessToken(application, new String[]{application.getUri()}, scopes, application.getId());
+    }
+    public Token createApplicationRefreshToken(Application application) {
+        return tokenManager.createApplicationRefreshToken(application, application.getId(), new String[]{application.getUri()});
+    }
+
     public Optional<Token> getFromSerializedToken(String token){
         return tokenManager.getFromToken(token);
     }

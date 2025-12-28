@@ -1,5 +1,9 @@
 package com.emakas.userService.service;
 
+import com.emakas.userService.domain.auth.ClientCredential;
+import com.emakas.userService.domain.auth.ClientPrincipal;
+import com.emakas.userService.domain.auth.ClientType;
+import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.model.*;
 import com.emakas.userService.shared.Constants;
@@ -25,13 +29,15 @@ public class OauthFlowManager {
     private final TokenService tokenService;
     private final ResourcePermissionService resourcePermissionService;
     private final ApplicationService applicationService;
+    private final ClientCredentialsService clientCredentialsService;
 
     @Autowired
-    public OauthFlowManager(UserLoginService userLoginService, TokenService tokenService, ResourcePermissionService resourcePermissionService, ApplicationService applicationService) {
+    public OauthFlowManager(UserLoginService userLoginService, TokenService tokenService, ResourcePermissionService resourcePermissionService, ApplicationService applicationService, ClientCredentialsService clientCredentialsService) {
         this.userLoginService = userLoginService;
         this.tokenService = tokenService;
         this.resourcePermissionService = resourcePermissionService;
         this.applicationService = applicationService;
+        this.clientCredentialsService = clientCredentialsService;
     }
 
     private ResponseEntity<TokenResponseDto> getTokenResponseFromUserLogin(UserLogin userLogin) {
@@ -60,11 +66,11 @@ public class OauthFlowManager {
     }
 
     public ResponseEntity<TokenResponseDto> handleAuthorizationFlow(String grant, UUID clientId, String clientSecret, String codeVerifier, String redirectUri) {
-        //TODO: Implement client id and secret mechanism
         if (Objects.isNull(clientSecret) && Objects.nonNull(codeVerifier))
             return handlePCKEFlow(grant, codeVerifier, clientId);
         Optional<Application> applicationValue = applicationService.getById(clientId);
-        if (applicationValue.isPresent() && applicationValue.get().getRedirectUri().equals(redirectUri)) {
+        Optional<ClientPrincipal> clientCredential = clientCredentialsService.validateClient(clientId, clientSecret);
+        if (applicationValue.isPresent() && clientCredential.isPresent() && applicationValue.get().getRedirectUri().equals(redirectUri)) {
             Optional<UserLogin> userLogin = userLoginService.getUserLoginByGrant(grant);
             return userLogin.map(this::getTokenResponseFromUserLogin).orElseGet(() -> ResponseEntity.notFound().build());
         }
@@ -88,7 +94,6 @@ public class OauthFlowManager {
                 Token newAccessToken = tokenService.createUserAccessToken(user, audiences, scopes, token.getClientId());
                 Token newRefreshToken = tokenService.createUserRefreshToken(user, audiences, token.getClientId());
                 long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(newAccessToken.getExp())).toSeconds();
-                tokenService.saveBatch(newAccessToken, newRefreshToken);
                 TokenResponseDto tokenResponseDto = new TokenResponseDto(
                         user.getUserName(), user.getName(), user.getSurname(),
                         user.getEmail(), newAccessToken.getSerializedToken(), expiresAt, newRefreshToken.getSerializedToken(),
@@ -102,8 +107,23 @@ public class OauthFlowManager {
     }
 
     public ResponseEntity<TokenResponseDto> handleClientCredentialsFlow(UUID clientId, String clientSecret, String[] requestedScopes){
-        //TODO: Implement Client Credentials Flow
-        return null;
+        Optional<ClientPrincipal> clientPrincipal = clientCredentialsService.validateClient(clientId, clientSecret);
+        return clientPrincipal.map(cp -> {
+            if (cp.getClientType() != ClientType.APPLICATION) //TODO: Think about non applications (i.e, Resources)
+                return ResponseEntity.badRequest().<TokenResponseDto>build();
+            Optional<Application> application = applicationService.getById(cp.getClientId());
+            return application.map(app -> {
+                Token applicationAccessToken = tokenService.createApplicationAccessToken(app, requestedScopes);
+                Token applicationRefreshToken = tokenService.createApplicationRefreshToken(app);
+                TokenResponseDto tokenResponseDto = new TokenResponseDto(
+                        app.getName(), null, null, null,
+                        applicationAccessToken.getSerializedToken(),
+                        Duration.between(Instant.now(), Instant.ofEpochSecond(applicationAccessToken.getExp())).toSeconds(),
+                        applicationRefreshToken.getSerializedToken(),Constants.BEARER_TOKEN
+                );
+                return ResponseEntity.ok(tokenResponseDto);
+            }).orElseGet(() -> ResponseEntity.notFound().build());
+        }).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     public ResponseEntity<TokenResponseDto> handlePCKEFlow(String grant , String codeVerifier, UUID clientId){
