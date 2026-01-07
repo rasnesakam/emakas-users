@@ -8,12 +8,14 @@ import com.emakas.userService.model.User;
 import com.emakas.userService.service.ResourcePermissionService;
 import com.emakas.userService.service.ResourceService;
 import com.emakas.userService.shared.SecurityContextManager;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -56,5 +58,23 @@ public class ResourcesController {
         Resource resource = resourceDtoMapper.toResource(resourceDto);
         Resource savedResource = resourceService.save(resource);
         return ResponseEntity.ok(Response.of(resourceDtoMapper.toResourceDto(savedResource)));
+    }
+
+    @DeleteMapping("delete")
+    @PreAuthorize("hasPermission(#RSC_RESOURCES, 'global:write')")
+    public ResponseEntity<Response<ResourceDto>> deleteResource(@RequestParam(name = "resource_id") UUID resourceId) {
+        return resourceService.getById(resourceId).map(resource -> {
+            resourceService.delete(resource);
+            return ResponseEntity.ok(Response.of(resourceDtoMapper.toResourceDto(resource), "Resource deleted successfully"));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.of("Resource not found")));
+    }
+
+    @PostMapping("generate-secret")
+    @PreAuthorize("hasPermission(#RSC_RESOURCES, 'global:write')")
+    public ResponseEntity<Response<String>> generateResourceSecret(@RequestParam(name = "resource_id") UUID resourceId) {
+        return resourceService.getById(resourceId).map(res -> {
+            String resourceSecret = resourceService.generateResourceSecretKey(res);
+            return ResponseEntity.ok(Response.of(resourceSecret, "Secret key generated"));
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.of("Application did not found")));
     }
 }

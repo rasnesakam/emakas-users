@@ -7,7 +7,7 @@ import {
     TableHeader,
     TableRow
 } from "@components/shadcn/ui/table.tsx";
-import {Dispatch, SetStateAction, useEffect, useState} from "react";
+import { useEffect, useState} from "react";
 import {Application} from "@models/Application.ts";
 import {useAuthContext} from "@contexts/AuthContext";
 import {generateClientSecretKey, getApplications} from "@services/applications";
@@ -19,8 +19,6 @@ import {
 } from "@components/shadcn/ui/dropdown-menu.tsx";
 import {Check, Copy, EllipsisVertical} from "lucide-react";
 import {Button} from "@components/shadcn/ui/button.tsx";
-import {copyToClipboard} from "@utils/utlis.ts";
-import {toast} from "sonner";
 import {
     Dialog, DialogClose,
     DialogContent,
@@ -31,6 +29,7 @@ import {
 } from "@components/shadcn/ui/dialog.tsx";
 import {ApplicationSliderForm} from "@components/SliderForms/Application";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@components/shadcn/ui/input-group.tsx";
+import {copyItemToClipboard} from "@utils/copyUtils";
 
 
 export function ApplicationPage() {
@@ -43,24 +42,7 @@ export function ApplicationPage() {
         getApplications(auth!).then(setApplications);
     }, [auth]);
 
-    function copyItemToClipboard(item: string, {title, description, dispatcher}:{title?: string, description?: string, dispatcher?: Dispatch<SetStateAction<boolean>>}) {
-        copyToClipboard(item)
-            .then(() => {
-                if (dispatcher){
-                    dispatcher(true);
-                    setTimeout(() => dispatcher(false), 5000);
-                }
-            })
-            .then(() => {
-                toast(title, {
-                    description: description,
-                    action: {
-                        label: "Ok",
-                        onClick: () => {}
-                    }
-                });
-            })
-    }
+
 
     function copyClientId(clientId: string) {
         copyItemToClipboard(clientId, {
@@ -79,10 +61,8 @@ export function ApplicationPage() {
 
     function generateClientSecret(clientId: string) {
         generateClientSecretKey(auth!, clientId).then(response => {
-            if (response.content){
-                setSecretKey(response.content);
-                setDialogOpen(true);
-            }
+            setSecretKey(response);
+            setDialogOpen(true);
         })
     }
 

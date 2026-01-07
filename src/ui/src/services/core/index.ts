@@ -24,7 +24,7 @@ export async function invokeRestRequest<O>({uri, method, body, queryParams, extr
     return await fetchResult.json() as unknown as O;
 }
 
-async function invokeRequest<O>(uri: string, method: "GET" | "POST" | "PUT" | "DELETE", queryParams: unknown | undefined = undefined, bodyParameters: unknown | undefined = undefined, jwtToken: string | undefined = undefined) {
+async function invokeRequest<O>(uri: string, method: "GET" | "POST" | "PUT" | "DELETE", queryParams?: unknown, bodyParameters?: unknown, jwtToken?: string ) {
     const invokeOptions: RestRequestType = {
         uri,
         method,
@@ -44,10 +44,14 @@ async function invokeRequest<O>(uri: string, method: "GET" | "POST" | "PUT" | "D
     return invokeRestRequest<O>(invokeOptions)
 }
 
-export async function invokeGetRequest<O>(uri: string, queryParams: unknown | undefined = undefined, jwtToken: string | undefined = undefined): Promise<O> {
+export async function invokeGetRequest<O>(uri: string, queryParams?: unknown, jwtToken?: string): Promise<O> {
     return invokeRequest<O>(uri, "GET", queryParams, undefined, jwtToken);
 }
 
-export async function invokePostRequest<O>(uri: string, queryParams: unknown | undefined = undefined, bodyParams: unknown | undefined = undefined, jwtToken: string | undefined = undefined): Promise<O> {
+export async function invokePostRequest<O>(uri: string, queryParams?: unknown, bodyParams?: unknown, jwtToken?: string ): Promise<O> {
     return invokeRequest<O>(uri, "POST", queryParams, bodyParams, jwtToken);
+}
+
+export async function invokeDeleteRequest<O>(uri: string, queryParams?: unknown, jwtToken?: string): Promise<O> {
+    return invokeRequest<O>(uri, "DELETE", queryParams, jwtToken)
 }

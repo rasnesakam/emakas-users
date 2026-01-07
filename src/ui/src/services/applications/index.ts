@@ -32,8 +32,13 @@ export async function getSelfApplicationInfo(): Promise<Application>{
     throw new Error(fetchResponse.statusText)
 }
 
-export async function generateClientSecretKey(auth: Authentication, clientId: string): Promise<ResponseWrapper<string>> {
-    return invokeGetRequest("/api/apps/generate-secret", {client_id: clientId}, auth.access_token);
+export async function generateClientSecretKey(auth: Authentication, clientId: string): Promise<string> {
+    return invokeGetRequest<ResponseWrapper<string>>("/api/apps/generate-secret", {client_id: clientId}, auth.access_token)
+        .then(response => {
+            if (response.content)
+                return response.content;
+            throw new Error(response.message);
+        });
 }
 
 export async function createNewApplication(auth: Authentication, app: Application) {

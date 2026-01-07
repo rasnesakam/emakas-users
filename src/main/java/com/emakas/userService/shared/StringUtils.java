@@ -3,9 +3,11 @@ package com.emakas.userService.shared;
 import org.jetbrains.annotations.NotNull;
 import java.security.SecureRandom;
 import java.text.Normalizer;
+import java.util.Base64;
 import java.util.regex.Pattern;
 
 public class StringUtils {
+    private static final int SECRET_LENGTH = 256;
     public static boolean isNullOrEmpty(String str) {
         return str == null || str.isEmpty();
     }
@@ -22,6 +24,14 @@ public class StringUtils {
             password.append(stringPool.charAt(secureRandom.nextInt(length)));
         }
         return password.toString();
+    }
+
+    public static String generateSecretKey() {
+        byte[] randomBytes = new byte[SECRET_LENGTH];
+        SecureRandom secureRandom = new SecureRandom();
+        secureRandom.nextBytes(randomBytes);
+        Base64.Encoder encoder = Base64.getEncoder();
+        return encoder.encodeToString(randomBytes);
     }
 
     public static String toAscii(String input) {

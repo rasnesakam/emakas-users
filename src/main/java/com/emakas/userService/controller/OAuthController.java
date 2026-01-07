@@ -42,7 +42,7 @@ public class OAuthController {
             summary = "Get details of token",
             security = @SecurityRequirement(name = "basicAuth")
     )
-    @PostMapping(value = "introspection", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "introspect", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<TokenIntrospectionDto> introspection(@ModelAttribute TokenIntrospectionRequestDto tokenIntrospectionRequestDto) {
         return tokenService.introspect(tokenIntrospectionRequestDto.getToken()).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }

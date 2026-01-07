@@ -1,5 +1,5 @@
 import {ExternalResourceInfo, Resource} from "@models/Resource.ts";
-import {invokeRestRequest, RestRequestType} from "@services/core";
+import {invokeDeleteRequest, invokePostRequest, invokeRestRequest, RestRequestType} from "@services/core";
 import {ResponseWrapper} from "@models/ResponseWrapper.ts";
 import {Authentication} from "@models/Auth.ts";
 
@@ -50,4 +50,20 @@ export function createResourceFromFormData(formData: FormData): Resource {
         uri: formData.get("uri")!.toString(),
         description: formData.get("description")!.toString()
     }
+}
+
+export async function generateResourceSecretKey(auth: Authentication, resourceId: string): Promise<string> {
+    const uri = "/api/resources/generate-secret"
+    return invokePostRequest<ResponseWrapper<string>>(
+        uri, {resource_id: resourceId}, undefined, auth.access_token
+    ).then(response => {
+        if (response.content)
+            return response.content;
+        throw new Error(response.message);
+    })
+}
+
+export async function removeResource(auth: Authentication, resourceId: string): Promise<ResponseWrapper<Resource>> {
+    const uri = "/api/resources/delete";
+    return invokeDeleteRequest(uri, {resource_id: resourceId}, auth.access_token);
 }
