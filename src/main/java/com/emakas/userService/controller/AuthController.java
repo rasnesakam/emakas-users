@@ -1,5 +1,11 @@
 package com.emakas.userService.controller;
 
+import java.net.URI;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -7,30 +13,43 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.emakas.userService.domain.auth.UserPrincipal;
 import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.LoginSessionDto;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.UserWriteDto;
 import com.emakas.userService.mappers.LoginSessionDtoMapper;
 import com.emakas.userService.mappers.UserDtoMapper;
+import com.emakas.userService.mappers.UserPrincipalMapper;
 import com.emakas.userService.model.*;
 import com.emakas.userService.service.*;
+import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.converters.StringToCodeChallengeMethodConverter;
 import com.emakas.userService.shared.enums.CodeChallengeMethod;
+import com.emakas.userService.shared.enums.TokenType;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.web.util.UriComponentsBuilder;
@@ -41,30 +60,28 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
-    private final PasswordEncoder passwordEncoder;
     private final UserLoginService userLoginService;
     private final ResourcePermissionService resourcePermissionService;
-    private final UserDtoMapper userDtoMapper;
     private final ApplicationService applicationService;
     private final LoginSessionService loginSessionService;
-    private final LoginSessionDtoMapper loginSessionDtoMapper;
     private final Logger logger = LoggerFactory.getLogger(AuthController.class);
-    private final LoginModel loginModel;
     private final StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter;
+    private final TokenService tokenService;
+    private final String appDomainName;
+    private final UserPrincipalMapper userPrincipalMapper;
 
     @Autowired
-    public AuthController(UserService service, AuthenticationManager authenticationManager, TokenManager tokenManager, PasswordEncoder passwordEncoder, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, UserDtoMapper userDtoMapper, ApplicationService applicationService, LoginSessionService loginSessionService, LoginSessionDtoMapper loginSessionDtoMapper, LoginSessionDtoMapper loginSessionDtoMapper1, LoginModel loginModel, StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter) {
-        this.userService = service;
+    public AuthController(UserService userService, AuthenticationManager authenticationManager, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, ApplicationService applicationService, LoginSessionService loginSessionService, StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter, TokenService tokenService, @Value("${app.domain}") String appDomainName, UserPrincipalMapper userPrincipalMapper) {
+        this.userService = userService;
         this.authenticationManager = authenticationManager;
-        this.passwordEncoder = passwordEncoder;
         this.userLoginService = userLoginService;
         this.resourcePermissionService = resourcePermissionService;
-        this.userDtoMapper = userDtoMapper;
         this.applicationService = applicationService;
         this.loginSessionService = loginSessionService;
-        this.loginSessionDtoMapper = loginSessionDtoMapper1;
-        this.loginModel = loginModel;
         this.stringToCodeChallengeMethodConverter = stringToCodeChallengeMethodConverter;
+        this.tokenService = tokenService;
+        this.appDomainName = appDomainName;
+        this.userPrincipalMapper = userPrincipalMapper;
     }
 
 
@@ -92,7 +109,7 @@ public class AuthController {
      * @param grantedScopes The client may request some permissions. But client can approve some, none or all of them.
      * @param state State is a optional parameter that confirms the OAuth flow did not intercept by any other parties. According to RFC of OAuth2.0
      * @return For Successful process, method returns redirect response to the client callback uri
-     * @see AuthController#signIn(LoginModel, UUID, String[], String, String) 
+     *
      */
     @GetMapping("/authorize")
     public ResponseEntity<?> authorize(
@@ -108,7 +125,7 @@ public class AuthController {
                 client -> loginSessionService.getById(sessionId).map(loginSession -> {
                     if (Instant.now().isAfter(Instant.ofEpochSecond(loginSession.getExpireDate())))
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Session Expired");
-                    User user = loginSession.getIntendedUser();
+                    //User user = loginSession.getIntendedUser();
                     Set<String> scopeSet = Set.of(grantedScopes);
                     //TODO: Compare requested scopes and authorizedScopes
                     UserLogin userLogin = new UserLogin(loginSession);
@@ -136,54 +153,52 @@ public class AuthController {
     /**
      * <h1>Sign-In</h1>
      * <p>
-     *     Checks user credentials and permissions for user
+     *     Checks user credentials for user
      * </p>
      * <p>
-     *     After filling login form, this endpoint is going to be invoke.<br/>
-     *     This endpoint validates client and user credentials. After validation, requested permissions and audiences will be saved for authorizing login.<br/>
-     *     For successful case, this enpoint returns {@link LoginSessionDto} that contains sessionId
+     *     Login page posts a request to this endpoint to validate user.<br/>
+     *     If validation successfull, this endpoint will redirect user to /oauth2/authorize after creation of session for logged in user<br/>
      * </p>
-     * <p>
-     *     After signing-in, The method {@link AuthController#authorize(UUID, UUID, String, String[], String, String, String)} should invoke with received session id.
-     * </p>
-     * @param loginModel User credential informations that passed into body as form data
-     * @param clientId Id that represents third party app client
-     * @param scopes Indicates the permissions that user has capable of
-     * @param state State is a optional parameter that confirms the OAuth flow did not intercept by any other parties. According to RFC of OAuth2.0
+     * @param username:  username value of user attended to log in
+     * @param password:  password value of user attended to log in
+     * @param continueUri:  URI that will be redirected after operation
      * @return {@link LoginSessionDto} that contains sessionId
      */
     @PostMapping("/sign-in")
     @ResponseBody
-    public ResponseEntity<Response<LoginSessionDto>> signIn(@RequestBody LoginModel loginModel, @RequestParam(name = "client_id") UUID clientId, @RequestParam(required = false) String[] scopes, @RequestParam(name = "state", required = false) String state, @RequestParam(name = "code_challenge", required = false) String codeChallenge){
-        return applicationService.getById(clientId).map(client -> {
-            UserDetails userDetails = userService.loadUserByUsername(loginModel.getUsername());
-            try{
-                Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginModel.getUsername(), loginModel.getPassword()));
-                if (!authentication.isAuthenticated())
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.<LoginSessionDto>of("Invalid credentials"));
-                return userService.getByUserName(userDetails.getUsername()).map(user -> {
-                    Set<String> audienceSet = Set.of(client.getUri());
-                    Set<String> scopeSet = getDefinedOrDefaultScopesForApp(scopes, user);
-                    LoginSession loginSession = new LoginSession(user, client, scopeSet, audienceSet);
-                    try {
-                        LoginSession savedSession = loginSessionService.save(loginSession);
-                        LoginSessionDto savedSessionResponse = loginSessionDtoMapper.toLoginSessionDto(savedSession);
-                        savedSessionResponse.setCodeChallenge(codeChallenge);
-                        savedSessionResponse.setState(state);
-                        return ResponseEntity.status(HttpStatus.OK).body(Response.of(savedSessionResponse));
-                    }catch (Exception e) {
-                        logger.error(e.getLocalizedMessage());
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response.<LoginSessionDto>of("Internal Error."));
-                    }
-                }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.of("User not found")));
-            }
-            catch (UsernameNotFoundException | BadCredentialsException exception){
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Response.<LoginSessionDto>of(null,"Invalid credentials"));
-            }
-            catch (DisabledException exception){
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Response.<LoginSessionDto>of(null,"User is suspended"));
-            }
-        }).orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Response.of("Invalid client")));
+    public ResponseEntity<?> signIn(
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestParam("continue_uri") String continueUri,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ){
+        URI redirectUri;
+        try{
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+            if (!authentication.isAuthenticated())
+                throw new BadCredentialsException("");
+            redirectUri = UriComponentsBuilder.fromUriString(URLDecoder.decode(continueUri, Charset.defaultCharset())).build().toUri();
+            User user = userService.getByUserName(username).get();
+            UserPrincipal userPrincipal = userPrincipalMapper.fromUser(user);
+            String token = tokenService.createSignInToken(userPrincipal, request);
+            ResponseCookie responseCookie = ResponseCookie.from(Constants.AUTH_COOKIE_PARAMETER, token)
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/")
+                    .maxAge(Duration.ofMinutes(10))
+                    .sameSite("Lax")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        }
+        catch (UsernameNotFoundException | BadCredentialsException | DisabledException exception){
+            redirectUri = UriComponentsBuilder.fromUriString("/page/auth/login")
+                    .queryParam("error", exception.getMessage())
+                    .queryParam("continue", continueUri)
+                    .build()
+                    .toUri();
+        }
+        return ResponseEntity.status(HttpStatus.FOUND).header("Location", redirectUri.toString()).build();
     }
 
     private Set<String> getDefinedOrDefaultScopesForApp(String[] scopes, User user){

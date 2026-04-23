@@ -90,7 +90,7 @@ export function ResourcesPage() {
             title: "Attention!",
             description: "This action cannot be undone. Are you sure to want to proceed?",
         }).then(() => {
-
+            removeResource(resourceId)
         })
     }
 

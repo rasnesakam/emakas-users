@@ -1,5 +1,7 @@
 package com.emakas.userService.service;
 
+import com.auth0.jwt.interfaces.Claim;
+import com.emakas.userService.domain.auth.UserPrincipal;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TokenIntrospectionDto;
 import com.emakas.userService.dto.TokenResponseDto;
@@ -8,35 +10,40 @@ import com.emakas.userService.model.Application;
 import com.emakas.userService.model.Token;
 import com.emakas.userService.model.User;
 import com.emakas.userService.repository.UserTokenRepository;
+import com.emakas.userService.shared.RequestUtils;
 import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.TokenTargetType;
 import com.emakas.userService.shared.enums.TokenVerificationStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 @Service
 public class TokenService{
     private final UserTokenRepository userTokenRepository;
     private final TokenManager tokenManager;
-    private final UserService userService;
     private final TokenIntrospectionMapper tokenIntrospectionMapper;
     private final Logger logger = LoggerFactory.getLogger(TokenService.class);
+    private final String appDomainName;
 
 
     @Autowired
-    public TokenService(UserTokenRepository repository, TokenManager tokenManager, UserService userService, TokenIntrospectionMapper tokenIntrospectionMapper) {
+    public TokenService(UserTokenRepository repository, TokenManager tokenManager, TokenIntrospectionMapper tokenIntrospectionMapper, @Value("${app.domain}") String appDomainName) {
         this.userTokenRepository = repository;
         this.tokenManager = tokenManager;
-        this.userService = userService;
         this.tokenIntrospectionMapper = tokenIntrospectionMapper;
+        this.appDomainName = appDomainName;
     }
 
     @CachePut(value = "tokens", key = "#result.jti")
@@ -96,6 +103,34 @@ public class TokenService{
     }
     public Token createApplicationRefreshToken(Application application) {
         return tokenManager.createApplicationRefreshToken(application, application.getId(), new String[]{application.getUri()});
+    }
+
+    public String createSignInToken(UserPrincipal userPrincipal, HttpServletRequest request) {
+        Map<String, String> customClaims = new TreeMap<>();
+        customClaims.put("email", userPrincipal.getUsername());
+        customClaims.put("user_name", userPrincipal.getUsername());
+        customClaims.put("session_fingerprint", RequestUtils.getRequestFingerPrint(request));
+        return tokenManager.generateCustomJwtToken(userPrincipal.getUserId().toString(), new String[]{appDomainName}, new String[]{"sign-in"}, Duration.ofMinutes(10).getSeconds(), customClaims);
+    }
+
+    public Optional<String> getSessionFingerprintFromToken(String token) {
+        return tokenManager.getTokenClaim(token, "session_fingerprint", String.class);
+    }
+
+    public Optional<String> getSubjectFromToken(String token) {
+        return tokenManager.getTokenClaim(token, "sub", String.class);
+    }
+
+    public Optional<String> getUsernameFromToken(String token) {
+        return tokenManager.getTokenClaim(token, "sub", String.class);
+    }
+
+    public Optional<String> getEmailFromToken(String token) {
+        return tokenManager.getTokenClaim(token, "sub", String.class);
+    }
+
+    public TokenVerificationStatus verifyToken(String token) {
+        return tokenManager.verifyJwtToken(token);
     }
 
     public Optional<Token> getFromSerializedToken(String token){

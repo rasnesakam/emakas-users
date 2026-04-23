@@ -24,3 +24,10 @@ export function copyToClipboard(text: string): Promise<void>{
         return Promise.resolve();
     }
 }
+
+export function getCookie(name: string) {
+  return document.cookie
+    .split("; ")
+    .find(row => row.startsWith(name + "="))
+    ?.split("=")[1];
+}

@@ -1,6 +1,7 @@
 package com.emakas.userService.shared;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.*;
@@ -14,11 +15,17 @@ import com.emakas.userService.shared.enums.AccessModifier;
 import com.emakas.userService.shared.enums.TokenTargetType;
 import com.emakas.userService.shared.enums.TokenType;
 import com.emakas.userService.shared.enums.TokenVerificationStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 import java.io.Serializable;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.RSAPrivateKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -37,6 +44,7 @@ public class TokenManager implements Serializable {
     private final Algorithm ALGORITHM;
     private final String appDomainName;
     private final UserService userService;
+    private final RsaKeyFactory rsaKeyFactory;
 
 
     public TokenManager(
@@ -45,16 +53,21 @@ public class TokenManager implements Serializable {
             @Value("${java-jwt.expiration}") long secondsToExpire,
             @Value("${java-jwt.refresh_expiration}") int daysToExpire,
             @Value("${app.domain}") String appDomainName,
-            UserService userService) {
+            RsaKeyFactory rsaKeyFactory,
+            UserService userService) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         this.issuer = issuer;
         this.secondsToExpire = secondsToExpire;
         this.daysToExpire = daysToExpire;
-        ALGORITHM = Algorithm.HMAC256(jwtSecret);
+        this.rsaKeyFactory = rsaKeyFactory;
         this.appDomainName = appDomainName;
         this.userService = userService;
+
+        RSAPrivateKey privateKey = rsaKeyFactory.getPrivateKey();
+        RSAPublicKey publicKey = rsaKeyFactory.getPublicKey();
+        this.ALGORITHM = Algorithm.RSA256(publicKey,privateKey);
     }
 
-    private Token createToken(UUID subjectId, TokenTargetType tokenTargetType, long expireDateSecond, @Nullable String[] audience, @Nullable String[] scopes, TokenType tokenType, UUID clientId) {
+    private Token createToken(UUID subjectId, TokenTargetType tokenTargetType, long expireDateSecond, String[] audience, String[] scopes, TokenType tokenType, UUID clientId) {
         Token token = new Token();
         token.setIss(issuer);
         if (audience != null && audience.length > 0)
@@ -89,7 +102,7 @@ public class TokenManager implements Serializable {
         return userService.getById(userId);
     }
 
-    public Token createUserAccessToken(User user, @Nullable String[] audiences, @Nullable String[] scopes, UUID clientId){
+    public Token createUserAccessToken(User user, String[] audiences, String[] scopes, UUID clientId){
 
         return createToken(user.getId(), TokenTargetType.USR, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes, TokenType.ACCESS_TOKEN, clientId);
     }
@@ -107,7 +120,7 @@ public class TokenManager implements Serializable {
         );
     }
 
-    public Token createApplicationAccessToken(Application application, @Nullable String[] audiences, @Nullable String[] scopes, UUID clientId){
+    public Token createApplicationAccessToken(Application application, String[] audiences, String[] scopes, UUID clientId){
         return createToken(application.getId(), TokenTargetType.APP, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes, TokenType.ACCESS_TOKEN, clientId);
     }
 
@@ -139,7 +152,24 @@ public class TokenManager implements Serializable {
                 .sign(ALGORITHM);
     }
 
-    public Optional<Token> getFromToken(@NotNull String token){
+    public String generateCustomJwtToken(String subject, String[] audiences, String[] scopes, long expiresAt, Map<String, String> additionalClaims) {
+        JWTCreator.Builder jwtBuilder = JWT.create()
+                .withIssuer(issuer)
+                .withSubject(subject)
+                .withExpiresAt(Instant.ofEpochSecond(expiresAt))
+                .withIssuedAt(Instant.now())
+                .withJWTId(UUID.randomUUID().toString());
+        if (audiences != null && audiences.length > 0)
+            jwtBuilder.withAudience(audiences);
+        if (scopes != null && scopes.length > 0)
+            jwtBuilder.withClaim("scope", Arrays.stream(scopes).toList());
+        if (additionalClaims != null && !additionalClaims.isEmpty()) {
+            additionalClaims.forEach(jwtBuilder::withClaim);
+        }
+        return jwtBuilder.sign(ALGORITHM);
+    }
+
+    public Optional<Token> getFromToken(String token){
         try {
             DecodedJWT decodedJWT = JWT.decode(token);
             String sub = decodedJWT.getSubject();
@@ -162,7 +192,7 @@ public class TokenManager implements Serializable {
             return Optional.empty();
         }
     }
-    public Map<String, Claim> getTokenClaims(@NotNull String token) {
+    public Map<String, Claim> getTokenClaims(String token) {
         try{
             DecodedJWT decodedJWT = JWT.decode(token);
             return decodedJWT.getClaims();
@@ -172,13 +202,20 @@ public class TokenManager implements Serializable {
         }
     }
 
+    public <T> Optional<T> getTokenClaim(String token, String claim, Class<T> clazz) {
+        Map<String, Claim> claims = getTokenClaims(token);
+        if (claims.containsKey(claim))
+            return Optional.of(claims.get(claim).as(clazz));
+        return Optional.empty();
+    }
+
     /**
      * <h3>Verifies json that given in request</h3>
      * <p>Verifies token signature end expiration date</p>
      * @param jwtToken The token that should be verified
      * @return The status that indicates result of verification
      */
-    public TokenVerificationStatus verifyJwtToken(String jwtToken, @Nullable String... audiences){
+    public TokenVerificationStatus verifyJwtToken(String jwtToken, String... audiences){
         try{
             JWTVerifier verifier = JWT.require(ALGORITHM)
                     .withIssuer(issuer)
@@ -200,7 +237,7 @@ public class TokenManager implements Serializable {
         }
     }
 
-    public Optional<String> getCleanSubject(@NotNull TokenTargetType tokenTargetType, String tokenSubject) {
+    public Optional<String> getCleanSubject(TokenTargetType tokenTargetType, String tokenSubject) {
         Pattern tokenPattern = Pattern.compile(String.format("^%s%s(.*)$", tokenTargetType, SEPARATOR));
         Matcher matcher = tokenPattern.matcher(tokenSubject);
         if (matcher.matches()) {
@@ -212,7 +249,7 @@ public class TokenManager implements Serializable {
     public Token generateUserToken(User user, String... audiences) {
         Token token = new Token();
         token.setIss(issuer);
-        token.setSub(user.getId().toString());
+        token.setSub(user.getUserName());
         if (audiences != null)
             token.setAud(Set.of(audiences));
         token.setExp(Instant.now().plusSeconds(secondsToExpire).getEpochSecond());

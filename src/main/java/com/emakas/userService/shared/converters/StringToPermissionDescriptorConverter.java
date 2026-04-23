@@ -1,7 +1,6 @@
 package com.emakas.userService.shared.converters;
 
 import com.emakas.userService.shared.data.PermissionDescriptor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,7 @@ public class StringToPermissionDescriptorConverter implements Converter<String, 
     }
 
     @Override
-    public PermissionDescriptor convert(@NotNull String source) {
+    public PermissionDescriptor convert(String source) {
         PermissionDescriptor permissionDescriptor = new PermissionDescriptor();
         Pattern scopeAndModifierPattern = Pattern.compile("^(.*):(.*)$");
         Matcher patternMatcher = scopeAndModifierPattern.matcher(source);

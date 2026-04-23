@@ -1,5 +1,5 @@
 plugins {
-	id 'org.springframework.boot' version '3.2.1'
+	id 'org.springframework.boot' version '3.3.4'
 	id 'io.spring.dependency-management' version '1.1.4'
 	id 'org.asciidoctor.jvm.convert' version '3.3.2'
 	id 'java'
@@ -10,14 +10,15 @@ group = 'com.emakas'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	sourceCompatibility = "17"
-	targetCompatibility = "17"
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
 }
 
 node {
-	version = '20.12.1'
-	npmVersion = '10.5.0'
-	download = true
+	version = '20.20.1'
+	npmVersion = '10.8.2'
+	download = false
 }
 
 repositories {
@@ -29,59 +30,54 @@ ext {
 }
 
 configurations {
-
 	developmentOnly
 	runtimeClasspath {
 		extendsFrom developmentOnly
 	}
 }
 
-
 dependencies {
-	// Spring Boot Web Framework
-	implementation 'org.springframework.boot:spring-boot-starter-websocket:3.3.3'
-	// Spring Data JPA
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.1.2'
-	// Spring Security
-	implementation 'org.springframework.boot:spring-boot-starter-security:3.3.4'
-	// Spring dev-tools
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	// Jwt implementation
-	implementation 'com.auth0:java-jwt:4.3.0'
-	// Cache Management
+	// Spring Boot starters (versions managed by Spring Boot)
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
-	// Caffeine In Memory Cache
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+	// Devtools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// JWT
+	implementation 'com.auth0:java-jwt:4.4.0'
+
+	// Cache
 	implementation 'com.github.ben-manes.caffeine:caffeine'
+
 	// Kafka
 	implementation 'org.springframework.kafka:spring-kafka'
-	// Lombok
-	compileOnly 'org.projectlombok:lombok:1.18.28'
-	annotationProcessor 'org.projectlombok:lombok:1.18.28'
-	// Postgresql
-	implementation 'org.postgresql:postgresql:42.7.2'
-	// Swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-	// JBoss Logging
-	implementation 'org.jboss.logging:jboss-logging:3.5.3.Final'
-	//MapStruct
+
+	// Database
+	runtimeOnly 'org.postgresql:postgresql'
+
+	// Swagger / OpenAPI
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+	// Lombok (Java 21 uyumlu)
+	compileOnly 'org.projectlombok:lombok:1.18.32'
+	annotationProcessor 'org.projectlombok:lombok:1.18.32'
+
+	// MapStruct
 	implementation 'org.mapstruct:mapstruct:1.6.3'
 	annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
-	// View renderer
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.1.2'
-	//devtools
-	implementation 'org.springframework.boot:spring-boot-devtools:3.3.4'
-	// Annotations
-	implementation 'javax.annotation:javax.annotation-api:1.3.2'
-	implementation 'com.google.code.findbugs:jsr305:3.0.2'
-	implementation 'org.jetbrains:annotations:26.0.1'
+
+	// Annotations (Jakarta)
+	implementation 'jakarta.annotation:jakarta.annotation-api'
 
 	// Testing
-	testImplementation 'org.springframework.boot:spring-boot-starter-test:3.3.3'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
-	// Kafka Test
-	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testImplementation 'org.testcontainers:kafka'
-
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
 }
 
 tasks.named('test') {
@@ -93,6 +89,7 @@ tasks.named('asciidoctor') {
 	dependsOn test
 }
 
+// UI build tasks
 task uiInstall(type: NpmTask){
 	args = ['install']
 	workingDir = file('src/ui')

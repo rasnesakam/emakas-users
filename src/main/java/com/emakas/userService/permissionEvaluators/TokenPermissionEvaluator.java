@@ -9,7 +9,6 @@ import com.emakas.userService.shared.converters.StringToPermissionDescriptorConv
 import com.emakas.userService.shared.converters.StringToResourcePermissionConverter;
 import com.emakas.userService.shared.data.PermissionDescriptor;
 import com.emakas.userService.shared.enums.AccessModifier;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
@@ -58,7 +57,7 @@ public class TokenPermissionEvaluator implements PermissionEvaluator {
         return false;
     }
 
-    private Stream<ResourcePermission> getResourcePermissionsFromToken(@NotNull Token token, Object targetDomainObject) {
+    private Stream<ResourcePermission> getResourcePermissionsFromToken(Token token, Object targetDomainObject) {
         return token.getScope().stream()
                 .map(stringToResourcePermissionConverter::convert)
                 .filter(Objects::nonNull).filter(Optional::isPresent)

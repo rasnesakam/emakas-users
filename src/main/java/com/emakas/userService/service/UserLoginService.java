@@ -27,6 +27,6 @@ public class UserLoginService extends CoreService<UserLogin, UUID> {
         Instant currentInstant = Instant.now();
         if (exprirationInstant.isBefore(currentInstant))
             return Optional.empty();
-        return Optional.of(userLogin.get());
+        return userLogin;
     }
 }

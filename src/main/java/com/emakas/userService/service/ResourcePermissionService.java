@@ -8,7 +8,6 @@ import com.emakas.userService.shared.data.PermissionDescriptor;
 import com.emakas.userService.shared.enums.AccessModifier;
 import com.emakas.userService.shared.enums.PermissionScope;
 import com.emakas.userService.shared.enums.PermissionTargetType;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,7 +36,7 @@ public class ResourcePermissionService extends CoreService<ResourcePermission, U
     }
 
 
-    public Optional<ResourcePermission> registerResourcePermission(@NotNull ResourcePermission resourcePermission){
+    public Optional<ResourcePermission> registerResourcePermission(ResourcePermission resourcePermission){
         try {
             resourcePermission.setResource(resourceService.getById(resourcePermission.getResource().getId()).orElseThrow(() -> new NoSuchElementException("No such resource found")));
             switch (resourcePermission.getPermissionTargetType()){

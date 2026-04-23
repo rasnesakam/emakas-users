@@ -5,50 +5,49 @@ import com.emakas.userService.dto.TokenIntrospectionDto;
 import com.emakas.userService.dto.TokenIntrospectionRequestDto;
 import com.emakas.userService.dto.TokenResponseDto;
 import com.emakas.userService.permissionEvaluators.TokenPermissionEvaluator;
-import com.emakas.userService.service.*;
+import com.emakas.userService.service.OauthFlowManager;
+import com.emakas.userService.service.TokenService;
 import com.emakas.userService.shared.enums.GrantType;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.StringToClassMapItem;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.UUID;
 
 @RestController
-@RequestMapping(path = "/api/oauth")
-public class OAuthController {
+@RequestMapping(path = "/api/token")
+public class TokenController {
 
-    private final TokenPermissionEvaluator tokenPermissionEvaluator;
-    private final OauthFlowManager oauthFlowManager;
+
     private final TokenService tokenService;
+    private final OauthFlowManager oauthFlowManager;
+    private final TokenPermissionEvaluator tokenPermissionEvaluator;
 
-    @Autowired
-    public OAuthController(TokenPermissionEvaluator tokenPermissionEvaluator, OauthFlowManager oauthFlowManager, TokenService tokenService) {
-        this.tokenPermissionEvaluator = tokenPermissionEvaluator;
-        this.oauthFlowManager = oauthFlowManager;
+    public TokenController(TokenService tokenService, OauthFlowManager oauthFlowManager, TokenPermissionEvaluator tokenPermissionEvaluator) {
         this.tokenService = tokenService;
+        this.oauthFlowManager = oauthFlowManager;
+        this.tokenPermissionEvaluator = tokenPermissionEvaluator;
     }
 
     @Operation(
             summary = "Get details of token",
             security = @SecurityRequirement(name = "basicAuth")
     )
-    @PostMapping(value = "introspect", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/introspect", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<TokenIntrospectionDto> introspection(@ModelAttribute TokenIntrospectionRequestDto tokenIntrospectionRequestDto) {
         return tokenService.introspect(tokenIntrospectionRequestDto.getToken()).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     //TODO: Use PreAuthorize annotation
-    @GetMapping("token/verify")
+    @GetMapping("/verify")
     public ResponseEntity<?> authorizeToken(@RequestParam(required = false) String targetResource, @RequestParam(required = false) String requestedPermission){
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = securityContext.getAuthentication();
@@ -72,7 +71,7 @@ public class OAuthController {
     }
 
 
-    @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<TokenResponseDto> getToken(
             @RequestParam("grant_type") String grantType,
             @RequestParam(name = "code", required = false) String code,
@@ -90,4 +89,5 @@ public class OAuthController {
             default -> ResponseEntity.badRequest().build();
         };
     }
+
 }

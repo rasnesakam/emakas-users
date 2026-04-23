@@ -1,6 +1,5 @@
 package com.emakas.userService.shared;
 
-import org.jetbrains.annotations.NotNull;
 import java.security.SecureRandom;
 import java.text.Normalizer;
 import java.util.Base64;
@@ -41,7 +40,7 @@ public class StringUtils {
         return stripped.replaceAll("[^\\p{ASCII}]", ""); // kalan non-ASCII'leri de sil
     }
 
-    public static String normalizeString(@NotNull String str) {
+    public static String normalizeString(String str) {
         String asciiConverted = toAscii(str.toUpperCase());
         return asciiConverted.toLowerCase().replaceAll("\\s+", "_");
     }

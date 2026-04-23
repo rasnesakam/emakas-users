@@ -4,7 +4,6 @@ import com.emakas.userService.domain.auth.ClientCredential;
 import com.emakas.userService.domain.auth.ClientPrincipal;
 import com.emakas.userService.mappers.ClientCredentialMapper;
 import com.emakas.userService.mappers.ClientPrincipalMapper;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,11 +26,11 @@ public class ClientCredentialsService {
         this.clientPrincipalMapper = clientPrincipalMapper;
     }
 
-    public Optional<ClientPrincipal> validateClient(@NotNull UUID clientId, @NotNull String clientSecret) {
+    public Optional<ClientPrincipal> validateClient(UUID clientId, String clientSecret) {
         return this.getClientCredentials(clientId).flatMap(credentials -> validateClientCredentials(credentials, clientSecret));
     }
 
-    public Optional<ClientPrincipal> validateClientCredentials(@NotNull ClientCredential clientCredential, @NotNull String clientSecret) {
+    public Optional<ClientPrincipal> validateClientCredentials(ClientCredential clientCredential, String clientSecret) {
         if (passwordEncoder.matches(clientSecret, clientCredential.getClientSecret())) {
             return Optional.of(clientPrincipalMapper.fromClientCredential(clientCredential));
         }

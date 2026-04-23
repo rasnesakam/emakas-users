@@ -1,6 +1,7 @@
 package com.emakas.userService.controller;
 
 import com.emakas.userService.auth.JwtAuthentication;
+import com.emakas.userService.domain.auth.UserPrincipal;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.TeamReadDto;
 import com.emakas.userService.dto.TeamWriteDto;
@@ -86,8 +87,8 @@ public class TeamsController {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = securityContext.getAuthentication();
         if (authentication instanceof JwtAuthentication jwtAuthentication) {
-            String userPrincipal = (String) jwtAuthentication.getPrincipal();
-            UUID userId = UUID.fromString(userPrincipal);
+            UserPrincipal userPrincipal = (UserPrincipal) jwtAuthentication.getPrincipal();
+            UUID userId = userPrincipal.getUserId();
             if (jwtAuthentication.getUserToken().getTokenTargetType() != TokenTargetType.USR)
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             Collection<Team> teams = teamService.getTeamsByOwner(userId);

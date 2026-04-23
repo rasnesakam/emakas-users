@@ -1,7 +1,7 @@
-import {FormEvent, useEffect, useState} from "react";
+import {/*FormEvent,*/ useEffect, useState} from "react";
 import {useSearchParams} from "react-router";
-import {LoginCredentials} from "@models/Auth.ts";
-import {authorize, login} from "@services/auth";
+// import {LoginCredentials} from "@models/Auth.ts";
+// import {authorize, login} from "@services/auth";
 import {LoadingComponent} from "@components/LoadingComponent";
 import {getSelfApplicationOAuthRequest, initializeOAuthRequest} from "@utils/oauth";
 import {OAuthRequest} from "@models/OAuth.ts";
@@ -11,44 +11,15 @@ import {Input} from "@components/shadcn/ui/input.tsx";
 import {Button} from "@components/shadcn/ui/button.tsx";
 import {InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput} from "@components/shadcn/ui/input-group.tsx";
 import {Eye, EyeOff} from "lucide-react";
+import {getCookie} from "@utils/utlis"
 
 export function LoginPage(){
     const loginMessage: string = "Hesabınıza erişmek için oturum açın.";
     const [urlSearch] = useSearchParams();
-    const [oAuthRequest, setOAuthRequest] = useState<OAuthRequest | undefined>(undefined);
-    const [appInfo, setAppInfo] = useState<Application | undefined>(undefined);
+    const [/*oAuthRequest*/, setOAuthRequest] = useState<OAuthRequest | undefined>(undefined);
+    const [/*appInfo*/, setAppInfo] = useState<Application | undefined>(undefined);
     const [shouldPasswordVisible, setShouldPasswordVisible] = useState<boolean>(false);
-    const [loadingState, setLoadingState] = useState<boolean>(false);
-
-    const onFormSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        console.log("OAuth.ts Request: ", oAuthRequest);
-        console.log("External App Info: ", appInfo);
-        setLoadingState(true);
-
-        const formData = new FormData(e.target as HTMLFormElement);
-        const loginInput: LoginCredentials = {
-            username: formData.get("username")!.toString(),
-            password: formData.get("password")!.toString(),
-        }
-        if (appInfo) {
-            loginInput.app_redirect = appInfo.redirect_uri;
-            loginInput.app_audiences = [appInfo.uri];
-            loginInput.app_scopes = appInfo.scopes;
-        }
-        login(loginInput, appInfo!.client_id, oAuthRequest?.state ?? "", oAuthRequest?.code_challenge ?? "")
-            .then(authorize)
-            .catch(err => {
-                console.error(err)
-            })
-            .finally(() => {
-
-                setLoadingState(false);
-            })
-
-
-    }
-
+    const [loadingState, /*setLoadingState*/] = useState<boolean>(false);
 
     useEffect(() => {
         try {
@@ -87,9 +58,14 @@ export function LoginPage(){
                 <div className="flex flex-col justify-start items-start">
                     <h1 className="text-3xl mb-4">Oturum Açın</h1>
                     <p>{loginMessage}</p>
+                    {
+                        urlSearch.has("error") && <p className="text-red-500 mt-2">{urlSearch.get("error") ?? "Unknown Error."}</p>
+                    }
                 </div>
                 <div>
-                    <form onSubmit={onFormSubmit} className="flex flex-col space-between">
+                    <form method="POST" action="/api/auth/sign-in" className="flex flex-col space-between">
+                        <input type="hidden" name="_csrf" value={getCookie("XSRF-TOKEN")}/>
+                        <input type="hidden" name="continue_uri" value={urlSearch.get("continue") ?? ""}/>
                         <div className="w-full my-2 border-b text-black">
                             <Input type={"text"} name={"username"} placeholder={"Kullanıcı Adı"}/>
                         </div>

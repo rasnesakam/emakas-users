@@ -20,6 +20,9 @@ public class LoginSessionDto {
     @JsonProperty("session_id")
     private UUID sessionId;
 
+    @JsonProperty("response_type")
+    private String responseType;
+
     @JsonProperty("redirect_uri")
     private String redirectUri;
 
@@ -28,6 +31,9 @@ public class LoginSessionDto {
 
     @JsonProperty("code_challenge")
     private String codeChallenge;
+
+    @JsonProperty("code_challenge_method")
+    private String codeChallengeMethod;
 
     private String state;
 

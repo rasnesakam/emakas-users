@@ -15,14 +15,14 @@ public final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
-        this.xorHandler.handle(request, response, csrfToken);
+        //this.xorHandler.handle(request, response, csrfToken); // For BREACH Protection. Because of we use SPA Application, we don't need to create masked CSRF token
         csrfToken.get();
     }
 
     @Override
     public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
         String headerValue = request.getHeader(csrfToken.getHeaderName());
-        CsrfTokenRequestHandler handler = headerValue != null && !headerValue.isEmpty() ? this.plainHandler : this.xorHandler;
-        return handler.resolveCsrfTokenValue(request, csrfToken);
+        //CsrfTokenRequestHandler handler = headerValue != null && !headerValue.isEmpty() ? this.plainHandler : this.xorHandler; // For BREACH Protection. Because of we use SPA Application, we don't need to create masked CSRF token
+        return plainHandler.resolveCsrfTokenValue(request, csrfToken);
     }
 }

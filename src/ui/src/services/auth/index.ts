@@ -124,7 +124,7 @@ export async function getToken(grantType: GrantType, {clientId, redirectUri, cod
         body: params.toString()
     }
 
-    const fetchResponse = await fetch(`/api/oauth/token`, fetchOptions);
+    const fetchResponse = await fetch(`/api/token/`, fetchOptions);
 
     if (fetchResponse.ok){
         return await fetchResponse.json();
@@ -139,25 +139,17 @@ export async function validateToken(token: string): Promise<boolean> {
             "Authorization": `Bearer ${token}`
         }
     }
-    return fetch(`/api/oauth/token/verify`, fetchOptions).then(response => response.ok)
+    return fetch(`/api/token/verify`, fetchOptions).then(response => response.ok).catch(err => {
+        console.error(err);
+        return false;
+    })
 }
 
 export async function tryRefreshToken(refreshToken: string): Promise<Authentication | undefined> {
-    const fetchOptions: RequestInit = {
-        method: "GET",
-        headers: {
-            "Authorization": `Bearer ${refreshToken}`
-        }
-    }
-    return fetch(`/api/oauth/token/refresh`, fetchOptions).then(response => {
-        if (response.ok)
-            return response.json()
-        throw new Error(response.statusText)
-    }).then(data => data as Authentication)
-        .catch(err => {
-            console.error(err);
-            return undefined;
-        })
+   return getToken(GrantType.REFRESH_TOKEN, {refreshToken}).catch(err => {
+       console.error(err);
+       return undefined;
+   })
 }
 
 const AUTH_KEY = "auth";
