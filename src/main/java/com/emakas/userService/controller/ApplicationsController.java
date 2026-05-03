@@ -32,20 +32,21 @@ public class ApplicationsController {
     private final ApplicationDtoMapper applicationDtoMapper;
     private final String appDomainName;
     private final TokenManager tokenManager;
+    private final SecurityContextManager securityContextManager;
 
     @Autowired
-    public ApplicationsController(ApplicationService applicationService, ApplicationDtoMapper applicationDtoMapper, @Value("${app.domain}") String appDomainName, TokenManager tokenManager) {
+    public ApplicationsController(ApplicationService applicationService, ApplicationDtoMapper applicationDtoMapper, @Value("${app.domain}") String appDomainName, TokenManager tokenManager, SecurityContextManager securityContextManager) {
         this.applicationService = applicationService;
         this.applicationDtoMapper = applicationDtoMapper;
         this.appDomainName = appDomainName;
         this.tokenManager = tokenManager;
+        this.securityContextManager = securityContextManager;
     }
 
     @Operation(summary = "Register new application", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("register")
     @PreAuthorize("hasPermission(#RSC_APPS, 'self:write')")
     public ResponseEntity<Response<ApplicationDto>> createApplication(@RequestBody ApplicationDto applicationDto) {
-        SecurityContextManager securityContextManager = new SecurityContextManager(tokenManager);
         Optional<Tenant> usersTenant = securityContextManager.getCurrentTenant();
         if (usersTenant.isEmpty())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Response.of("Unauthorized action. Please provide valid token"));
@@ -79,7 +80,6 @@ public class ApplicationsController {
     @GetMapping("/")
     @PreAuthorize("hasPermission(#RSC_APPS, 'self:read')")
     public ResponseEntity<Collection<ApplicationDto>> getApplications() {
-        SecurityContextManager securityContextManager = new SecurityContextManager(tokenManager);
         Optional<Tenant> tenant = securityContextManager.getCurrentTenant();
         if (tenant.isEmpty())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ArrayList<>());

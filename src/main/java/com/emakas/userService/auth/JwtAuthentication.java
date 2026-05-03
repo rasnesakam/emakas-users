@@ -7,13 +7,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.stream.Collectors;
 
 public class JwtAuthentication extends AbstractAuthenticationToken {
-
+    //TODO:Change Token based structure to UserPrincipal Structure. 4 Occurences detected. TokenPermissionEvaluator (1), SecurityContextManager (1), TeamsController(2)
     private final UserPrincipal userPrincipal;
 
     @Deprecated
     public JwtAuthentication(Token token) {
         super(token.getScope().stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet()));
-        this.token = token;
         this.userPrincipal = null;
         setAuthenticated(false);
     }
@@ -24,9 +23,6 @@ public class JwtAuthentication extends AbstractAuthenticationToken {
         setAuthenticated(true);
     }
 
-    public Token getUserToken() {
-        return token;
-    }
     @Override
     public Object getCredentials() {
         return null;

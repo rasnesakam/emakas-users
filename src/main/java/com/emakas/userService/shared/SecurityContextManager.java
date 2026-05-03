@@ -1,9 +1,11 @@
 package com.emakas.userService.shared;
 
 import com.emakas.userService.auth.JwtAuthentication;
+import com.emakas.userService.domain.auth.UserPrincipal;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.model.Tenant;
 import com.emakas.userService.model.User;
+import com.emakas.userService.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,11 +17,12 @@ import java.util.Optional;
 @Component
 public class SecurityContextManager {
 
-    private final TokenManager tokenManager;
+    private final UserService userService;
 
-    public SecurityContextManager(TokenManager tokenManager) {
-        this.tokenManager = tokenManager;
+    public SecurityContextManager(UserService userService) {
+        this.userService = userService;
     }
+
 
     public Optional<Tenant> getCurrentTenant() {
         Optional<User> currentUser = this.getCurrentUser();
@@ -31,7 +34,8 @@ public class SecurityContextManager {
         if (authentication == null)
             return Optional.empty();
         if (authentication instanceof JwtAuthentication jwtAuthentication) {
-            return tokenManager.loadUserFromToken(jwtAuthentication.getUserToken());
+            UserPrincipal userPrincipal = (UserPrincipal) jwtAuthentication.getPrincipal();
+            return userService.getById(userPrincipal.getUserId());
         }
         return Optional.empty();
     }

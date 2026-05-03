@@ -10,6 +10,7 @@ import com.emakas.userService.model.Team;
 import com.emakas.userService.model.User;
 import com.emakas.userService.service.TeamService;
 import com.emakas.userService.service.UserService;
+import com.emakas.userService.shared.SecurityContextManager;
 import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.TokenTargetType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,13 +41,15 @@ public class TeamsController {
     private final TokenManager tokenManager;
     private final Logger logger = LoggerFactory.getLogger(TeamsController.class);
     private final UserService userService;
+    private final SecurityContextManager securityContextManager;
 
     @Autowired
-    public TeamsController(TeamService teamService, TeamsDtoMapper teamsDtoMapper, TokenManager tokenManager, UserService userService) {
+    public TeamsController(TeamService teamService, TeamsDtoMapper teamsDtoMapper, TokenManager tokenManager, UserService userService, SecurityContextManager securityContextManager) {
         this.teamService = teamService;
         this.teamsDtoMapper = teamsDtoMapper;
         this.tokenManager = tokenManager;
         this.userService = userService;
+        this.securityContextManager = securityContextManager;
     }
 
     @Operation(summary = "Create new team", security = @SecurityRequirement(name = "bearerAuth"))
@@ -55,7 +58,7 @@ public class TeamsController {
     public ResponseEntity<Response<TeamReadDto>> createNewTeam(@RequestBody TeamWriteDto teamWriteDto) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof JwtAuthentication jwtAuthentication){
-            Optional<User> leadUserValue = tokenManager.loadUserFromToken(jwtAuthentication.getUserToken());
+            Optional<User> leadUserValue = securityContextManager.getCurrentUser();
             if (leadUserValue.isPresent()){
                 Team team = teamsDtoMapper.temFromWriteDto(teamWriteDto, userService, teamService, leadUserValue.get());
                 try {
@@ -89,8 +92,6 @@ public class TeamsController {
         if (authentication instanceof JwtAuthentication jwtAuthentication) {
             UserPrincipal userPrincipal = (UserPrincipal) jwtAuthentication.getPrincipal();
             UUID userId = userPrincipal.getUserId();
-            if (jwtAuthentication.getUserToken().getTokenTargetType() != TokenTargetType.USR)
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             Collection<Team> teams = teamService.getTeamsByOwner(userId);
             return ResponseEntity.ok(teams.stream().map(teamsDtoMapper::toTeamDto).toList());
         }

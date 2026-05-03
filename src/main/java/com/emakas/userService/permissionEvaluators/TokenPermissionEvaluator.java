@@ -1,6 +1,7 @@
 package com.emakas.userService.permissionEvaluators;
 
 import com.emakas.userService.auth.JwtAuthentication;
+import com.emakas.userService.domain.auth.UserPrincipal;
 import com.emakas.userService.model.ResourcePermission;
 import com.emakas.userService.model.Token;
 import com.emakas.userService.service.ResourcePermissionService;
@@ -14,6 +15,7 @@ import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -48,17 +50,17 @@ public class TokenPermissionEvaluator implements PermissionEvaluator {
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
         if (authentication instanceof JwtAuthentication jwtAuthentication){
-            Token token = jwtAuthentication.getUserToken();
+            UserPrincipal principal = (UserPrincipal) jwtAuthentication.getPrincipal();
             PermissionDescriptor permissionDescriptor = stringToPermissionDescriptorConverter.convert(permission.toString());
             String requestedResourceUri = targetDomainObject.toString();
-            Stream<ResourcePermission> resourcePermissions = getResourcePermissionsFromToken(token, targetDomainObject);
+            Stream<ResourcePermission> resourcePermissions = getResourcePermissionsFromToken(principal.getAuthorities().toArray(new String[0]), targetDomainObject);
             return resourcePermissions.anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, requestedResourceUri, permissionDescriptor));
         }
         return false;
     }
 
-    private Stream<ResourcePermission> getResourcePermissionsFromToken(Token token, Object targetDomainObject) {
-        return token.getScope().stream()
+    private Stream<ResourcePermission> getResourcePermissionsFromToken(String[] scopes, Object targetDomainObject) {
+        return Arrays.stream(scopes)
                 .map(stringToResourcePermissionConverter::convert)
                 .filter(Objects::nonNull).filter(Optional::isPresent)
                 .map(Optional::get)
