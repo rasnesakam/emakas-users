@@ -93,64 +93,6 @@ public class AuthController {
     }
 
     /**
-     * <h1>Authorize</h1>
-     * <p>Redirect to third party app with approved credentials.</p>
-     * <p>
-     *     This method should not use alone
-     * </p>
-     * <p>
-     *     This method should use after invoke <code>/sign-in</code> endpoint
-     *     with <code>sessionId</code> parameter that returned from the method
-     * </p>
-     *
-     * @param clientId The id of the client app that registered
-     * @param sessionId After signing in, the sessionId will generate in order to represent that login.
-     * @param redirectUri The uri of the client app that registered. After authorize,
-     * @param grantedScopes The client may request some permissions. But client can approve some, none or all of them.
-     * @param state State is a optional parameter that confirms the OAuth flow did not intercept by any other parties. According to RFC of OAuth2.0
-     * @return For Successful process, method returns redirect response to the client callback uri
-     *
-     */
-    @GetMapping("/authorize")
-    public ResponseEntity<?> authorize(
-            @RequestParam(name = "client_id") UUID clientId,
-            @RequestParam(name = "session_id") UUID sessionId,
-            @RequestParam(name = "redirect_uri") String redirectUri,
-            @RequestParam(name = "granted_scopes") String[] grantedScopes,
-            @RequestParam(name = "state") String state,
-            @RequestParam(name = "code_challenge", required = false) String codeChallenge,
-            @RequestParam(name = "code_challenge_method", required = false) String codeChallengeMethodString
-            ) {
-        return applicationService.getById(clientId).map(
-                client -> loginSessionService.getById(sessionId).map(loginSession -> {
-                    if (Instant.now().isAfter(Instant.ofEpochSecond(loginSession.getExpireDate())))
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Session Expired");
-                    //User user = loginSession.getIntendedUser();
-                    Set<String> scopeSet = Set.of(grantedScopes);
-                    //TODO: Compare requested scopes and authorizedScopes
-                    UserLogin userLogin = new UserLogin(loginSession);
-                    if (Objects.nonNull(codeChallenge) && !codeChallenge.isEmpty()){
-                        userLogin.setCodeChallenge(codeChallenge);
-                        userLogin.setCodeChallengeMethod(stringToCodeChallengeMethodConverter.convert(codeChallengeMethodString));
-                    }
-                    try {
-                        UserLogin savedUserLogin = userLoginService.save(userLogin);
-                        UriComponentsBuilder uriBuilder = UriComponentsBuilder
-                                .fromUriString(client.getRedirectUri())
-                                .queryParam("code",savedUserLogin.getAuthorizationGrant())
-                                .queryParam("state", state);
-                        return ResponseEntity.status(HttpStatus.FOUND)
-                                .location(uriBuilder.build().toUri())
-                                .build();
-                    }catch (Exception e) {
-                        logger.error(e.getLocalizedMessage());
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal Error.");
-                    }
-                }).orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build())
-        ).orElse(ResponseEntity.notFound().build());
-    }
-
-    /**
      * <h1>Sign-In</h1>
      * <p>
      *     Checks user credentials for user

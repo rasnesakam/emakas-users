@@ -38,4 +38,12 @@ public class PkceOperationsManager {
             default -> false;
         };
     }
+
+    public static CodeChallengeMethod getCodeChallengeMethodFromString(String value) {
+        if (value.equals(CodeChallengeMethod.SHA_256.getNormalizedName()))
+            return CodeChallengeMethod.SHA_256;
+        else if (value.equals(CodeChallengeMethod.PLAIN.getNormalizedName()))
+            return CodeChallengeMethod.PLAIN;
+        else return CodeChallengeMethod.UNKNOWN;
+    }
 }

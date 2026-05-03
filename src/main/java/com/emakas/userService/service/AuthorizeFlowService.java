@@ -169,7 +169,7 @@ public class AuthorizeFlowService {
         if (loggedUser.isEmpty())
             throw new AuthorizeFlowException("Invalid Request", "User not found");
 
-        UserLogin userLogin = new UserLogin(loginSession.get());
+        UserLogin userLogin = new UserLogin(loginSession.get(), loggedUser.get());
         userLogin.setLoggedUser(loggedUser.get());
         UserLogin savedUserLogin = userLoginService.save(userLogin);
 

@@ -22,7 +22,8 @@ export function RestrictLayout() {
             redirect_uri: appInfo.redirect_uri,
             scope: "openid profile email",
             state: getState(),
-            code_challenge: codeChallenge
+            code_challenge: codeChallenge,
+            code_challenge_method: "S256"
         });
         const redirectUrl = `/oauth2/authorize?${params.toString()}`;
         return window.location.replace(redirectUrl);

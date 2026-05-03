@@ -1,5 +1,6 @@
 package com.emakas.userService.model;
 
+import com.emakas.userService.shared.PkceOperationsManager;
 import com.emakas.userService.shared.enums.CodeChallengeMethod;
 import com.emakas.userService.shared.enums.Scope;
 import jakarta.persistence.*;
@@ -73,10 +74,14 @@ public class UserLogin extends BaseEntity{
         this.authorizedScopes = authorizedScopes;
     }
 
-    public UserLogin(LoginSession loginSession) {
+    public UserLogin(LoginSession loginSession, User user) {
         this.relatedSession = loginSession;
+        this.loggedUser = user;
         this.authorizedScopes = loginSession.getRequestedScopes();
         this.authorizedAudiences = loginSession.getIntendedAudiences();
         this.requestedClient = loginSession.getRequestedClient();
+        this.codeChallengeMethod = PkceOperationsManager.getCodeChallengeMethodFromString(loginSession.getCodeChallengeMethod());
+        this.codeChallenge = loginSession.getCodeChallenge();
+
     }
 }

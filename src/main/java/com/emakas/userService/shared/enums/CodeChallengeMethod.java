@@ -17,4 +17,6 @@ public enum CodeChallengeMethod {
     public String toString() {
         return this.normalizedName;
     }
+
+
 }
