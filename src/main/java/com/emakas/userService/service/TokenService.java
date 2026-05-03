@@ -27,7 +27,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TokenService{
@@ -110,7 +112,7 @@ public class TokenService{
         customClaims.put("email", userPrincipal.getUsername());
         customClaims.put("user_name", userPrincipal.getUsername());
         customClaims.put("session_fingerprint", RequestUtils.getRequestFingerPrint(request));
-        return tokenManager.generateCustomJwtToken(userPrincipal.getUserId().toString(), new String[]{appDomainName}, new String[]{"sign-in"}, Duration.ofMinutes(10).getSeconds(), customClaims);
+        return tokenManager.generateCustomJwtToken(userPrincipal.getUserId().toString(), new String[]{appDomainName}, new String[]{"sign-in"}, Instant.now().plus(Duration.ofMinutes(10)).getEpochSecond(), customClaims);
     }
 
     public Optional<String> getSessionFingerprintFromToken(String token) {
@@ -127,6 +129,10 @@ public class TokenService{
 
     public Optional<String> getEmailFromToken(String token) {
         return tokenManager.getTokenClaim(token, "sub", String.class);
+    }
+
+    public Optional<Set<String>> getScopesFromToken(String token) {
+        return tokenManager.getTokenClaimAsList(token, "scope", String.class).map(HashSet::new);
     }
 
     public TokenVerificationStatus verifyToken(String token) {

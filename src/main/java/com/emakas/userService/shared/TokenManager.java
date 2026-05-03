@@ -208,6 +208,12 @@ public class TokenManager implements Serializable {
             return Optional.of(claims.get(claim).as(clazz));
         return Optional.empty();
     }
+    public <T> Optional<List<T>> getTokenClaimAsList(String token, String claim, Class<T> clazz) {
+        Map<String, Claim> claims = getTokenClaims(token);
+        if (claims.containsKey(claim))
+            return Optional.of(claims.get(claim).asList(clazz));
+        return Optional.empty();
+    }
 
     /**
      * <h3>Verifies json that given in request</h3>

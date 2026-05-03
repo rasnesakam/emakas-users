@@ -16,6 +16,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -39,18 +41,27 @@ public class AuthFilter extends OncePerRequestFilter {
     private final ClientCredentialsService clientCredentialsService;
     private final TokenService tokenService;
     private final UserPrincipalMapper userPrincipalMapper;
+    private final SecurityContextRepository securityContextRepository;
 
-    public AuthFilter(@Lazy ClientCredentialsService clientCredentialsService, @Lazy TokenService tokenService, UserPrincipalMapper userPrincipalMapper) {
+    @Autowired
+    public AuthFilter(@Lazy ClientCredentialsService clientCredentialsService, @Lazy TokenService tokenService, UserPrincipalMapper userPrincipalMapper, @Lazy SecurityContextRepository securityContextRepository) {
         this.clientCredentialsService = clientCredentialsService;
         this.tokenService = tokenService;
         this.userPrincipalMapper = userPrincipalMapper;
+        this.securityContextRepository = securityContextRepository;
     }
 
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-       resolveAuthentication(request).ifPresent(auth -> SecurityContextHolder.getContext().setAuthentication(auth));
-       filterChain.doFilter(request, response);
+        logger.info(String.format("Filtering request: %s", request.getRequestURI()));
+        resolveAuthentication(request).ifPresent(auth -> {
+            SecurityContext context = SecurityContextHolder.getContext();
+            context.setAuthentication(auth);
+            securityContextRepository.saveContext(context, request, response);
+            logger.info("Security context updated.");
+        });
+        filterChain.doFilter(request, response);
     }
 
     private Optional<Authentication> resolveAuthentication(HttpServletRequest request) {
@@ -58,6 +69,7 @@ public class AuthFilter extends OncePerRequestFilter {
         if (authorizationHeader != null) {
             String[] authHeaderParameters = authorizationHeader.split(Constants.Chars.ONE_SPACE);
             if (authHeaderParameters.length == 2) {
+                logger.info("Reading authorization token from header");
                 final AuthorizationType authorizationType = AuthorizationType.valueOf(authHeaderParameters[0].trim().toUpperCase()); //TODO: Should it be enum or string?
                 String authorizationToken = authHeaderParameters[1];
                 return switch (authorizationType) {
@@ -68,8 +80,10 @@ public class AuthFilter extends OncePerRequestFilter {
             else logger.warn("Unsupported authorization header format");
         }
         else if (request.getCookies() != null){
+            logger.info("Reading authorization token from cookie");
             return getAuthenticationFromCookie(request);
         }
+        logger.warn("No authentication token found in header nor cookie");
         return Optional.empty();
     }
 
@@ -84,24 +98,33 @@ public class AuthFilter extends OncePerRequestFilter {
     }
 
     private Optional<Authentication> getSignInTokenAuthentication(String token, HttpServletRequest request) {
+        logger.info("Found authorization token in cookie");
         TokenVerificationStatus tokenVerificationStatus = tokenService.verifyToken(token);
-        if (tokenVerificationStatus != TokenVerificationStatus.SUCCESS)
+        if (tokenVerificationStatus != TokenVerificationStatus.SUCCESS){
+            logger.warn(String.format("Token could not verify. Verify status: %s", tokenVerificationStatus.name()));
             return Optional.empty();
+        }
         String sessionFingerPrint = RequestUtils.getRequestFingerPrint(request);
         Optional<String> tokenFingerPrint = tokenService.getSessionFingerprintFromToken(token);
-        if (tokenFingerPrint.isEmpty() || !tokenFingerPrint.get().equals(sessionFingerPrint))
+        if (tokenFingerPrint.isEmpty() || !tokenFingerPrint.get().equals(sessionFingerPrint)){
+            logger.warn(String.format("Token could not verify. %s", "Session fingerprint does not match" ));
             return Optional.empty();
+        }
 
         Optional<UUID> userId = tokenService.getSubjectFromToken(token).map(UUID::fromString);
-        if (userId.isEmpty())
+        if (userId.isEmpty()){
+            logger.warn(String.format("Token could not verify. %s", "User info could not fetch from token" ));
             return Optional.empty();
+        }
         Optional<String> username = tokenService.getUsernameFromToken(token);
         Optional<String> email = tokenService.getEmailFromToken(token);
+        Optional<Set<String>> scopes = tokenService.getScopesFromToken(token);
         UserPrincipal userPrincipal = new UserPrincipal();
 
         userId.ifPresent(userPrincipal::setUserId);
         username.ifPresent(userPrincipal::setUsername);
         email.ifPresent(userPrincipal::setEmail);
+        scopes.ifPresent(userPrincipal::setAuthorities);
 
         return Optional.of(new JwtAuthentication(userPrincipal));
     }

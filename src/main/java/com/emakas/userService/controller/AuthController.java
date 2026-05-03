@@ -179,7 +179,10 @@ public class AuthController {
             if (!authentication.isAuthenticated())
                 throw new BadCredentialsException("");
             redirectUri = UriComponentsBuilder.fromUriString(URLDecoder.decode(continueUri, Charset.defaultCharset())).build().toUri();
-            User user = userService.getByUserName(username).get();
+            Optional<User> authenticatedUser = userService.getByUserName(username);
+            if (authenticatedUser.isEmpty())
+                throw new UsernameNotFoundException("Could not proceed with that user. Please try again later.");
+            User user = authenticatedUser.get();
             UserPrincipal userPrincipal = userPrincipalMapper.fromUser(user);
             String token = tokenService.createSignInToken(userPrincipal, request);
             ResponseCookie responseCookie = ResponseCookie.from(Constants.AUTH_COOKIE_PARAMETER, token)

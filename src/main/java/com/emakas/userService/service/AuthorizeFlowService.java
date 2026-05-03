@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.emakas.userService.domain.auth.UserPrincipal;
+import com.emakas.userService.shared.SecurityContextManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,17 +40,19 @@ public class AuthorizeFlowService {
     private final UserService userService;
     private final LoginSessionService loginSessionService;
     private final LoginPageInputMapper loginPageInputMapper;
+    private final SecurityContextManager securityContextManager;
 
     @Autowired
     public AuthorizeFlowService(ApplicationService applicationService, OidcConfig oidcConfig,
-            UserLoginService userLoginService, UserService userService, LoginSessionService loginSessionService,
-            LoginPageInputMapper loginPageInputMapper) {
+                                UserLoginService userLoginService, UserService userService, LoginSessionService loginSessionService,
+                                LoginPageInputMapper loginPageInputMapper, SecurityContextManager securityContextManager) {
         this.applicationService = applicationService;
         this.oidcConfig = oidcConfig;
         this.userLoginService = userLoginService;
         this.userService = userService;
         this.loginSessionService = loginSessionService;
         this.loginPageInputMapper = loginPageInputMapper;
+        this.securityContextManager = securityContextManager;
     }
 
     public ResponseEntity<Object> handleAuthorizationFlow(AuthorizeDto authorizeDto) {
@@ -161,7 +165,7 @@ public class AuthorizeFlowService {
             throw new AuthorizeFlowException("Invalid Request",
                     "Authentication required to proceed in authorization flow");
 
-        Optional<User> loggedUser = userService.getByUserName(auth.getPrincipal().toString());
+        Optional<User> loggedUser = securityContextManager.getCurrentUser();
         if (loggedUser.isEmpty())
             throw new AuthorizeFlowException("Invalid Request", "User not found");
 
