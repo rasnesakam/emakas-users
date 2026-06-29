@@ -57,11 +57,16 @@ public class OauthFlowManager {
                 requestedClient
         );
         long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
-        TokenResponseDto dto =  new TokenResponseDto(
-                loggedUser.getUserName(), loggedUser.getName(), loggedUser.getSurname(),
-                loggedUser.getEmail(), token.getSerializedToken(), expiresAt, refreshToken.getSerializedToken(),
-                Constants.BEARER_TOKEN
-        );
+        TokenResponseDto dto =  new TokenResponseDto();
+        dto.setUsername(loggedUser.getUserName());
+        dto.setName(loggedUser.getName());
+        dto.setSurname(loggedUser.getSurname());
+        dto.setEmail(loggedUser.getEmail());
+        dto.setAccessToken(token.getSerializedToken());
+        dto.setExpiresIn(expiresAt);
+        dto.setRefreshToken(refreshToken.getSerializedToken());
+        dto.setTokenType(Constants.BEARER_TOKEN);
+
         return ResponseEntity.ok(dto);
     }
 
@@ -94,11 +99,15 @@ public class OauthFlowManager {
                 Token newAccessToken = tokenService.createUserAccessToken(user, audiences, scopes, token.getClientId());
                 Token newRefreshToken = tokenService.createUserRefreshToken(user, audiences, token.getClientId());
                 long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(newAccessToken.getExp())).toSeconds();
-                TokenResponseDto tokenResponseDto = new TokenResponseDto(
-                        user.getUserName(), user.getName(), user.getSurname(),
-                        user.getEmail(), newAccessToken.getSerializedToken(), expiresAt, newRefreshToken.getSerializedToken(),
-                        Constants.BEARER_TOKEN
-                );
+                TokenResponseDto tokenResponseDto =  new TokenResponseDto();
+                tokenResponseDto.setUsername(user.getUserName());
+                tokenResponseDto.setName(user.getName());
+                tokenResponseDto.setSurname(user.getSurname());
+                tokenResponseDto.setEmail(user.getEmail());
+                tokenResponseDto.setAccessToken(newAccessToken.getSerializedToken());
+                tokenResponseDto.setExpiresIn(expiresAt);
+                tokenResponseDto.setRefreshToken(newRefreshToken.getSerializedToken());
+                tokenResponseDto.setTokenType(Constants.BEARER_TOKEN);
                 return ResponseEntity.ok(tokenResponseDto);
             }
 
@@ -115,12 +124,11 @@ public class OauthFlowManager {
             return application.map(app -> {
                 Token applicationAccessToken = tokenService.createApplicationAccessToken(app, requestedScopes);
                 Token applicationRefreshToken = tokenService.createApplicationRefreshToken(app);
-                TokenResponseDto tokenResponseDto = new TokenResponseDto(
-                        app.getName(), null, null, null,
-                        applicationAccessToken.getSerializedToken(),
-                        Duration.between(Instant.now(), Instant.ofEpochSecond(applicationAccessToken.getExp())).toSeconds(),
-                        applicationRefreshToken.getSerializedToken(),Constants.BEARER_TOKEN
-                );
+                TokenResponseDto tokenResponseDto = new TokenResponseDto();
+                tokenResponseDto.setName(app.getName());
+                tokenResponseDto.setAccessToken(applicationAccessToken.getSerializedToken());
+                tokenResponseDto.setExpiresIn(Duration.between(Instant.now(), Instant.ofEpochSecond(applicationAccessToken.getExp())).toSeconds());
+                tokenResponseDto.setRefreshToken(applicationRefreshToken.getSerializedToken());
                 return ResponseEntity.ok(tokenResponseDto);
             }).orElseGet(() -> ResponseEntity.notFound().build());
         }).orElseGet(() -> ResponseEntity.notFound().build());

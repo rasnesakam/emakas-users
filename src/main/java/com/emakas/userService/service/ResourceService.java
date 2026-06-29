@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +26,10 @@ public class ResourceService extends CoreService<Resource, UUID>{
 
     public Optional<Resource> getByUri(String resourceUri) {
         return resourceRepository.findByUri(resourceUri);
+    }
+
+    public Collection<Resource> getResourcesByTenant(UUID tenantId) {
+        return this.resourceRepository.findByTenant_Id(tenantId);
     }
 
     public String generateResourceSecretKey(Resource resource) {

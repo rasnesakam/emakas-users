@@ -78,6 +78,7 @@ dependencies {
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:kafka'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
+    runtimeOnly 'org.postgresql:postgresql'
 }
 
 tasks.named('test') {

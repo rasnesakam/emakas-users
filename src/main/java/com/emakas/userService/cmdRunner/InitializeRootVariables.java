@@ -61,7 +61,9 @@ public class InitializeRootVariables implements CommandLineRunner {
         Tenant tenant = new Tenant();
         tenant.setName("Core Tenant");
         tenant.setDescription("Default Tenant");
-        return tenantsService.save(tenant);
+        Tenant savedTenant = tenantsService.save(tenant);
+        logger.info("Created default tenant with id: {}", savedTenant.getId());
+        return savedTenant;
     }
 
     public void assignAdminToTenant(User user, Tenant tenant) {

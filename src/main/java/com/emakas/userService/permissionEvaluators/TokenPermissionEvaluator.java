@@ -54,7 +54,8 @@ public class TokenPermissionEvaluator implements PermissionEvaluator {
             PermissionDescriptor permissionDescriptor = stringToPermissionDescriptorConverter.convert(permission.toString());
             String requestedResourceUri = targetDomainObject.toString();
             Stream<ResourcePermission> resourcePermissions = getResourcePermissionsFromToken(principal.getAuthorities().toArray(new String[0]), targetDomainObject);
-            return resourcePermissions.anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, requestedResourceUri, permissionDescriptor));
+            boolean permissionResult = resourcePermissions.anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, requestedResourceUri, permissionDescriptor));
+            return permissionResult;
         }
         return false;
     }
