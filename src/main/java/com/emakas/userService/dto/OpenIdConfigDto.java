@@ -26,4 +26,10 @@ public class OpenIdConfigDto {
     private String[] responseTypesSupported;
     @JsonProperty("token_endpoint_auth_methods_supported")
     private String[] tokenEndpointAuthMethodsSupported;
+    @JsonProperty("id_token_signing_alg_values_supported")
+    private String[] idTokenSigningAlgValuesSupported;
+    @JsonProperty("grant_types_supported")
+    private String[] grantTypesSupported;
+    @JsonProperty("subject_types_supported")
+    private String[] subjectTypesSupported;
 }
