@@ -5,11 +5,14 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import com.emakas.userService.domain.auth.UserPrincipal;
+import com.emakas.userService.model.*;
+import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.SecurityContextManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,10 +28,6 @@ import com.emakas.userService.config.OidcConfig;
 import com.emakas.userService.dto.AuthorizeDto;
 import com.emakas.userService.dto.LoginPageInput;
 import com.emakas.userService.mappers.LoginPageInputMapper;
-import com.emakas.userService.model.Application;
-import com.emakas.userService.model.LoginSession;
-import com.emakas.userService.model.User;
-import com.emakas.userService.model.UserLogin;
 import com.emakas.userService.shared.exceptions.AuthorizeFlowException;
 
 @Component
@@ -37,22 +36,22 @@ public class AuthorizeFlowService {
     private final ApplicationService applicationService;
     private final OidcConfig oidcConfig;
     private final UserLoginService userLoginService;
-    private final UserService userService;
     private final LoginSessionService loginSessionService;
     private final LoginPageInputMapper loginPageInputMapper;
     private final SecurityContextManager securityContextManager;
+    private final OidcDiscoveryService oidcDiscoveryService;
 
     @Autowired
     public AuthorizeFlowService(ApplicationService applicationService, OidcConfig oidcConfig,
-                                UserLoginService userLoginService, UserService userService, LoginSessionService loginSessionService,
-                                LoginPageInputMapper loginPageInputMapper, SecurityContextManager securityContextManager) {
+                                UserLoginService userLoginService, LoginSessionService loginSessionService,
+                                LoginPageInputMapper loginPageInputMapper, SecurityContextManager securityContextManager, OidcDiscoveryService oidcDiscoveryService) {
         this.applicationService = applicationService;
         this.oidcConfig = oidcConfig;
         this.userLoginService = userLoginService;
-        this.userService = userService;
         this.loginSessionService = loginSessionService;
         this.loginPageInputMapper = loginPageInputMapper;
         this.securityContextManager = securityContextManager;
+        this.oidcDiscoveryService = oidcDiscoveryService;
     }
 
     public ResponseEntity<Object> handleAuthorizationFlow(AuthorizeDto authorizeDto) {
@@ -63,12 +62,19 @@ public class AuthorizeFlowService {
             if (authorizeDto.getClientId() == null)
                 throw new AuthorizeFlowException("Bad Client Id", "Please provide a valid client id");
 
-            if (!oidcConfig.isScopeSupported(authorizeDto.getScope()))
-                throw new AuthorizeFlowException("Bad Scope", "System does not support these scopes");
+            Application clientInfo = applicationService.getById(authorizeDto.getClientId())
+                    .orElseThrow(() -> new AuthorizeFlowException("Bad Client", "Please provide a valid client"));
 
-            Optional<Application> clientInfo = applicationService.getById(authorizeDto.getClientId());
-            if (clientInfo.isEmpty())
-                throw new AuthorizeFlowException("Bad Client", "Please provide a valid client");
+            Set<String> supportedScopes = Set.of(oidcDiscoveryService.getConfigurationForTenant(
+                    clientInfo.getTenant().getId().toString()).getScopesSupported()
+            );
+
+            if (authorizeDto.getScope() == null || authorizeDto.getScope().isBlank())
+                throw new AuthorizeFlowException("Bad Scope", "You should provide which scopes you want to");
+
+            if (Arrays.stream(authorizeDto.getScope().split(Constants.Chars.ONE_SPACE))
+                    .anyMatch(s -> !supportedScopes.contains(s)))
+                throw new AuthorizeFlowException("Bad Scope", "System does not support these scopes");
 
             return this.redirectLoginPageIfNoAuth(loginPageInputMapper.fromAuthorizeDto(authorizeDto));
 
@@ -101,7 +107,7 @@ public class AuthorizeFlowService {
     }
 
     public Optional<ResponseEntity<Object>> redirectErrorIfBadScope(String scope) {
-        if (!oidcConfig.isScopeSupported(scope)) {
+        if (!oidcConfig.getSupportedScopes().contains(scope)) {
             URI redirectTo = UriComponentsBuilder.fromUriString("/page/error")
                     .queryParam("title", "Invalid Scope")
                     .queryParam("description", "The scope you provided is not supported by system")

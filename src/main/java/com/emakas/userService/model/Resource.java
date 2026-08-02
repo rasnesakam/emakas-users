@@ -33,4 +33,9 @@ public class Resource extends BaseEntity {
         this.uri = uri;
         this.tenant = tenant;
     }
+
+    @Override
+    public String toString() {
+        return this.uri;
+    }
 }

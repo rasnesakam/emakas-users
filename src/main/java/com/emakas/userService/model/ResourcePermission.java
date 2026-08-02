@@ -58,11 +58,11 @@ public class ResourcePermission extends BaseEntity{
      */
     @Override
     public String toString() {
-        return String.join(
-                Constants.SEPARATOR,
-                this.permissionScope.toString(),
-                this.accessModifier.toString(),
-                this.resource.getUri()
-        );
+        StringBuilder stringBuilder = new StringBuilder();
+        if (this.permissionScope != null)
+            stringBuilder.append(this.permissionScope).append(Constants.Chars.SEPARATOR);
+        stringBuilder.append(this.accessModifier).append(Constants.Chars.SEPARATOR);
+        stringBuilder.append(this.resource);
+        return stringBuilder.toString();
     }
 }

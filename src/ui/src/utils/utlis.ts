@@ -31,3 +31,15 @@ export function getCookie(name: string) {
     .find(row => row.startsWith(name + "="))
     ?.split("=")[1];
 }
+
+export const requiredScopes = [
+    "openid",
+    "email",
+    "profile",
+    "read_write:iam.emakas.net/members",
+    "read_write:iam.emakas.net/teams",
+    "read_write:iam.emakas.net/permissions",
+    "read_write:iam.emakas.net/teamMembers",
+    "read_write:iam.emakas.net/resources",
+    "read_write:iam.emakas.net/applications"
+]

@@ -6,6 +6,7 @@ import {useEffect, useRef, useState} from "react";
 import {getSelfApplicationInfo} from "@services/applications";
 import {getState} from "@utils/stateHolder";
 import {getCodeChallenge} from "@utils/codeChallengeHolder";
+import {requiredScopes} from "@utils/utlis.ts";
 
 export function RestrictLayout() {
     const {auth, setAuth} = useAuthContext();
@@ -20,7 +21,7 @@ export function RestrictLayout() {
             response_type: "code",
             client_id: appInfo.client_id,
             redirect_uri: appInfo.redirect_uri,
-            scope: "openid profile email",
+            scope: requiredScopes.join(" "),
             state: getState(),
             code_challenge: codeChallenge,
             code_challenge_method: "S256"

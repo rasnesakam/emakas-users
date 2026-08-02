@@ -3,6 +3,7 @@ import {OAuthRequestKeys} from "@utils/enums/OAuthEnums.ts";
 import {getSelfApplicationInfo} from "@services/applications";
 import {getState} from "@utils/stateHolder";
 import {getCodeChallenge} from "@utils/codeChallengeHolder";
+import {requiredScopes} from "@utils/utlis.ts";
 
 
 export function initializeOAuthRequest(searchParams: URLSearchParams): OAuthRequest {
@@ -31,17 +32,10 @@ export function initializeOAuthRequest(searchParams: URLSearchParams): OAuthRequ
 
 export async function getSelfApplicationOAuthRequest(): Promise<OAuthRequest> {
     const {client_id, redirect_uri} = await getSelfApplicationInfo()
-    const requestingScopes = [
-        "global:read_write:iam.emakas.net/resources",
-        "global:read_write:iam.emakas.net/teamMembers",
-        "global:read_write:iam.emakas.net/applications",
-        "global:read_write:iam.emakas.net/teams",
-        "global:read_write:iam.emakas.net/members"
-    ]
     return {
         client_id,
         redirect_uri: redirect_uri,
-        scope: requestingScopes,
+        scope: requiredScopes,
         response_type: "code",
         state: getState(),
         code_challenge: await getCodeChallenge()

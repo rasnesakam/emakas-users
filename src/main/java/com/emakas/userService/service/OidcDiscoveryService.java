@@ -81,15 +81,12 @@ public class OidcDiscoveryService {
     }
 
     private Stream<String> getScopesOfResource(Resource resource) {
-        return Arrays.stream(PermissionScope.values()).flatMap(ps ->
-                Arrays.stream(AccessModifier.values()).map(am -> {
-                    ResourcePermission resourcePermission = new ResourcePermission();
-                    resourcePermission.setPermissionScope(ps);
-                    resourcePermission.setAccessModifier(am);
-                    resourcePermission.setResource(resource);
-                    return resourcePermission.toString();
-                })
-        );
+        return Arrays.stream(AccessModifier.values()).map(am -> {
+            ResourcePermission resourcePermission = new ResourcePermission();
+            resourcePermission.setAccessModifier(am);
+            resourcePermission.setResource(resource);
+            return resourcePermission.toString();
+        });
     }
 
     private String base64Url(BigInteger value) {
