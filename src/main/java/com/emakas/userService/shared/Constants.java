@@ -9,6 +9,9 @@ public class Constants {
     public static final String REFRESH_TOKEN = "REFRESH_TOKEN";
     public static final String BEARER_TOKEN = "Bearer";
     public static final String AUTH_COOKIE_PARAMETER = "AUTH-TOKEN";
+    public static final String SCOPE_OPENID = "openid";
+    public static final String SCOPE_PROFILE = "profile";
+    public static final String SCOPE_EMAIL = "email";
     /**
      * @deprecated Use Constants.Chars.ONE_SPACE instead
      */

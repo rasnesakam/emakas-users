@@ -41,6 +41,13 @@ public class StringToResourcePermissionConverter implements Converter<String, Op
             resourcePermission.setResource(resource);
             return Optional.of(resourcePermission);
         }
+        else if (split.length == 2) {
+            AccessModifier accessModifier = AccessModifier.valueOf(split[INDEX_OF_ACCESS_MODIFIER - 1].toUpperCase(Locale.ROOT));
+            resource.setUri(split[INDEX_OF_RESOURCE_URI - 1]);
+            resourcePermission.setAccessModifier(accessModifier);
+            resourcePermission.setResource(resource);
+            return Optional.of(resourcePermission);
+        }
         return Optional.empty();
     }
 }

@@ -7,6 +7,11 @@ public enum AccessModifier {
     WRITE,
     READ_WRITE;
 
+    public boolean doesCover(AccessModifier oth) {
+        return this == READ_WRITE
+                || (this == READ && oth == READ)
+                || (this == WRITE && oth == WRITE);
+    }
 
     @Override
     public String toString() {

@@ -11,6 +11,7 @@ import com.emakas.userService.shared.PkceOperationsManager;
 import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.enums.CodeChallengeMethod;
 import jakarta.servlet.http.HttpServletRequest;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,14 +31,18 @@ public class OauthFlowManager {
     private final ResourcePermissionService resourcePermissionService;
     private final ApplicationService applicationService;
     private final ClientCredentialsService clientCredentialsService;
+    private final UserPermissionService userPermissionService;
+    private final UserTokenService userTokenService;
 
     @Autowired
-    public OauthFlowManager(UserLoginService userLoginService, TokenService tokenService, ResourcePermissionService resourcePermissionService, ApplicationService applicationService, ClientCredentialsService clientCredentialsService) {
+    public OauthFlowManager(UserLoginService userLoginService, TokenService tokenService, ResourcePermissionService resourcePermissionService, ApplicationService applicationService, ClientCredentialsService clientCredentialsService, UserPermissionService userPermissionService, UserTokenService userTokenService) {
         this.userLoginService = userLoginService;
         this.tokenService = tokenService;
         this.resourcePermissionService = resourcePermissionService;
         this.applicationService = applicationService;
         this.clientCredentialsService = clientCredentialsService;
+        this.userPermissionService = userPermissionService;
+        this.userTokenService = userTokenService;
     }
 
     private ResponseEntity<TokenResponseDto> getTokenResponseFromUserLogin(UserLogin userLogin) {
@@ -48,7 +53,7 @@ public class OauthFlowManager {
         Token token = tokenService.createUserAccessToken(
                 loggedUser,
                 userLogin.getAuthorizedAudiences().toArray(String[]::new),
-                userLogin.getAuthorizedScopes().toArray(String[]::new),
+                userPermissionService.modifyScopesByUserPrivillage(loggedUser, userLogin.getAuthorizedScopes()),
                 requestedClient
         );
         Token refreshToken = tokenService.createUserRefreshToken(
@@ -56,6 +61,15 @@ public class OauthFlowManager {
                 userLogin.getAuthorizedAudiences().toArray(String[]::new),
                 requestedClient
         );
+        String audience = userLogin.getAuthorizedAudiences().toArray(String[]::new)[0];
+        String idToken = userLogin.getAuthorizedScopes().contains(Constants.SCOPE_OPENID) ?
+                userTokenService.createIdToken(loggedUser,audience,userLogin.getAuthorizedScopes())
+                : "";
+        return getTokenResponseDtoResponseEntity(loggedUser, token, refreshToken, idToken);
+    }
+
+    @NonNull
+    private ResponseEntity<TokenResponseDto> getTokenResponseDtoResponseEntity(User loggedUser, Token token, Token refreshToken, String idToken) {
         long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(token.getExp())).toSeconds();
         TokenResponseDto dto =  new TokenResponseDto();
         dto.setUsername(loggedUser.getUserName());
@@ -66,7 +80,8 @@ public class OauthFlowManager {
         dto.setExpiresIn(expiresAt);
         dto.setRefreshToken(refreshToken.getSerializedToken());
         dto.setTokenType(Constants.BEARER_TOKEN);
-
+        if (idToken != null && !idToken.isBlank())
+            dto.setIdToken(idToken);
         return ResponseEntity.ok(dto);
     }
 
@@ -98,17 +113,7 @@ public class OauthFlowManager {
                         .stream().map(ResourcePermission::toString).toArray(String[]::new);
                 Token newAccessToken = tokenService.createUserAccessToken(user, audiences, scopes, token.getClientId());
                 Token newRefreshToken = tokenService.createUserRefreshToken(user, audiences, token.getClientId());
-                long expiresAt = Duration.between(Instant.now(), Instant.ofEpochSecond(newAccessToken.getExp())).toSeconds();
-                TokenResponseDto tokenResponseDto =  new TokenResponseDto();
-                tokenResponseDto.setUsername(user.getUserName());
-                tokenResponseDto.setName(user.getName());
-                tokenResponseDto.setSurname(user.getSurname());
-                tokenResponseDto.setEmail(user.getEmail());
-                tokenResponseDto.setAccessToken(newAccessToken.getSerializedToken());
-                tokenResponseDto.setExpiresIn(expiresAt);
-                tokenResponseDto.setRefreshToken(newRefreshToken.getSerializedToken());
-                tokenResponseDto.setTokenType(Constants.BEARER_TOKEN);
-                return ResponseEntity.ok(tokenResponseDto);
+                return getTokenResponseDtoResponseEntity(user, newAccessToken, newRefreshToken, "");
             }
 
         }

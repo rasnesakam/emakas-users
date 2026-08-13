@@ -48,7 +48,7 @@ public class TokenManager implements Serializable {
 
 
     public TokenManager(
-            @Value("${java-jwt.issuer}") String issuer,
+            @Value("${app.domain}") String issuer,
             @Value("${java-jwt.secret}") String jwtSecret,
             @Value("${java-jwt.expiration}") long secondsToExpire,
             @Value("${java-jwt.refresh_expiration}") int daysToExpire,
@@ -166,6 +166,20 @@ public class TokenManager implements Serializable {
         if (additionalClaims != null && !additionalClaims.isEmpty()) {
             additionalClaims.forEach(jwtBuilder::withClaim);
         }
+        return jwtBuilder.sign(ALGORITHM);
+    }
+
+    public String generateCustomTokenWithClaims(Map<String, Object> claims) {
+        JWTCreator.Builder jwtBuilder = JWT.create();
+        claims.forEach((key,value) -> {
+            if (value instanceof String v) {
+                jwtBuilder.withClaim(key, v);
+            } else if (value instanceof Long v) {
+                jwtBuilder.withClaim(key, v);
+            } else if (value instanceof Boolean v) {
+                jwtBuilder.withClaim(key, v);
+            }
+        });
         return jwtBuilder.sign(ALGORITHM);
     }
 
