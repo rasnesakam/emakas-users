@@ -25,6 +25,7 @@ export interface Authentication {
     expires_in: number;
     refresh_token: string;
     access_token: string;
+    id_token: string;
     token_type: string;
 }
 

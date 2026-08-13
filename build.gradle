@@ -57,7 +57,7 @@ dependencies {
 	implementation 'org.springframework.kafka:spring-kafka'
 
 	// Database
-	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.postgresql:postgresql'
 
 	// Swagger / OpenAPI
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
@@ -78,7 +78,6 @@ dependencies {
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:kafka'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
-    runtimeOnly 'org.postgresql:postgresql'
 }
 
 tasks.named('test') {
