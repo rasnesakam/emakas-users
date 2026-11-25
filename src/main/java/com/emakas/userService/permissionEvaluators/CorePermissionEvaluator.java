@@ -5,7 +5,7 @@ import com.emakas.userService.model.*;
 import com.emakas.userService.service.*;
 import com.emakas.userService.shared.converters.StringToPermissionDescriptorConverter;
 import com.emakas.userService.shared.data.PermissionDescriptor;
-import com.emakas.userService.shared.enums.TokenTargetType;
+import com.emakas.userService.shared.enums.PrincipalType;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 
@@ -25,7 +25,9 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
     private final StringToPermissionDescriptorConverter stringToPermissionDescriptorConverter;
 
     // @Autowired
-    public CorePermissionEvaluator(ResourcePermissionService resourcePermissionService, UserService userService, TeamService teamService, ApplicationService applicationService, ResourceService resourceService, StringToPermissionDescriptorConverter stringToPermissionDescriptorConverter) {
+    public CorePermissionEvaluator(ResourcePermissionService resourcePermissionService, UserService userService,
+            TeamService teamService, ApplicationService applicationService, ResourceService resourceService,
+            StringToPermissionDescriptorConverter stringToPermissionDescriptorConverter) {
         this.resourcePermissionService = resourcePermissionService;
         this.userService = userService;
         this.teamService = teamService;
@@ -38,40 +40,45 @@ public class CorePermissionEvaluator implements PermissionEvaluator {
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
         if (authentication instanceof JwtAuthentication) {
             String userId = authentication.getName();
-            Token token = (Token) authentication.getCredentials();
+            AccessToken token = (AccessToken) authentication.getCredentials();
             String resourceUri = targetDomainObject.toString();
             Optional<Resource> resourceValue = resourceService.getByUri(resourceUri);
             if (resourceValue.isEmpty())
                 return false;
             Resource resource = resourceValue.get();
-            PermissionDescriptor permissionDescriptor = stringToPermissionDescriptorConverter.convert(permission.toString());
-            if (token.getTokenTargetType() == TokenTargetType.USR) {
+            PermissionDescriptor permissionDescriptor = stringToPermissionDescriptorConverter
+                    .convert(permission.toString());
+            if (token.getPrincipalType() == PrincipalType.USER) {
                 Optional<User> user = userService.getById(UUID.fromString(userId));
                 if (user.isEmpty())
                     return false;
                 Collection<Team> userTeams = teamService.getUserTeams(user.get());
-                boolean hasUserPermission = resourcePermissionService.getUserPermissionsByResource(user.get(), resource).stream()
-                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, permissionDescriptor, user.get()));
+                boolean hasUserPermission = resourcePermissionService.getUserPermissionsByResource(user.get(), resource)
+                        .stream()
+                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri,
+                                permissionDescriptor, user.get()));
                 boolean hasTeamPermission = userTeams.stream()
-                        .anyMatch(team ->
-                                resourcePermissionService.getTeamPermissionsByResource(team, resource).stream()
-                                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, permissionDescriptor, team))
-                        );
+                        .anyMatch(
+                                team -> resourcePermissionService.getTeamPermissionsByResource(team, resource).stream()
+                                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri,
+                                                permissionDescriptor, team)));
                 return hasUserPermission || hasTeamPermission;
-            }
-            else if (token.getTokenTargetType() == TokenTargetType.APP) {
+            } else if (token.getPrincipalType() == PrincipalType.APP) {
                 Optional<Application> app = applicationService.getById(UUID.fromString(userId));
-                return app.isPresent() && resourcePermissionService.getApplicationPermissionsByResource(app.get(), resource).stream()
-                        .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri, permissionDescriptor, app.get()));
-            }
-            else return false;
-        }
-        else return false;
+                return app.isPresent()
+                        && resourcePermissionService.getApplicationPermissionsByResource(app.get(), resource).stream()
+                                .anyMatch(rp -> resourcePermissionService.hasPermissionFor(rp, resourceUri,
+                                        permissionDescriptor, app.get()));
+            } else
+                return false;
+        } else
+            return false;
 
     }
 
     @Override
-    public boolean hasPermission(Authentication authentication, Serializable targetId, String targetType, Object permission) {
+    public boolean hasPermission(Authentication authentication, Serializable targetId, String targetType,
+            Object permission) {
         return false;
     }
 }

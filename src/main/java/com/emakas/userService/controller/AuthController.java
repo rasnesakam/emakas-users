@@ -2,34 +2,29 @@ package com.emakas.userService.controller;
 
 import java.net.URI;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.emakas.userService.domain.auth.UserPrincipal;
-import com.emakas.userService.dto.LoginModel;
 import com.emakas.userService.dto.LoginSessionDto;
 import com.emakas.userService.dto.Response;
 import com.emakas.userService.dto.UserWriteDto;
-import com.emakas.userService.mappers.LoginSessionDtoMapper;
-import com.emakas.userService.mappers.UserDtoMapper;
 import com.emakas.userService.mappers.UserPrincipalMapper;
-import com.emakas.userService.model.*;
-import com.emakas.userService.service.*;
+import com.emakas.userService.model.ResourcePermission;
+import com.emakas.userService.model.User;
+import com.emakas.userService.service.ApplicationService;
+import com.emakas.userService.service.LoginSessionService;
+import com.emakas.userService.service.ResourcePermissionService;
+import com.emakas.userService.service.TokenService;
+import com.emakas.userService.service.UserLoginService;
+import com.emakas.userService.service.UserService;
 import com.emakas.userService.shared.Constants;
-import com.emakas.userService.shared.TokenManager;
 import com.emakas.userService.shared.converters.StringToCodeChallengeMethodConverter;
-import com.emakas.userService.shared.enums.CodeChallengeMethod;
-import com.emakas.userService.shared.enums.TokenType;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,16 +38,19 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -60,50 +58,42 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
-    private final UserLoginService userLoginService;
-    private final ResourcePermissionService resourcePermissionService;
-    private final ApplicationService applicationService;
-    private final LoginSessionService loginSessionService;
     private final Logger logger = LoggerFactory.getLogger(AuthController.class);
-    private final StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter;
     private final TokenService tokenService;
-    private final String appDomainName;
     private final UserPrincipalMapper userPrincipalMapper;
 
     @Autowired
-    public AuthController(UserService userService, AuthenticationManager authenticationManager, UserLoginService userLoginService, ResourcePermissionService resourcePermissionService, ApplicationService applicationService, LoginSessionService loginSessionService, StringToCodeChallengeMethodConverter stringToCodeChallengeMethodConverter, TokenService tokenService, @Value("${app.domain}") String appDomainName, UserPrincipalMapper userPrincipalMapper) {
+    public AuthController(UserService userService, AuthenticationManager authenticationManager,
+            ResourcePermissionService resourcePermissionService, TokenService tokenService,
+            UserPrincipalMapper userPrincipalMapper) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
-        this.userLoginService = userLoginService;
-        this.resourcePermissionService = resourcePermissionService;
-        this.applicationService = applicationService;
-        this.loginSessionService = loginSessionService;
-        this.stringToCodeChallengeMethodConverter = stringToCodeChallengeMethodConverter;
         this.tokenService = tokenService;
-        this.appDomainName = appDomainName;
         this.userPrincipalMapper = userPrincipalMapper;
     }
 
-
     @PostMapping("/sign-up")
     @ResponseBody
-    public ResponseEntity<Response<User>> createUser(@RequestBody UserWriteDto userDto, @RequestParam(value = "invite-code") String inviteCode){
-        //TODO: Signing up feature will design again
+    public ResponseEntity<Response<User>> createUser(@RequestBody UserWriteDto userDto,
+            @RequestParam(value = "invite-code") String inviteCode) {
+        // TODO: Signing up feature will design again
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
     }
 
     /**
      * <h1>Sign-In</h1>
      * <p>
-     *     Checks user credentials for user
+     * Checks user credentials for user
      * </p>
      * <p>
-     *     Login page posts a request to this endpoint to validate user.<br/>
-     *     If validation successfull, this endpoint will redirect user to /oauth2/authorize after creation of session for logged in user<br/>
+     * Login page posts a request to this endpoint to validate user.<br/>
+     * If validation successfull, this endpoint will redirect user to
+     * /oauth2/authorize after creation of session for logged in user<br/>
      * </p>
-     * @param username:  username value of user attended to log in
-     * @param password:  password value of user attended to log in
-     * @param continueUri:  URI that will be redirected after operation
+     * 
+     * @param username:    username value of user attended to log in
+     * @param password:    password value of user attended to log in
+     * @param continueUri: URI that will be redirected after operation
      * @return {@link LoginSessionDto} that contains sessionId
      */
     @PostMapping("/sign-in")
@@ -113,14 +103,16 @@ public class AuthController {
             @RequestParam String password,
             @RequestParam("continue_uri") String continueUri,
             HttpServletRequest request,
-            HttpServletResponse response
-    ){
+            HttpServletResponse response) {
+        logger.info(String.format("User '%s' wants to login and continue to uri: %s", username, continueUri));
         URI redirectUri;
-        try{
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        try {
+            Authentication authentication = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(username, password));
             if (!authentication.isAuthenticated())
                 throw new BadCredentialsException("");
-            redirectUri = UriComponentsBuilder.fromUriString(URLDecoder.decode(continueUri, Charset.defaultCharset())).build().toUri();
+            redirectUri = UriComponentsBuilder.fromUriString(URLDecoder.decode(continueUri, Charset.defaultCharset()))
+                    .build().toUri();
             Optional<User> authenticatedUser = userService.getByUserName(username);
             if (authenticatedUser.isEmpty())
                 throw new UsernameNotFoundException("Could not proceed with that user. Please try again later.");
@@ -135,8 +127,9 @@ public class AuthController {
                     .sameSite("Lax")
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-        }
-        catch (UsernameNotFoundException | BadCredentialsException | DisabledException exception){
+        } catch (UsernameNotFoundException | BadCredentialsException | DisabledException exception) {
+            logger.error(
+                    String.format("User '%s' failed to login. Error message: %s", username, exception.getMessage()));
             redirectUri = UriComponentsBuilder.fromUriString("/page/auth/login")
                     .queryParam("error", exception.getMessage())
                     .queryParam("continue", continueUri)
@@ -146,26 +139,14 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.FOUND).header("Location", redirectUri.toString()).build();
     }
 
-    private Set<String> getDefinedOrDefaultScopesForApp(String[] scopes, User user){
-        return scopes.length > 0 ? Set.of(scopes) :
-                resourcePermissionService.getPermissionsByUser(user)
-                        .stream().map(ResourcePermission::toString).collect(Collectors.toSet());
-    }
-
-    private Set<String> getDefinedOrDefaultAudiences(String[] audiences, User user){
-        return audiences.length > 0 ? Set.of(audiences) :
-                resourcePermissionService.getPermissionsByUser(user)
-                        .stream().map(ResourcePermission::toString).collect(Collectors.toSet());
-    }
-
     @DeleteMapping("/delete/{uuid}")
     @ResponseBody
     public ResponseEntity<Response<User>> deleteUser(@PathVariable UUID uuid) {
-    	Optional<User> user = userService.getById(uuid);
-    	if (user.isEmpty())
-    		return ResponseEntity.notFound().build();
-    	userService.delete(user.get());
-    	return ResponseEntity.ok(Response.of(user.get(), "User deleted"));
+        Optional<User> user = userService.getById(uuid);
+        if (user.isEmpty())
+            return ResponseEntity.notFound().build();
+        userService.delete(user.get());
+        return ResponseEntity.ok(Response.of(user.get(), "User deleted"));
     }
 
 }

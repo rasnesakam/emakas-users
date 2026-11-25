@@ -1,6 +1,7 @@
 package com.emakas.userService.mappers;
 
 import com.emakas.userService.domain.auth.UserPrincipal;
+import com.emakas.userService.model.AccessToken;
 import com.emakas.userService.model.Token;
 import com.emakas.userService.model.User;
 import org.mapstruct.Mapper;
@@ -17,8 +18,8 @@ public interface UserPrincipalMapper {
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "userId", expression = "java(java.util.UUID.fromString(token.getSub()))")
     @Mapping(target = "authorities", source = "scope")
-    @Mapping(target = "tokenType", source = "tokenType")
-    public UserPrincipal fromUserToken(Token token);
+    @Mapping(target = "tokenType", constant = "ACCESS_TOKEN")
+    public UserPrincipal fromUserToken(AccessToken token);
 
     @Mapping(target = "username", source = "userName")
     @Mapping(target = "email", source = "email")

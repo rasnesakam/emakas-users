@@ -1,84 +1,32 @@
 package com.emakas.userService.model;
 
-import com.emakas.userService.shared.enums.TokenTargetType;
-import com.emakas.userService.shared.enums.TokenType;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.Set;
 import java.util.UUID;
 
-@EqualsAndHashCode
-@NoArgsConstructor
-@AllArgsConstructor
+@MappedSuperclass
 @Getter
 @Setter
-@Entity
-@Table(name="user_tokens")
+@NoArgsConstructor
 public class Token {
 
-    /**
-     * Represents <b>jti</b> claim for the JWT
-     */
     @Id
     private UUID jti;
 
-    /**
-     * Represents <b>iss</b> claim for the JWT
-     */
-    @Column
-    private String iss; // Provider of token
+    @Column(nullable = false)
+    private String iss;
 
-    /**
-     * Represents <b>iss</b> claim for the JWT
-     */
-    @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_token_audiences", joinColumns = @JoinColumn(name = "user_token_id"))
-    @Column
-    private Set<String> aud; // Audience of token
+    @Column(nullable = false)
+    private long exp;
 
-    /**
-     * Represents <b>scope</b> claim for the JWT
-     */
-    @ElementCollection(targetClass = String.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_token_scopes", joinColumns = @JoinColumn(name = "user_token_id"))
-    @Column
-    private Set<String> scope; // Audience of token
-
-    /**
-     * Represents <b>sub</b> claim for the JWT
-     */
-    @Column
-    private String sub; // Subject of token
-
-    /**
-     * Represents <b>exp</b> claim for the JWT
-     */
-    @Column(columnDefinition = "BIGINT")
-    private long exp; // Expiration date
-
-    /**
-     * Represents <b>iat</b> claim for the JWT
-     */
-    @Column(columnDefinition = "BIGINT")
-    private long iat; // Date of the creation of token
-
-    /**
-     * Represents to whom this token intended for
-     */
-    @Column
-    @Enumerated(EnumType.STRING)
-    private TokenTargetType tokenTargetType;
-
-    @Column(length = 2048)
-    private String serializedToken;
-
-    @Column(name = "token_type")
-    @Enumerated(EnumType.STRING)
-    private TokenType tokenType;
-
-    @Column(name = "client_id")
-    private UUID clientId;
+    @Column(nullable = false)
+    private long iat;
 
     @PrePersist
     public void prePersist() {

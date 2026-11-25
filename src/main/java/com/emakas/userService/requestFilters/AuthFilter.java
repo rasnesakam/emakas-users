@@ -92,7 +92,8 @@ public class AuthFilter extends OncePerRequestFilter {
         TokenVerificationStatus tokenVerificationStatus = tokenService.verifyToken(token);
         if (tokenVerificationStatus != TokenVerificationStatus.SUCCESS)
             return Optional.empty();
-        return tokenService.getFromSerializedToken(token)
+        return tokenService.parseTokenAsAccessToken(token)
+                .filter(t -> !tokenService.isTokenInBlacklist(t))
                 .map(userPrincipalMapper::fromUserToken)
                 .map(JwtAuthentication::new);
     }

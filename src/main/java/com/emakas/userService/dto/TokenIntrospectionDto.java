@@ -19,8 +19,8 @@ public class TokenIntrospectionDto {
     @JsonProperty("client_id")
     private String clientId;
     private String username;
-    @JsonProperty("token_type")
-    private String tokenType;
+    @JsonProperty("principal_type")
+    private String principalType;
     private String aud;
     private String iss;
 }

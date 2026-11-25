@@ -1,14 +1,16 @@
 package com.emakas.userService.mappers;
 
 import com.emakas.userService.dto.TokenIntrospectionDto;
-import com.emakas.userService.model.Token;
+import com.emakas.userService.model.AccessToken;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface TokenIntrospectionMapper {
-    static TokenIntrospectionMapper getInstance() { return Mappers.getMapper(TokenIntrospectionMapper.class); }
+    static TokenIntrospectionMapper getInstance() {
+        return Mappers.getMapper(TokenIntrospectionMapper.class);
+    }
 
     @Mapping(target = "active", ignore = true) // şimdilik ignore
     @Mapping(target = "username", ignore = true) // şimdilik ignore
@@ -16,9 +18,9 @@ public interface TokenIntrospectionMapper {
     @Mapping(target = "exp", source = "exp")
     @Mapping(target = "iat", source = "iat")
     @Mapping(target = "scope", expression = "java(String.join(\" \", token.getScope()))")
-    @Mapping(target = "clientId", source = "clientId")
-    @Mapping(target = "tokenType", source = "tokenType")
+    @Mapping(target = "clientId", source = "client.id")
+    @Mapping(target = "principalType", source = "principalType")
     @Mapping(target = "aud", expression = "java(String.join(\" \", token.getAud()))")
     @Mapping(target = "iss", source = "iss")
-    TokenIntrospectionDto toIntrospection(Token token);
+    TokenIntrospectionDto toIntrospection(AccessToken token);
 }

@@ -22,4 +22,15 @@ public class Constants {
         public static final String ONE_SPACE = " ";
         public static final String SEPARATOR = ":";
     }
+
+    public static final class JwtClaims {
+        public static final class AccessTokenClaims {
+            public static final String SCOPE = "scope";
+            public static final String PRINCIPAL_TYPE = "principal_type";
+            public static final String CLIENT_ID = "client_id";
+        }
+        public static final class RefreshTokenClaims {
+            public static final String USER_LOGIN = "user_login";
+        }
+    }
 }

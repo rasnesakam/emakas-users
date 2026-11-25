@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -26,35 +25,35 @@ import java.util.UUID;
 @RequestMapping(path = "/api/token")
 public class TokenController {
 
-
     private final TokenService tokenService;
     private final OauthFlowManager oauthFlowManager;
     private final TokenPermissionEvaluator tokenPermissionEvaluator;
 
-    public TokenController(TokenService tokenService, OauthFlowManager oauthFlowManager, TokenPermissionEvaluator tokenPermissionEvaluator) {
+    public TokenController(TokenService tokenService, OauthFlowManager oauthFlowManager,
+            TokenPermissionEvaluator tokenPermissionEvaluator) {
         this.tokenService = tokenService;
         this.oauthFlowManager = oauthFlowManager;
         this.tokenPermissionEvaluator = tokenPermissionEvaluator;
     }
 
-    @Operation(
-            summary = "Get details of token",
-            security = @SecurityRequirement(name = "basicAuth")
-    )
+    @Operation(summary = "Get details of token", security = @SecurityRequirement(name = "basicAuth"))
     @PostMapping(value = "/introspect", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<TokenIntrospectionDto> introspection(@ModelAttribute TokenIntrospectionRequestDto tokenIntrospectionRequestDto) {
-        return tokenService.introspect(tokenIntrospectionRequestDto.getToken()).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    public ResponseEntity<TokenIntrospectionDto> introspection(
+            @ModelAttribute TokenIntrospectionRequestDto tokenIntrospectionRequestDto) {
+        return tokenService.introspect(tokenIntrospectionRequestDto.getToken()).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
-    //TODO: Use PreAuthorize annotation
+    // TODO: Use PreAuthorize annotation
     @GetMapping("/verify")
-    public ResponseEntity<?> authorizeToken(@RequestParam(required = false) String targetResource, @RequestParam(required = false) String requestedPermission){
+    public ResponseEntity<?> authorizeToken(@RequestParam(required = false) String targetResource,
+            @RequestParam(required = false) String requestedPermission) {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = securityContext.getAuthentication();
-        if (authentication instanceof JwtAuthentication jwtAuthentication){
+        if (authentication instanceof JwtAuthentication jwtAuthentication) {
             boolean parametersAreNotNullOrEmpty = targetResource != null && !targetResource.isBlank()
                     && requestedPermission != null && !requestedPermission.isBlank();
-            if (parametersAreNotNullOrEmpty){
+            if (parametersAreNotNullOrEmpty) {
                 if (tokenPermissionEvaluator.hasPermission(jwtAuthentication, targetResource, requestedPermission))
                     return ResponseEntity.ok().build();
                 else
@@ -63,13 +62,11 @@ public class TokenController {
             if (jwtAuthentication.isAuthenticated())
                 return ResponseEntity.ok().build();
             else
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body( "Authorization failed");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization failed");
 
-        }
-        else
+        } else
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication must made by Jwt toekens");
     }
-
 
     @PostMapping(value = "/", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<TokenResponseDto> getToken(
@@ -81,10 +78,13 @@ public class TokenController {
             @RequestParam(name = "refresh_token", required = false) String refreshToken,
             @RequestParam(name = "code_verifier", required = false) String codeVerifier,
             @RequestParam(name = "scope", required = false) String[] scopes,
-            HttpServletRequest request){
-        return switch (GrantType.getGrantType(grantType)){
-            case AUTHORIZATION_CODE -> oauthFlowManager.handleAuthorizationFlow(code, clientId, clientSecret, codeVerifier, redirectUri);
-            case CLIENT_CREDENTIALS -> oauthFlowManager.handleClientCredentialsFlow(clientId, clientSecret, scopes);
+            @RequestParam(name = "aud", required = false) String[] audiences,
+            HttpServletRequest request) {
+        return switch (GrantType.getGrantType(grantType)) {
+            case AUTHORIZATION_CODE ->
+                oauthFlowManager.handleAuthorizationFlow(code, clientId, clientSecret, codeVerifier, redirectUri);
+            case CLIENT_CREDENTIALS ->
+                oauthFlowManager.handleClientCredentialsFlow(clientId, clientSecret, scopes, audiences);
             case REFRESH_TOKEN -> oauthFlowManager.handleRefreshTokenFlow(refreshToken, request);
             default -> ResponseEntity.badRequest().build();
         };

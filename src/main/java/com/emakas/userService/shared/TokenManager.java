@@ -1,217 +1,222 @@
 package com.emakas.userService.shared;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.*;
-import com.auth0.jwt.interfaces.Claim;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.emakas.userService.model.Application;
-import com.emakas.userService.model.User;
-import com.emakas.userService.model.Token;
-import com.emakas.userService.service.UserService;
-import com.emakas.userService.shared.enums.AccessModifier;
-import com.emakas.userService.shared.enums.TokenTargetType;
-import com.emakas.userService.shared.enums.TokenType;
-import com.emakas.userService.shared.enums.TokenVerificationStatus;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.io.Serializable;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPrivateKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
-import static com.emakas.userService.shared.Constants.REFRESH_TOKEN;
-import static com.emakas.userService.shared.Constants.SEPARATOR;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.AlgorithmMismatchException;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.Verification;
+import com.emakas.userService.model.AccessToken;
+import com.emakas.userService.model.Application;
+import com.emakas.userService.model.IdToken;
+import com.emakas.userService.model.RefreshToken;
+import com.emakas.userService.model.Token;
+import com.emakas.userService.model.User;
+import com.emakas.userService.model.UserLogin;
+import com.emakas.userService.shared.enums.PrincipalType;
+import com.emakas.userService.shared.enums.TokenVerificationStatus;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class TokenManager implements Serializable {
 
-    private final long secondsToExpire;
-    private final int daysToExpire;
+    private final long accessTokenExpiresAt;
+    private final int refreshTokenExpiresAt;
+    private final long idTokenExpiresAt;
     private final String issuer;
     private final Algorithm ALGORITHM;
-    private final String appDomainName;
-    private final UserService userService;
-    private final RsaKeyFactory rsaKeyFactory;
-
 
     public TokenManager(
             @Value("${app.domain}") String issuer,
             @Value("${java-jwt.secret}") String jwtSecret,
-            @Value("${java-jwt.expiration}") long secondsToExpire,
-            @Value("${java-jwt.refresh_expiration}") int daysToExpire,
-            @Value("${app.domain}") String appDomainName,
-            RsaKeyFactory rsaKeyFactory,
-            UserService userService) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+            @Value("${java.jwt.access_expiration}") long accessTokenExpiresAt,
+            @Value("${java-jwt.refresh_expiration}") int refreshTokenExpiresAt,
+            @Value("${java-jwt.id_expiration}") long idTokenExpiresAt,
+            RsaKeyFactory rsaKeyFactory) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         this.issuer = issuer;
-        this.secondsToExpire = secondsToExpire;
-        this.daysToExpire = daysToExpire;
-        this.rsaKeyFactory = rsaKeyFactory;
-        this.appDomainName = appDomainName;
-        this.userService = userService;
+        this.accessTokenExpiresAt = accessTokenExpiresAt;
+        this.refreshTokenExpiresAt = refreshTokenExpiresAt;
+        this.idTokenExpiresAt = idTokenExpiresAt;
 
         RSAPrivateKey privateKey = rsaKeyFactory.getPrivateKey();
         RSAPublicKey publicKey = rsaKeyFactory.getPublicKey();
-        this.ALGORITHM = Algorithm.RSA256(publicKey,privateKey);
+        this.ALGORITHM = Algorithm.RSA256(publicKey, privateKey);
     }
 
-    private Token createToken(UUID subjectId, TokenTargetType tokenTargetType, long expireDateSecond, String[] audience, String[] scopes, TokenType tokenType, UUID clientId) {
-        Token token = new Token();
+    private void setupBaseToken(Token token, long expiresAt) {
         token.setIss(issuer);
-        if (audience != null && audience.length > 0)
-            token.setAud(Set.of(audience));
-        if (scopes != null && scopes.length > 0)
-            token.setScope(Set.of(scopes));
-        token.setSub(tokenTargetType.toString().concat(Constants.SEPARATOR).concat(subjectId.toString()));
         token.setIat(Instant.now().getEpochSecond());
-        token.setJti(UUID.randomUUID());
-        token.setExp(expireDateSecond);
-        token.setTokenType(tokenType);
-        token.setClientId(clientId);
-        token.setSerializedToken(generateJwtToken(token));
-        return token;
+        token.setExp(expiresAt);
     }
 
-    public Optional<User> loadUserFromToken(Token token){
-        UUID userId = null;
-        String tokenSubject = token.getSub();
-        Pattern tokenSubjectPattern = Pattern.compile(String.format("^%s:(.*)$", TokenTargetType.USR));
-        Matcher tokenSubjectMatcher = tokenSubjectPattern.matcher(tokenSubject);
-        if (tokenSubjectMatcher.find())
-            userId = UUID.fromString(tokenSubjectMatcher.group(1));
-        else{
-            try {
-                userId = UUID.fromString(token.getSub());
-            }
-            catch (Exception e) {
-                return Optional.empty();
-            }
-        }
-        return userService.getById(userId);
-    }
-
-    public Token createUserAccessToken(User user, String[] audiences, String[] scopes, UUID clientId){
-
-        return createToken(user.getId(), TokenTargetType.USR, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes, TokenType.ACCESS_TOKEN, clientId);
-    }
-
-    //TODO: Find a suitable place for REFRESH_TOKEN string
-    public Token createUserRefreshToken(User user, UUID clientId, String[] audiences){
-        String refreshScope = REFRESH_TOKEN.concat(SEPARATOR).concat(AccessModifier.WRITE.toString());
-        return createToken(
-                user.getId(), TokenTargetType.USR,
-                Instant.now().plus(daysToExpire, ChronoUnit.DAYS).getEpochSecond(),
-                audiences,
-                new String[]{refreshScope},
-                TokenType.REFRESH_TOKEN,
-                clientId
-        );
-    }
-
-    public Token createApplicationAccessToken(Application application, String[] audiences, String[] scopes, UUID clientId){
-        return createToken(application.getId(), TokenTargetType.APP, Instant.now().plus(secondsToExpire, ChronoUnit.SECONDS).getEpochSecond(), audiences, scopes, TokenType.ACCESS_TOKEN, clientId);
-    }
-
-    public Token createApplicationRefreshToken(Application application, UUID clientId, String[] audiences){
-        String refreshScope = REFRESH_TOKEN.concat(SEPARATOR).concat(AccessModifier.WRITE.toString());
-        return createToken(
-                application.getId(), TokenTargetType.APP,
-                Instant.now().plus(daysToExpire, ChronoUnit.DAYS).getEpochSecond(),
-                audiences,
-                new String[]{refreshScope},
-                TokenType.REFRESH_TOKEN,
-                clientId
-        );
-    }
-
-    public String generateJwtToken(Token token) {
-        return JWT.create()
-                .withIssuer(issuer)
-                .withSubject(token.getSub())
-                .withAudience(
-                        Optional.ofNullable(token.getAud())
-                                .orElse(new HashSet<>())
-                                .toArray(new String[0]
-                ))
-                .withClaim("scope", token.getScope().stream().toList())
-                .withExpiresAt(Instant.ofEpochSecond(token.getExp()))
-                .withIssuedAt(Instant.ofEpochSecond(token.getIat()))
-                .withJWTId(token.getJti().toString())
-                .sign(ALGORITHM);
-    }
-
-    public String generateCustomJwtToken(String subject, String[] audiences, String[] scopes, long expiresAt, Map<String, String> additionalClaims) {
-        JWTCreator.Builder jwtBuilder = JWT.create()
-                .withIssuer(issuer)
-                .withSubject(subject)
-                .withExpiresAt(Instant.ofEpochSecond(expiresAt))
-                .withIssuedAt(Instant.now())
-                .withJWTId(UUID.randomUUID().toString());
+    private AccessToken createAccessToken(UUID subjectId, PrincipalType principalType, Application client,
+            String[] audiences, String[] scopes) {
+        AccessToken accessToken = new AccessToken();
+        setupBaseToken(accessToken, Instant.now().plus(accessTokenExpiresAt, ChronoUnit.SECONDS).getEpochSecond());
+        accessToken.setSub(subjectId.toString());
+        accessToken.setPrincipalType(principalType);
+        accessToken.setClient(client);
         if (audiences != null && audiences.length > 0)
-            jwtBuilder.withAudience(audiences);
+            accessToken.setAud(Set.of(audiences));
         if (scopes != null && scopes.length > 0)
-            jwtBuilder.withClaim("scope", Arrays.stream(scopes).toList());
-        if (additionalClaims != null && !additionalClaims.isEmpty()) {
-            additionalClaims.forEach(jwtBuilder::withClaim);
+            accessToken.setScope(Set.of(scopes));
+        return accessToken;
+    }
+
+    public AccessToken createAccessToken(User user, Application client, String[] audiences, String[] scopes) {
+        return createAccessToken(user.getId(), PrincipalType.USER, client, audiences, scopes);
+    }
+
+    public AccessToken createAccessToken(Application application, String[] audiences, String[] scopes) {
+        return createAccessToken(application.getId(), PrincipalType.APP, application, audiences, scopes);
+    }
+
+    // TODO: Should I use UserLogin or LoginSession?
+    public RefreshToken createRefreshToken(UserLogin userLogin) {
+        RefreshToken refreshToken = new RefreshToken();
+        setupBaseToken(refreshToken, Instant.now().plus(refreshTokenExpiresAt, ChronoUnit.DAYS).getEpochSecond());
+        // TODO: fill out missing fields
+        return refreshToken;
+    }
+
+    public IdToken createIdToken(User user) {
+        IdToken idToken = new IdToken();
+        setupBaseToken(idToken, Instant.now().plus(idTokenExpiresAt, ChronoUnit.SECONDS).getEpochSecond());
+        // TODO: fill out missing fields
+        return idToken;
+    }
+
+    public String createCustomToken(Map<String, String> additionalClaims) {
+        Token token = new Token();
+        setupBaseToken(token, Instant.now().plus(accessTokenExpiresAt, ChronoUnit.SECONDS).getEpochSecond());
+        JWTCreator.Builder builder = getTokenBuilder(token);
+        additionalClaims.forEach(builder::withClaim);
+        return builder.sign(ALGORITHM);
+    }
+
+    private JWTCreator.Builder getTokenBuilder(Token token) {
+        return JWT.create()
+                .withIssuer(token.getIss())
+                .withExpiresAt(Instant.ofEpochSecond(token.getExp()))
+                .withJWTId(token.getJti().toString())
+                .withIssuedAt(Instant.ofEpochSecond(token.getIat()));
+    }
+
+    public String serializeAccessToken(AccessToken accessToken) {
+        JWTCreator.Builder builder = getTokenBuilder(accessToken);
+        builder.withAudience(accessToken.getAud().toArray(String[]::new));
+        builder.withClaim(Constants.JwtClaims.AccessTokenClaims.SCOPE, accessToken.getScope().stream().toList());
+        builder.withClaim(Constants.JwtClaims.AccessTokenClaims.PRINCIPAL_TYPE,
+                accessToken.getPrincipalType().toString());
+        builder.withClaim(Constants.JwtClaims.AccessTokenClaims.CLIENT_ID, accessToken.getClient().getId().toString());
+        return builder.sign(ALGORITHM);
+    }
+
+    public String serializeRefreshToken(RefreshToken refreshToken) {
+        JWTCreator.Builder builder = getTokenBuilder(refreshToken);
+        builder.withClaim(Constants.JwtClaims.RefreshTokenClaims.USER_LOGIN,
+                refreshToken.getUserLogin().getId().toString());
+        return builder.sign(ALGORITHM);
+    }
+
+    public String serializeIdToken(IdToken idToken) {
+        JWTCreator.Builder builder = getTokenBuilder(idToken);
+        // TODO: implement the fields you added here.
+        return builder.sign(ALGORITHM);
+    }
+
+    private void parseBaseClaims(Token token, DecodedJWT decodedJWT) {
+        token.setJti(UUID.fromString(decodedJWT.getId()));
+        token.setIss(decodedJWT.getIssuer());
+        token.setExp(decodedJWT.getExpiresAtAsInstant().getEpochSecond());
+        token.setIat(decodedJWT.getIssuedAtAsInstant().getEpochSecond());
+    }
+
+    public AccessToken parseAccessToken(String token) {
+        AccessToken accessToken = new AccessToken();
+        DecodedJWT decodedJWT = JWT.decode(token);
+
+        parseBaseClaims(accessToken, decodedJWT);
+
+        if (!decodedJWT.getClaims().containsKey(Constants.JwtClaims.AccessTokenClaims.PRINCIPAL_TYPE))
+            throw new IllegalArgumentException(
+                    String.format("%s is not set for token", Constants.JwtClaims.AccessTokenClaims.PRINCIPAL_TYPE));
+        String principalTypeClaimString = decodedJWT.getClaim(Constants.JwtClaims.AccessTokenClaims.PRINCIPAL_TYPE)
+                .asString();
+        PrincipalType principalType = EnumUtils.parseOrDefault(PrincipalType.class, principalTypeClaimString,
+                PrincipalType.UNDEFINED);
+        accessToken.setPrincipalType(principalType);
+
+        if (StringUtils.isNullOrEmpty(decodedJWT.getSubject()))
+            throw new IllegalArgumentException("sub claim is not set for token");
+        accessToken.setSub(decodedJWT.getSubject());
+
+        if (decodedJWT.getAudience() == null || decodedJWT.getAudience().isEmpty())
+            throw new IllegalArgumentException("aud claim is not set for token");
+        accessToken.setAud(new HashSet<>(decodedJWT.getAudience()));
+
+        if (!decodedJWT.getClaims().containsKey(Constants.JwtClaims.AccessTokenClaims.SCOPE))
+            throw new IllegalArgumentException(
+                    String.format("%s is not set for token", Constants.JwtClaims.AccessTokenClaims.SCOPE));
+        accessToken.setScope(
+                new HashSet<>(decodedJWT.getClaim(Constants.JwtClaims.AccessTokenClaims.SCOPE).asList(String.class)));
+
+        if (!decodedJWT.getClaims().containsKey(Constants.JwtClaims.AccessTokenClaims.CLIENT_ID))
+            throw new IllegalArgumentException(
+                    String.format("%s is not set for token", Constants.JwtClaims.AccessTokenClaims.CLIENT_ID));
+        String clientIdString = decodedJWT.getClaim(Constants.JwtClaims.AccessTokenClaims.CLIENT_ID).asString();
+        if (!StringUtils.isNullOrEmpty(clientIdString)) {
+            Application application = new Application();
+            application.setId(UUID.fromString(clientIdString));
+            accessToken.setClient(application);
         }
-        return jwtBuilder.sign(ALGORITHM);
+        return accessToken;
     }
 
-    public String generateCustomTokenWithClaims(Map<String, Object> claims) {
-        JWTCreator.Builder jwtBuilder = JWT.create();
-        claims.forEach((key,value) -> {
-            if (value instanceof String v) {
-                jwtBuilder.withClaim(key, v);
-            } else if (value instanceof Long v) {
-                jwtBuilder.withClaim(key, v);
-            } else if (value instanceof Boolean v) {
-                jwtBuilder.withClaim(key, v);
-            }
-        });
-        return jwtBuilder.sign(ALGORITHM);
+    public RefreshToken parseRefreshToken(String token) {
+        RefreshToken refreshToken = new RefreshToken();
+        DecodedJWT decodedJWT = JWT.decode(token);
+
+        parseBaseClaims(refreshToken, decodedJWT);
+        if (!decodedJWT.getClaims().containsKey(Constants.JwtClaims.RefreshTokenClaims.USER_LOGIN))
+            throw new IllegalArgumentException(
+                    String.format("%s is not set for token", Constants.JwtClaims.RefreshTokenClaims.USER_LOGIN));
+        UserLogin userLogin = new UserLogin();
+        userLogin.setId(
+                UUID.fromString(decodedJWT.getClaim(Constants.JwtClaims.RefreshTokenClaims.USER_LOGIN).asString()));
+        refreshToken.setUserLogin(userLogin);
+        return refreshToken;
     }
 
-    public Optional<Token> getFromToken(String token){
+    public Map<String, Claim> getTokenClaims(String token) {
         try {
             DecodedJWT decodedJWT = JWT.decode(token);
-            String sub = decodedJWT.getSubject();
-            TokenTargetType tokenTargetType = TokenTargetType.fromString(sub);
-            if (tokenTargetType == TokenTargetType.UNDEFINED)
-                throw new JWTDecodeException("Undefined token type");
-            sub = getCleanSubject(tokenTargetType, sub).orElseThrow(() -> new RuntimeException("Unknown token."));
-            Token generatedToken = new Token();
-            generatedToken.setSub(sub);
-            generatedToken.setJti(UUID.fromString(decodedJWT.getId()));
-            generatedToken.setIat(decodedJWT.getIssuedAt().getTime());
-            generatedToken.setExp(decodedJWT.getExpiresAt().getTime());
-            generatedToken.setAud(new HashSet<>(decodedJWT.getAudience()));
-            generatedToken.setScope(new HashSet<>(decodedJWT.getClaim("scope").asList(String.class)));
-            generatedToken.setSerializedToken(decodedJWT.getToken());
-            generatedToken.setTokenTargetType(tokenTargetType);
-            return Optional.of(generatedToken);
-        }
-        catch (JWTDecodeException exception){
-            return Optional.empty();
-        }
-    }
-    public Map<String, Claim> getTokenClaims(String token) {
-        try{
-            DecodedJWT decodedJWT = JWT.decode(token);
             return decodedJWT.getClaims();
-        }
-        catch (JWTDecodeException exception){
+        } catch (JWTDecodeException exception) {
             return Collections.emptyMap();
         }
     }
@@ -222,6 +227,7 @@ public class TokenManager implements Serializable {
             return Optional.of(claims.get(claim).as(clazz));
         return Optional.empty();
     }
+
     public <T> Optional<List<T>> getTokenClaimAsList(String token, String claim, Class<T> clazz) {
         Map<String, Claim> claims = getTokenClaims(token);
         if (claims.containsKey(claim))
@@ -231,49 +237,37 @@ public class TokenManager implements Serializable {
 
     /**
      * <h3>Verifies json that given in request</h3>
-     * <p>Verifies token signature end expiration date</p>
+     * <p>
+     * Verifies token signature end expiration date
+     * </p>
+     * 
      * @param jwtToken The token that should be verified
      * @return The status that indicates result of verification
      */
-    public TokenVerificationStatus verifyJwtToken(String jwtToken, String... audiences){
-        try{
-            JWTVerifier verifier = JWT.require(ALGORITHM)
-                    .withIssuer(issuer)
-                    .build();
+    public TokenVerificationStatus verifyJwtToken(String jwtToken, String[] audiences, String[] scopes) {
+        try {
+            Verification verification = JWT.require(ALGORITHM)
+                    .withIssuer(issuer);
+            if (audiences != null && audiences.length > 0)
+                verification.withAudience(audiences);
+            if (scopes != null && scopes.length > 0)
+                verification.withArrayClaim(Constants.JwtClaims.AccessTokenClaims.SCOPE, scopes);
+            JWTVerifier verifier = verification.build();
             verifier.verify(jwtToken);
             return TokenVerificationStatus.SUCCESS;
-        }
-        catch (AlgorithmMismatchException exception){
+        } catch (AlgorithmMismatchException exception) {
             return TokenVerificationStatus.INVALID_ALGORITHM.withException(exception);
-        }
-        catch (SignatureVerificationException exception) {
+        } catch (SignatureVerificationException exception) {
             return TokenVerificationStatus.INVALID_SIGNATURE.withException(exception);
-        }
-        catch (TokenExpiredException exception) {
+        } catch (TokenExpiredException exception) {
             return TokenVerificationStatus.EXPIRED.withException(exception);
-        }
-        catch (JWTVerificationException exception){
+        } catch (JWTVerificationException exception) {
             return TokenVerificationStatus.FAILED.withException(exception);
         }
     }
 
-    public Optional<String> getCleanSubject(TokenTargetType tokenTargetType, String tokenSubject) {
-        Pattern tokenPattern = Pattern.compile(String.format("^%s%s(.*)$", tokenTargetType, SEPARATOR));
-        Matcher matcher = tokenPattern.matcher(tokenSubject);
-        if (matcher.matches()) {
-            return Optional.of(matcher.group(1));
-        }
-        return Optional.empty();
+    public TokenVerificationStatus verifyJwtToken(String jwtToken) {
+        return verifyJwtToken(jwtToken, null, null);
     }
 
-    public Token generateUserToken(User user, String... audiences) {
-        Token token = new Token();
-        token.setIss(issuer);
-        token.setSub(user.getUserName());
-        if (audiences != null)
-            token.setAud(Set.of(audiences));
-        token.setExp(Instant.now().plusSeconds(secondsToExpire).getEpochSecond());
-        token.setSerializedToken(generateJwtToken(token));
-        return token;
-    }
 }

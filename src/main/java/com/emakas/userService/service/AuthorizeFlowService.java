@@ -9,8 +9,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-
-import com.emakas.userService.domain.auth.UserPrincipal;
 import com.emakas.userService.model.*;
 import com.emakas.userService.shared.Constants;
 import com.emakas.userService.shared.SecurityContextManager;
@@ -18,18 +16,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
-
 import com.emakas.userService.config.OidcConfig;
 import com.emakas.userService.dto.AuthorizeDto;
 import com.emakas.userService.dto.LoginPageInput;
 import com.emakas.userService.mappers.LoginPageInputMapper;
 import com.emakas.userService.shared.exceptions.AuthorizeFlowException;
 
+/**
+ * Handles base authentication flows such as redirecting login page and client
+ * callbacks
+ * 
+ * @author Ensar Makas
+ */
 @Component
 public class AuthorizeFlowService {
 
@@ -43,8 +45,9 @@ public class AuthorizeFlowService {
 
     @Autowired
     public AuthorizeFlowService(ApplicationService applicationService, OidcConfig oidcConfig,
-                                UserLoginService userLoginService, LoginSessionService loginSessionService,
-                                LoginPageInputMapper loginPageInputMapper, SecurityContextManager securityContextManager, OidcDiscoveryService oidcDiscoveryService) {
+            UserLoginService userLoginService, LoginSessionService loginSessionService,
+            LoginPageInputMapper loginPageInputMapper, SecurityContextManager securityContextManager,
+            OidcDiscoveryService oidcDiscoveryService) {
         this.applicationService = applicationService;
         this.oidcConfig = oidcConfig;
         this.userLoginService = userLoginService;
@@ -54,6 +57,17 @@ public class AuthorizeFlowService {
         this.oidcDiscoveryService = oidcDiscoveryService;
     }
 
+    /**
+     * Entrypoint of authorization flow
+     * Redirects to login page if no authentication provided
+     * redirects to client callback page if authentication and authorization
+     * provided
+     * Also validates if login request is valid for provided client and scope
+     * informations
+     * 
+     * @param authorizeDto inputs of login page according to OAuth 2.0 specs
+     * @return Response Entity to redirect request to different endpoints and pages
+     */
     public ResponseEntity<Object> handleAuthorizationFlow(AuthorizeDto authorizeDto) {
         try {
             if (authorizeDto.getSessionId() != null)
@@ -66,8 +80,7 @@ public class AuthorizeFlowService {
                     .orElseThrow(() -> new AuthorizeFlowException("Bad Client", "Please provide a valid client"));
 
             Set<String> supportedScopes = Set.of(oidcDiscoveryService.getConfigurationForTenant(
-                    clientInfo.getTenant().getId().toString()).getScopesSupported()
-            );
+                    clientInfo.getTenant().getId().toString()).getScopesSupported());
 
             if (authorizeDto.getScope() == null || authorizeDto.getScope().isBlank())
                 throw new AuthorizeFlowException("Bad Scope", "You should provide which scopes you want to");
@@ -87,37 +100,12 @@ public class AuthorizeFlowService {
         }
     }
 
-    public Optional<ResponseEntity<Object>> redirectErrorIfBadClient(UUID clientId, String redirectUri) {
-        URI redirectTo;
-        Optional<Application> client = applicationService.getById(clientId);
-
-        if (client.isEmpty()) {
-            redirectTo = UriComponentsBuilder.fromUriString("/page/error")
-                    .queryParam("title", "Invalid Client")
-                    .queryParam("description", "Client could not found")
-                    .build().toUri();
-        } else if (!client.get().getRedirectUri().equals(redirectUri)) {
-            redirectTo = UriComponentsBuilder.fromUriString("/page/error")
-                    .queryParam("title", "Invalid Redirect URI")
-                    .queryParam("description", "Unknown redirect location")
-                    .build().toUri();
-        } else
-            return Optional.empty();
-        return Optional.of(ResponseEntity.status(HttpStatus.FOUND).header("Location", redirectTo.toString()).build());
-    }
-
-    public Optional<ResponseEntity<Object>> redirectErrorIfBadScope(String scope) {
-        if (!oidcConfig.getSupportedScopes().contains(scope)) {
-            URI redirectTo = UriComponentsBuilder.fromUriString("/page/error")
-                    .queryParam("title", "Invalid Scope")
-                    .queryParam("description", "The scope you provided is not supported by system")
-                    .build().toUri();
-            return Optional
-                    .of(ResponseEntity.status(HttpStatus.FOUND).header("Location", redirectTo.toString()).build());
-        }
-        return Optional.empty();
-    }
-
+    /**
+     * Redirects if no authentication provided
+     * 
+     * @param loginPageInput
+     * @return
+     */
     public ResponseEntity<Object> redirectLoginPageIfNoAuth(LoginPageInput loginPageInput) {
 
         Optional<Application> application = applicationService.getById(loginPageInput.getClientId());
@@ -125,7 +113,7 @@ public class AuthorizeFlowService {
             throw new RuntimeException("Client not found, should not happen due to previous checks");
         // Mapper denenebilir belki
         LoginSession loginSession = new LoginSession(
-                application.get(), Set.of(loginPageInput.getScope().split(" ")),
+                application.get(), Set.of(loginPageInput.getScope().split(Constants.Chars.ONE_SPACE)),
                 Set.of(loginPageInput.getClientId().toString()),
                 loginPageInput.getRedirectUri(), loginPageInput.getState(), loginPageInput.getResponseType(),
                 loginPageInput.getCodeChallenge(),
@@ -158,9 +146,13 @@ public class AuthorizeFlowService {
         return ResponseEntity.status(HttpStatus.FOUND).header("Location", redirectTo.toString()).build();
     }
 
-    // TODO: Burası ciddili karıştı. Grant oluşturulması lazım, bu da UserLogin ile
-    // oluşuyor. Bunun için de audience, scope değerleri veya LoginSession
-    // gerekiyor. login session da neye göre oluşacak falan bissürü iş...
+    /**
+     * Creates a grant code and sends it into client's callback page
+     * 
+     * @param loginSessionId
+     * @return
+     * @throws AuthorizeFlowException
+     */
     public ResponseEntity<Object> redirectClientCallbackPage(UUID loginSessionId) throws AuthorizeFlowException {
         Optional<LoginSession> loginSession = loginSessionService.getById(loginSessionId);
         if (loginSession.isEmpty())
@@ -176,7 +168,6 @@ public class AuthorizeFlowService {
             throw new AuthorizeFlowException("Invalid Request", "User not found");
 
         UserLogin userLogin = new UserLogin(loginSession.get(), loggedUser.get());
-        userLogin.setLoggedUser(loggedUser.get());
         UserLogin savedUserLogin = userLoginService.save(userLogin);
 
         URI redirectTo = UriComponentsBuilder.fromUriString(loginSession.get().getRequestedClient().getRedirectUri())

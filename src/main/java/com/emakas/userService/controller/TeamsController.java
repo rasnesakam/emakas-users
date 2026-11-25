@@ -12,7 +12,6 @@ import com.emakas.userService.service.TeamService;
 import com.emakas.userService.service.UserService;
 import com.emakas.userService.shared.SecurityContextManager;
 import com.emakas.userService.shared.TokenManager;
-import com.emakas.userService.shared.enums.TokenTargetType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.slf4j.Logger;
