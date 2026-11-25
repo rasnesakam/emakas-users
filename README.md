@@ -43,7 +43,7 @@ Before run the application, you need to generate two files in order to configure
     java-jwt:
       secret: YOUR SECRET HERE
       issuer: YOUR ISSUER HERE
-      expiration: EXPIRATION TIMES IN SECONDS
+    java.jwt.access_expiration: EXPIRATION TIME IN SECONDS
     spring:
       datasource:
         url: jdbc:postgresql://DB_URL/DB_NAME
