@@ -1,2 +1,3 @@
 rootProject.name = 'user-service'
-include('src:ui')
+include('ui')
+project(':ui').projectDir = file('src/ui')
